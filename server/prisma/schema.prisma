@@ -13,3 +13,13 @@ datasource db {
   url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
+
+model TicketType {
+  id         String   @id @default(uuid())
+  name       String   @unique
+  priceCents Int
+  isActive   Boolean  @default(true)
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
