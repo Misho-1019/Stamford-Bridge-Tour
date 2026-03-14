@@ -14,6 +14,13 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+enum HoldStatus {
+  HELD
+  EXPIRED
+  CONVERTED
+  CANCELLED
+}
+
 model TicketType {
   id         String   @id @default(uuid())
   name       String   @unique
@@ -31,9 +38,33 @@ model TourSlot {
   capacityTotal Int
   isActive      Boolean  @default(true)
 
+  holds         Hold[]
+
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
   @@index([startAt])
   @@unique([startAt])
+}
+
+model Hold {
+  id               String     @id @default(uuid())
+  slotId           String
+  slot             TourSlot   @relation(fields: [slotId], references: [id], onDelete: Cascade)
+
+  status           HoldStatus @default(HELD)
+  expiresAt        DateTime   @db.Timestamptz(6)
+
+  stripeSessionId  String?    @unique
+  email            String
+
+  items            Json
+  qtyTotal         Int
+  amountTotalCents Int
+
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+
+  @@index([expiresAt])
+  @@index([slotId, status])
 }
