@@ -28,6 +28,19 @@ slotController.get('/', async (req, res) => {
                 startAt: {
                     gte: startOfDayUtc,
                     lte: endOfDayUtc,
+                },
+            },
+            include: {
+                holds: {
+                    where: {
+                        status: 'HELD',
+                        expiresAt: {
+                            gt: new Date(),
+                        }
+                    },
+                    select: {
+                        qtyTotal: true,
+                    }
                 }
             },
             orderBy: {
@@ -35,9 +48,23 @@ slotController.get('/', async (req, res) => {
             }
         })
 
+        const slotsWithAvailability = slots.map((slot) => {
+            const heldSeats = slot.holds.reduce((sum, h) => sum + h.qtyTotal, 0);
+
+            const remainingSeats = slot.capacityTotal - heldSeats;
+
+            return {
+                id: slot.id,
+                startAt: slot.startAt,
+                endAt: slot.endAt,
+                capacityTotal: slot.capacityTotal,
+                remainingSeats,
+            }
+        })
+
         res.json({
             blocked: false,
-            slots,
+            slots: slotsWithAvailability,
         })
     } catch (error) {
         console.error("Error fetching slots:", error);
