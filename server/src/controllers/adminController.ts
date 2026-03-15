@@ -3,6 +3,7 @@ import { generateSlots } from "../lib/slotGenerator";
 import { requireAdmin } from "../middleware/admin";
 import { DatasetFixtureProvider } from "../providers/datasetFixtureProvider";
 import { syncBlackouts } from "../lib/syncBlackouts";
+import { RealFixtureProvider } from "../providers/realFixtureProvider";
 
 const adminController = Router();
 
@@ -33,13 +34,25 @@ adminController.post('/blackouts/sync', requireAdmin, async (req, res) => {
             return res.status(400).json({ error: 'daysAhead must be a positive integer' })
         }
 
-        const provider = new DatasetFixtureProvider();
-        const result = await syncBlackouts(provider, daysAhead);
+        try {
+            const realProvider = new RealFixtureProvider();
+            const result = await syncBlackouts(realProvider, daysAhead);
 
-        return res.json({
-            provider: 'dataset',
-            ...result,
-        })
+            return res.json({
+                provider: 'real_api',
+                ...result,
+            });
+        } catch (realError) {
+            console.error("Real fixture provider failed, falling back to dataset:", realError);
+
+            const datasetProvider = new DatasetFixtureProvider();
+            const result = await syncBlackouts(datasetProvider, daysAhead);
+    
+            return res.json({
+                provider: 'dataset_fallback',
+                ...result,
+            });
+        }
     } catch (error) {
         console.error("Sync blackouts error:", error);
         return res.status(500).json({ error: "Failed to sync blackouts" });
