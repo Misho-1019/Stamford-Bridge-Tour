@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { DateTime } from "luxon";
 import { prisma } from "../db";
+import { getActiveBlackoutByLondonDate } from "../lib/blackout";
 
 const slotController = Router();
 
@@ -10,6 +11,16 @@ slotController.get('/', async (req, res) => {
 
     if (!date || typeof date !== 'string') {
         return res.status(400).json({ error: 'date query is required' });
+    }
+
+    const blackout = await getActiveBlackoutByLondonDate(date);
+
+    if (blackout) {
+        return res.json({
+            blocked: true,
+            reason: blackout.reason,
+            slots: [],
+        })
     }
 
     const parsedDate = DateTime.fromISO(date, { zone: LONDON_TZ });

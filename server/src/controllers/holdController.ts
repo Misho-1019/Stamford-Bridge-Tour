@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { prisma } from "../db";
+import { getActiveBlackoutByLondonDate, getLondonDateFromUtc } from "../lib/blackout";
 
 const createHold = Router();
 
@@ -75,6 +76,14 @@ createHold.post('/', async (req, res) => {
                 throw new Error("SLOT_NOT_FOUND");
             }
 
+            const londonDate = getLondonDateFromUtc(slot.startAt);
+
+            const blackout = await getActiveBlackoutByLondonDate(londonDate);
+
+            if (blackout) {
+                throw new Error("BLACKOUT_DATE");
+            }
+
             const heldSeats = slot.holds.reduce((sum, hold) => sum + hold.qtyTotal, 0);
             const remainingSeats = slot.capacityTotal - heldSeats;
 
@@ -102,6 +111,10 @@ createHold.post('/', async (req, res) => {
         });
     } catch (error) {
         if (error instanceof Error) {
+            if (error.message === "BLACKOUT_DATE") {
+              return res.status(400).json({ error: "Tours unavailable on this date" });
+            }
+
             if (error.message === "SLOT_NOT_FOUND") {
                 return res.status(404).json({ error: "Slot not found" });
             }
