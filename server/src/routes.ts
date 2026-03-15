@@ -4,6 +4,7 @@ import adminController from "./controllers/adminController";
 import slotController from "./controllers/slotController";
 import createHold from "./controllers/holdController";
 import bookingController from "./controllers/bookingController";
+import blackoutRoutes from "./controllers/blackoutController";
 
 const routes = Router();
 
@@ -12,5 +13,6 @@ routes.use('/admin', adminController)
 routes.use('/slots', slotController)
 routes.use('/holds', createHold)
 routes.use('/bookings', bookingController)
+routes.use('/admin/blackouts', blackoutRoutes)
 
 export default routes;
