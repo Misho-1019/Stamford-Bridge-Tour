@@ -29,8 +29,13 @@ type FootballDataMatchesResponse = {
 const LONDON_TZ = "Europe/London";
 
 function isChelsea(name?: string, shortName?: string, tla?: string) {
-    const values = [name, shortName, tla].filter(Boolean).map((v) => v!.toLowerCase());
-    return values.includes("chelsea") || values.includes("che") || values.includes("chelsea fc");
+    const values = [name, shortName, tla]
+        .filter(Boolean)
+        .map((v) => v!.toLowerCase());
+
+    return values.includes("chelsea") ||
+        values.includes("che") ||
+        values.includes("chelsea fc");
 }
 
 export class RealFixtureProvider implements FixtureProvider {
@@ -42,14 +47,17 @@ export class RealFixtureProvider implements FixtureProvider {
             throw new Error("FOOTBALL_DATA_API_KEY is not configured");
         }
 
-        const dateFrom = DateTime.now().setZone(LONDON_TZ).toFormat("yyyy-MM-dd");
+        const dateFrom = DateTime.now()
+            .setZone(LONDON_TZ)
+            .toFormat("yyyy-MM-dd");
+
         const dateTo = DateTime.now()
             .setZone(LONDON_TZ)
             .plus({ days: daysAhead })
             .toFormat("yyyy-MM-dd");
 
         const response = await axios.get<FootballDataMatchesResponse>(
-            `https://api.football-data.org/v4/competitions/${competition}/matches`,
+            "https://api.football-data.org/v4/teams/61/matches",
             {
                 params: {
                     dateFrom,
@@ -70,6 +78,7 @@ export class RealFixtureProvider implements FixtureProvider {
                     match.homeTeam?.shortName,
                     match.homeTeam?.tla
                 );
+
                 const awayIsChelsea = isChelsea(
                     match.awayTeam?.name,
                     match.awayTeam?.shortName,
