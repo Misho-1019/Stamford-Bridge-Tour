@@ -96,3 +96,23 @@ model Booking {
 
   @@index([slotId, status])
 }
+
+model BlackoutDate {
+  id            String   @id @default(uuid())
+  date          DateTime @db.Date
+  reason        String
+
+  source        String
+  sourceEventId String?
+
+  opponent      String?
+  competition   String?
+  kickoffAt     DateTime? @db.Timestamptz(6)
+
+  isActive      Boolean  @default(true)
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([date])
+}
