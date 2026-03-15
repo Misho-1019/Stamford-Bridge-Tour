@@ -1,62 +1,97 @@
 import axios from "axios";
-import { FixtureProvider, NormalizedFixture } from "../types/fixture";
 import { DateTime } from "luxon";
+import { FixtureProvider, NormalizedFixture } from "../types/fixture";
 
-type ApiFootballFixture = {
-    fixture: {
-        id: number;
-        date: string;
-    };
-    teams: {
-        home: {
-            name: string;
-        };
-        away: {
-            name: string;
-        };
-    };
-    league: {
+type FootballDataMatch = {
+    id: number;
+    utcDate: string;
+    status: string;
+    homeTeam: {
         name: string;
+        shortName?: string;
+        tla?: string;
+    };
+    awayTeam: {
+        name: string;
+        shortName?: string;
+        tla?: string;
+    };
+    competition?: {
+        name?: string;
+        code?: string;
     };
 };
 
+type FootballDataMatchesResponse = {
+    matches: FootballDataMatch[];
+};
+
+const LONDON_TZ = "Europe/London";
+
+function isChelsea(name?: string, shortName?: string, tla?: string) {
+    const values = [name, shortName, tla].filter(Boolean).map((v) => v!.toLowerCase());
+    return values.includes("chelsea") || values.includes("che") || values.includes("chelsea fc");
+}
+
 export class RealFixtureProvider implements FixtureProvider {
     async getFixtures(daysAhead: number): Promise<NormalizedFixture[]> {
-        const apiKey = process.env.FIXTURES_API_KEY;
+        const apiKey = process.env.FOOTBALL_DATA_API_KEY;
+        const competition = process.env.FOOTBALL_DATA_COMPETITION || "PL";
 
         if (!apiKey) {
-          throw new Error("FIXTURES_API_KEY is not configured");
+            throw new Error("FOOTBALL_DATA_API_KEY is not configured");
         }
 
-        const today = DateTime.now().setZone('Europe/London').toISODate();
-        const to = DateTime.now()
-            .setZone('Europe/London')
+        const dateFrom = DateTime.now().setZone(LONDON_TZ).toFormat("yyyy-MM-dd");
+        const dateTo = DateTime.now()
+            .setZone(LONDON_TZ)
             .plus({ days: daysAhead })
-            .toISODate();
-        
-        const response = await axios.get("https://v3.football.api-sports.io/fixtures", {
-            params: {
-                team: 49,
-                from: today,
-                to,
-                season: 2025,
-            },
-            headers: {
-                "x-apisports-key": apiKey,
-            },
-        });
+            .toFormat("yyyy-MM-dd");
 
-        const fixtures: ApiFootballFixture[] = response.data?.response ?? [];
+        const response = await axios.get<FootballDataMatchesResponse>(
+            `https://api.football-data.org/v4/competitions/${competition}/matches`,
+            {
+                params: {
+                    dateFrom,
+                    dateTo,
+                },
+                headers: {
+                    "X-Auth-Token": apiKey,
+                },
+            }
+        );
 
-        return fixtures.map((fixture) => ({
-            id: String(fixture.fixture.id),
-            kickoffAt: fixture.fixture.date,
-            isHome: fixture.teams.home.name.toLowerCase() === 'chelsea',
-            opponent:
-                fixture.teams.home.name.toLowerCase() === 'chelsea'
-                    ? fixture.teams.away.name
-                    : fixture.teams.home.name,
-                competition: fixture.league.name,
-        }))
+        const matches = response.data.matches ?? [];
+
+        return matches
+            .filter((match) => {
+                const homeIsChelsea = isChelsea(
+                    match.homeTeam?.name,
+                    match.homeTeam?.shortName,
+                    match.homeTeam?.tla
+                );
+                const awayIsChelsea = isChelsea(
+                    match.awayTeam?.name,
+                    match.awayTeam?.shortName,
+                    match.awayTeam?.tla
+                );
+
+                return homeIsChelsea || awayIsChelsea;
+            })
+            .map((match) => {
+                const homeIsChelsea = isChelsea(
+                    match.homeTeam?.name,
+                    match.homeTeam?.shortName,
+                    match.homeTeam?.tla
+                );
+
+                return {
+                    id: String(match.id),
+                    kickoffAt: match.utcDate,
+                    isHome: homeIsChelsea,
+                    opponent: homeIsChelsea ? match.awayTeam.name : match.homeTeam.name,
+                    competition: match.competition?.name || competition,
+                };
+            });
     }
 }
