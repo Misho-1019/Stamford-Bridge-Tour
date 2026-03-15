@@ -40,6 +40,14 @@ slotController.get('/', async (req, res) => {
                     },
                     select: {
                         qtyTotal: true,
+                    },
+                },
+                bookings: {
+                    where: {
+                        status: 'CONFIRMED',
+                    },
+                    select: {
+                        qtyTotal: true,
                     }
                 }
             },
@@ -50,8 +58,9 @@ slotController.get('/', async (req, res) => {
 
         const slotsWithAvailability = slots.map((slot) => {
             const heldSeats = slot.holds.reduce((sum, h) => sum + h.qtyTotal, 0);
+            const confirmedSeats = slot.bookings.reduce((sum, b) => sum + b.qtyTotal, 0);
 
-            const remainingSeats = slot.capacityTotal - heldSeats;
+            const remainingSeats = slot.capacityTotal - heldSeats - confirmedSeats;
 
             return {
                 id: slot.id,

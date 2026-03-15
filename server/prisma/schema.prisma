@@ -21,6 +21,12 @@ enum HoldStatus {
   CANCELLED
 }
 
+enum BookingStatus {
+  CONFIRMED
+  CANCELLED
+  REFUNDED
+}
+
 model TicketType {
   id         String   @id @default(uuid())
   name       String   @unique
@@ -39,6 +45,7 @@ model TourSlot {
   isActive      Boolean  @default(true)
 
   holds         Hold[]
+  bookings      Booking[]
 
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -66,5 +73,26 @@ model Hold {
   updatedAt        DateTime   @updatedAt
 
   @@index([expiresAt])
+  @@index([slotId, status])
+}
+
+model Booking {
+  id                    String        @id @default(uuid())
+  slotId                String
+  slot                  TourSlot      @relation(fields: [slotId], references: [id], onDelete: Cascade)
+
+  email                 String
+  items                 Json
+  qtyTotal              Int
+  amountTotalCents      Int
+
+  status                BookingStatus @default(CONFIRMED)
+
+  stripeSessionId       String?       @unique
+  stripePaymentIntentId String?       @unique
+
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+
   @@index([slotId, status])
 }
