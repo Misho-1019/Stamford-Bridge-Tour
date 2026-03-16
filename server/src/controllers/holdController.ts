@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { prisma } from "../db";
 import { getActiveBlackoutByLondonDate, getLondonDateFromUtc } from "../lib/blackout";
+import { stripe } from "../lib/stripe";
 
 const createHold = Router();
 
@@ -52,6 +53,17 @@ createHold.post('/', async (req, res) => {
             });
         }
 
+        const lineItems = normalizedItems.map((item) => ({
+            price_data: {
+                currency: 'gbp',
+                product_data: {
+                    name: 'Stamford Bridge Tour Ticket',
+                },
+                unit_amount: item.unitPriceCents,
+            },
+            quantity: item.qty,
+        }))
+
         const expiresAt = new Date(Date.now() + HOLD_DURATION_MINUTES * 60 * 1000);
 
         const hold = await prisma.$transaction(async (tx) => {
@@ -69,6 +81,14 @@ createHold.post('/', async (req, res) => {
                             qtyTotal: true,
                         },
                     },
+                    bookings: {
+                        where: {
+                            status: 'CONFIRMED',
+                        },
+                        select: {
+                            qtyTotal: true,
+                        }
+                    }
                 },
             });
 
@@ -85,7 +105,8 @@ createHold.post('/', async (req, res) => {
             }
 
             const heldSeats = slot.holds.reduce((sum, hold) => sum + hold.qtyTotal, 0);
-            const remainingSeats = slot.capacityTotal - heldSeats;
+            const confirmedSeats = slot.bookings.reduce((sum, booking) => sum + booking.qtyTotal, 0)
+            const remainingSeats = slot.capacityTotal - heldSeats - confirmedSeats;
 
             if (qtyTotal > remainingSeats) {
                 throw new Error("INSUFFICIENT_SEATS");
@@ -103,11 +124,52 @@ createHold.post('/', async (req, res) => {
             });
         });
 
+        let session: Awaited<ReturnType<typeof stripe.checkout.sessions.create>>;
+
+        try {
+            session = await stripe.checkout.sessions.create({
+                mode: "payment",
+                payment_method_types: ["card"],
+                line_items: lineItems,
+                metadata: {
+                    holdId: hold.id,
+                    slotId: hold.slotId,
+                    email,
+                },
+                customer_email: email,
+                success_url: `${process.env.APP_BASE_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+                cancel_url: `${process.env.APP_BASE_URL}/checkout/cancelled`,
+            });
+        } catch (stripeError) {
+            await prisma.hold.update({
+                where: { id: hold.id },
+                data: {
+                    status: "CANCELLED",
+                },
+            });
+        
+            throw stripeError;
+        }
+
+        await prisma.hold.update({
+            where: { id: hold.id },
+            data: {
+                stripeSessionId: session.id,
+            }
+        })
+
+        if (!session.url) {
+            await prisma.hold.update({
+                where: { id: hold.id },
+                data: { status: 'CANCELLED' },
+            })
+
+            return res.status(500).json({ error: "Stripe checkout URL was not created" })
+        }
+
         return res.status(201).json({
             holdId: hold.id,
-            expiresAt: hold.expiresAt,
-            qtyTotal: hold.qtyTotal,
-            amountTotalCents: hold.amountTotalCents,
+            checkoutUrl: session.url,
         });
     } catch (error) {
         if (error instanceof Error) {
