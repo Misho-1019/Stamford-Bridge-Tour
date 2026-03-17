@@ -250,13 +250,43 @@ adminController.get('/bookings/revenue-series', requireAdmin, async (req, res) =
             entry.bookings += 1;
         }
 
-        const data = Array.from(map.entries())
-            .map(([date, value]) => ({
-                date,
-                revenueCents: value.revenueCents,
-                bookings: value.bookings
-            }))
-            .sort((a, b) => a.date.localeCompare(b.date));
+        let startDate = fromDate;
+        let endDate = toDate;
+
+        if (!startDate || !endDate) {
+            const allDates = Array.from(map.keys()).sort();
+
+            if (allDates.length > 0) {
+                startDate = startDate ?? new Date(allDates[0]);
+                endDate = endDate ?? new Date(allDates[allDates.length - 1])
+            }
+        }
+
+        if (!startDate || !endDate) {
+            return res.json({ data: [] })
+        }
+
+        const data: {
+            date: string;
+            revenueCents: number;
+            bookings: number;
+        }[] = [];
+
+        const current = new Date(startDate);
+
+        while (current <= endDate) {
+            const dateStr = current.toISOString().split('T')[0];
+
+            const entry = map.get(dateStr);
+
+            data.push({
+                date: dateStr,
+                revenueCents: entry?.revenueCents ?? 0,
+                bookings: entry?.bookings ?? 0,
+            })
+
+            current.setDate(current.getDate() + 1)
+        }
 
         return res.json({ data })
     } catch (error) {
