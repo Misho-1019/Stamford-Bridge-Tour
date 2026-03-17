@@ -130,4 +130,34 @@ adminController.get('/bookings', requireAdmin, async (req, res) => {
     }
 })
 
+adminController.get('/bookings/:id', requireAdmin, async (req, res) => {
+    try {
+        const id = req.params.id;
+
+        if (typeof id !== 'string') {
+            return res.status(400).json({ error: 'Invalid booking id' })
+        }
+
+        const booking = await prisma.booking.findUnique({
+            where: {
+                id,
+            },
+            include: {
+                slot: true,
+            }
+        })
+
+        if (!booking) {
+            return res.status(404).json({ error: 'Booking not found' })
+        }
+
+        return res.json({
+            booking,
+        })
+    } catch (error) {
+        console.error('Failed to fetch booking:', error);
+        return res.status(500).json({ error: 'Failed to fetch booking' });
+    }
+})
+
 export default adminController;
