@@ -49,7 +49,7 @@ adminController.post('/blackouts/sync', requireAdmin, async (req, res) => {
 
             const datasetProvider = new DatasetFixtureProvider();
             const result = await syncBlackouts(datasetProvider, daysAhead);
-    
+
             return res.json({
                 provider: 'dataset_fallback',
                 ...result,
@@ -292,6 +292,87 @@ adminController.get('/bookings/revenue-series', requireAdmin, async (req, res) =
     } catch (error) {
         console.error('Failed to fetch revenue series:', error);
         return res.status(500).json({ error: 'Failed to fetch revenue series' });
+    }
+})
+
+adminController.get('/bookings/ticket-type-stats', requireAdmin, async (req, res) => {
+    try {
+        const fromDate =
+            typeof req.query.fromDate === 'string'
+                ? new Date(req.query.fromDate)
+                : undefined;
+
+        const toDate =
+            typeof req.query.toDate === 'string'
+                ? new Date(req.query.toDate)
+                : undefined;
+
+        const where: Prisma.BookingWhereInput = {
+            status: BookingStatus.CONFIRMED
+        };
+
+        if (fromDate || toDate) {
+            where.createdAt = {};
+
+            if (fromDate) {
+                where.createdAt.gte = fromDate;
+            }
+
+            if (toDate) {
+                where.createdAt.lte = toDate;
+            }
+        }
+
+        const bookings = await prisma.booking.findMany({
+            where,
+            select: {
+                items: true,
+            }
+        });
+
+        const statsMap = new Map<string, { ticketTypeId: string; qty: number; revenueCents: number; }>();
+
+        for (const booking of bookings) {
+            if (!Array.isArray(booking.items)) {
+                continue;
+            }
+
+            for (const rawItem of booking.items) {
+                if (!rawItem || typeof rawItem !== 'object' || Array.isArray(rawItem)) {
+                    continue;
+                }
+
+                const item = rawItem as {
+                    ticketTypeId?: unknown;
+                    qty?: unknown;
+                    unitPriceCents?: unknown;
+                };
+
+                if (typeof item.ticketTypeId !== 'string' || typeof item.qty !== 'number' || typeof item.unitPriceCents !== 'number') {
+                    continue;
+                }
+
+                const existing = statsMap.get(item.ticketTypeId);
+
+                if (existing) {
+                    existing.qty += item.qty;
+                    existing.revenueCents += item.qty * item.unitPriceCents;
+                } else {
+                    statsMap.set(item.ticketTypeId, {
+                        ticketTypeId: item.ticketTypeId,
+                        qty: item.qty,
+                        revenueCents: item.qty * item.unitPriceCents
+                    })
+                }
+            }
+        }
+
+        const data = Array.from(statsMap.values()).sort((a, b) => b.revenueCents - a.revenueCents)
+
+        return res.json({ data })
+    } catch (error) {
+        console.error('Failed to fetch ticket type stats:', error);
+        return res.status(500).json({ error: 'Failed to fetch ticket type stats' });
     }
 })
 
