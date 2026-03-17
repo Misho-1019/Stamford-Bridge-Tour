@@ -160,4 +160,49 @@ adminController.get('/bookings/:id', requireAdmin, async (req, res) => {
     }
 })
 
+adminController.patch('/bookings/:id/status', requireAdmin, async (req, res) => {
+    try {
+        const id = req.params.id;
+
+        if (typeof id !== 'string') {
+            return res.status(400).json({ error: 'Invalid booking id' })
+        }
+
+        const rawStatus = req.body?.status;
+
+        if (typeof rawStatus !== 'string') {
+            return res.status(400).json({ error: 'Status is required' })
+        }
+
+        if (!Object.values(BookingStatus).includes(rawStatus as BookingStatus)) {
+            return res.status(400).json({ error: 'Invalid status' })
+        }
+
+        const status = rawStatus as BookingStatus;
+
+        const existingBooking = await prisma.booking.findUnique({
+            where: { id },
+        })
+
+        if (!existingBooking) {
+            return res.status(400).json({ error: 'Booking not found' })
+        }
+
+        const booking = await prisma.booking.update({
+            where: { id },
+            data: { status },
+            include: {
+                slot: true,
+            }
+        })
+
+        return res.json({
+            booking,
+        })
+    } catch (error) {
+        console.error('Failed to update booking status:', error);
+        return res.status(500).json({ error: 'Failed to update booking status' });
+    }
+})
+
 export default adminController;
