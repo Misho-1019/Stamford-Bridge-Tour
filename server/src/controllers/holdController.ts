@@ -53,16 +53,20 @@ createHold.post('/', async (req, res) => {
             });
         }
 
-        const lineItems = normalizedItems.map((item) => ({
-            price_data: {
-                currency: 'gbp',
-                product_data: {
-                    name: 'Stamford Bridge Tour Ticket',
+        const lineItems = normalizedItems.map((item) => {
+            const ticket = ticketMap.get(item.ticketTypeId)
+
+            return {
+                price_data: {
+                    currency: 'gbp',
+                    product_data: {
+                        name: `Stamford Bridge Tour - ${ticket?.name ?? 'Ticket'}`,
+                    },
+                    unit_amount: item.unitPriceCents,
                 },
-                unit_amount: item.unitPriceCents,
-            },
-            quantity: item.qty,
-        }))
+                quantity: item.qty,
+            }
+        })
 
         const expiresAt = new Date(Date.now() + HOLD_DURATION_MINUTES * 60 * 1000);
 

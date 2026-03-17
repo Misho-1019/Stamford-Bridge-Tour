@@ -6,6 +6,7 @@ import { getActiveBlackoutByLondonDate } from "../lib/blackout";
 const slotController = Router();
 
 const LONDON_TZ = 'Europe/London';
+
 slotController.get('/', async (req, res) => {
     const { date } = req.query;
 
