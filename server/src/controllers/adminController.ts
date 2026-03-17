@@ -130,6 +130,64 @@ adminController.get('/bookings', requireAdmin, async (req, res) => {
     }
 })
 
+adminController.get('/bookings/stats', requireAdmin, async (req, res) => {
+    try {
+        const [
+            totalBookings,
+            confirmedBookings,
+            cancelledBookings,
+            refundedBookings,
+            confirmedRevenueAgg,
+            refundedRevenueAgg,
+        ] = await Promise.all([
+            prisma.booking.count(),
+            prisma.booking.count({
+                where: {
+                    status: BookingStatus.CONFIRMED
+                }
+            }),
+            prisma.booking.count({
+                where: {
+                    status: BookingStatus.CANCELLED,
+                }
+            }),
+            prisma.booking.count({
+                where: {
+                    status: BookingStatus.REFUNDED,
+                }
+            }),
+            prisma.booking.aggregate({
+                where: {
+                    status: BookingStatus.CONFIRMED,
+                },
+                _sum: {
+                    amountTotalCents: true,
+                }
+            }),
+            prisma.booking.aggregate({
+                where: {
+                    status: BookingStatus.REFUNDED,
+                },
+                _sum: {
+                    amountTotalCents: true,
+                }
+            })
+        ])
+
+        return res.json({
+            totalBookings,
+            confirmedBookings,
+            cancelledBookings,
+            refundedBookings,
+            confirmedRevenueCents: confirmedRevenueAgg._sum.amountTotalCents ?? 0,
+            refundedRevenueCents: refundedRevenueAgg._sum.amountTotalCents ?? 0,
+        })
+    } catch (error) {
+        console.error('Failed to fetch admin booking stats:', error);
+        return res.status(500).json({ error: 'Failed to fetch booking stats' });
+    }
+})
+
 adminController.get('/bookings/:id', requireAdmin, async (req, res) => {
     try {
         const id = req.params.id;
