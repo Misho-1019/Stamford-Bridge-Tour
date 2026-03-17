@@ -178,7 +178,7 @@ adminController.patch('/bookings/:id/status', requireAdmin, async (req, res) => 
             return res.status(400).json({ error: 'Invalid status' })
         }
 
-        const status = rawStatus as BookingStatus;
+        const nextStatus = rawStatus as BookingStatus;
 
         const existingBooking = await prisma.booking.findUnique({
             where: { id },
@@ -188,9 +188,27 @@ adminController.patch('/bookings/:id/status', requireAdmin, async (req, res) => 
             return res.status(400).json({ error: 'Booking not found' })
         }
 
+        const currentStatus = existingBooking.status;
+
+        if (currentStatus === nextStatus) {
+            return res.status(400).json({ error: 'Booking already has this status' })
+        }
+
+        const allowedTransitions: Record<BookingStatus, BookingStatus[]> = {
+            CONFIRMED: [BookingStatus.CANCELLED, BookingStatus.REFUNDED],
+            CANCELLED: [BookingStatus.REFUNDED],
+            REFUNDED: []
+        }
+
+        const canTransition = allowedTransitions[currentStatus].includes(nextStatus);
+
+        if (!canTransition) {
+            return res.status(400).json({ error: `Cannot change booking status from ${currentStatus} to ${nextStatus}` });
+        }
+
         const booking = await prisma.booking.update({
             where: { id },
-            data: { status },
+            data: { status: nextStatus },
             include: {
                 slot: true,
             }
