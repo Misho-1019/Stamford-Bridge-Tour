@@ -132,6 +132,24 @@ adminController.get('/bookings', requireAdmin, async (req, res) => {
 
 adminController.get('/bookings/stats', requireAdmin, async (req, res) => {
     try {
+        const fromDate = typeof req.query.fromDate === 'string' ? new Date(req.query.fromDate) : undefined;
+
+        const toDate = typeof req.query.toDate === 'string' ? new Date(req.query.toDate) : undefined;
+
+        const where: Prisma.BookingWhereInput = {};
+
+        if (fromDate || toDate) {
+            where.createdAt = {};
+
+            if (fromDate) {
+                where.createdAt.gte = fromDate;
+            }
+
+            if (toDate) {
+                where.createdAt.lte = toDate;
+            }
+        }
+        
         const [
             totalBookings,
             confirmedBookings,
