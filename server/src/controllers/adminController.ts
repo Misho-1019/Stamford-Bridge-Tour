@@ -149,7 +149,7 @@ adminController.get('/bookings/stats', requireAdmin, async (req, res) => {
                 where.createdAt.lte = toDate;
             }
         }
-        
+
         const [
             totalBookings,
             confirmedBookings,
@@ -203,6 +203,65 @@ adminController.get('/bookings/stats', requireAdmin, async (req, res) => {
     } catch (error) {
         console.error('Failed to fetch admin booking stats:', error);
         return res.status(500).json({ error: 'Failed to fetch booking stats' });
+    }
+})
+
+adminController.get('/bookings/revenue-series', requireAdmin, async (req, res) => {
+    try {
+        const fromDate = typeof req.query.fromDate === 'string' ? new Date(req.query.fromDate) : undefined;
+
+        const toDate = typeof req.query.toDate === 'string' ? new Date(req.query.toDate) : undefined;
+
+        const where: Prisma.BookingWhereInput = {
+            status: BookingStatus.CONFIRMED
+        }
+
+        if (fromDate || toDate) {
+            where.createdAt = {};
+
+            if (fromDate) {
+                where.createdAt.gte = fromDate;
+            }
+
+            if (toDate) {
+                where.createdAt.lte = toDate;
+            }
+        }
+
+        const bookings = await prisma.booking.findMany({
+            where,
+            select: {
+                createdAt: true,
+                amountTotalCents: true,
+            }
+        })
+
+        const map = new Map<string, { revenueCents: number; bookings: number }>();
+
+        for (const b of bookings) {
+            const date = b.createdAt.toISOString().split('T')[0];
+
+            if (!map.has(date)) {
+                map.set(date, { revenueCents: 0, bookings: 0 })
+            }
+
+            const entry = map.get(date)!;
+            entry.revenueCents += b.amountTotalCents;
+            entry.bookings += 1;
+        }
+
+        const data = Array.from(map.entries())
+            .map(([date, value]) => ({
+                date,
+                revenueCents: value.revenueCents,
+                bookings: value.bookings
+            }))
+            .sort((a, b) => a.date.localeCompare(b.date));
+
+        return res.json({ data })
+    } catch (error) {
+        console.error('Failed to fetch revenue series:', error);
+        return res.status(500).json({ error: 'Failed to fetch revenue series' });
     }
 })
 
