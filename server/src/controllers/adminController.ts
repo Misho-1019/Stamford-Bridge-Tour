@@ -4,6 +4,8 @@ import { requireAdmin } from "../middleware/admin";
 import { DatasetFixtureProvider } from "../providers/datasetFixtureProvider";
 import { syncBlackouts } from "../lib/syncBlackouts";
 import { RealFixtureProvider } from "../providers/realFixtureProvider";
+import { prisma } from "../db";
+import { BookingStatus, Prisma } from "@prisma/client";
 
 const adminController = Router();
 
@@ -56,6 +58,75 @@ adminController.post('/blackouts/sync', requireAdmin, async (req, res) => {
     } catch (error) {
         console.error("Sync blackouts error:", error);
         return res.status(500).json({ error: "Failed to sync blackouts" });
+    }
+})
+
+adminController.get('/bookings', requireAdmin, async (req, res) => {
+    try {
+        const page = Math.max(Number(req.query.page) || 1, 1);
+        const limit = Math.min(Math.max(Number(req.query.limit) || 10, 1), 100);
+        const skip = (page - 1) * limit;
+
+        const rawStatus = typeof req.query.status === 'string' ? req.query.status : undefined;
+
+        const email = typeof req.query.email === 'string' ? req.query.email.trim() : undefined;
+
+        const slotId = typeof req.query.slotId === 'string' ? req.query.slotId : undefined;
+
+        let status: BookingStatus | undefined;
+
+        if (rawStatus) {
+            if (!Object.values(BookingStatus).includes(rawStatus as BookingStatus)) {
+                return res.status(400).json({ error: 'Invalid status' })
+            }
+
+            status = rawStatus as BookingStatus;
+        }
+
+        const where: Prisma.BookingWhereInput = {};
+
+        if (status) {
+            where.status = status;
+        }
+
+        if (email) {
+            where.email = {
+                contains: email,
+                mode: 'insensitive',
+            }
+        }
+
+        if (slotId) {
+            where.slotId = slotId;
+        }
+
+        const [bookings, total] = await Promise.all([
+            prisma.booking.findMany({
+                where,
+                orderBy: {
+                    createdAt: 'desc',
+                },
+                skip,
+                take: limit,
+                include: {
+                    slot: true,
+                }
+            }),
+            prisma.booking.count({ where }),
+        ]);
+
+        const totalPages = Math.ceil(total / limit);
+
+        return res.json({
+            page,
+            limit,
+            total,
+            totalPages,
+            bookings,
+        })
+    } catch (error) {
+        console.error('Failed to fetch admin bookings:', error);
+        return res.status(500).json({ error: 'Failed to fetch bookings' });
     }
 })
 
