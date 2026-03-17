@@ -367,8 +367,30 @@ adminController.get('/bookings/ticket-type-stats', requireAdmin, async (req, res
             }
         }
 
-        const data = Array.from(statsMap.values()).sort((a, b) => b.revenueCents - a.revenueCents)
+        const ticketTypeIds = Array.from(statsMap.keys());
 
+        const ticketTypes = await prisma.ticketType.findMany({
+            where: {
+                id: {
+                    in: ticketTypeIds
+                }
+            },
+            select: {
+                id: true,
+                name: true,
+            }
+        })
+
+        const ticketTypeNameMap = new Map(ticketTypes.map((ticketType) => [ticketType.id, ticketType.name]))
+
+        const data = Array.from(statsMap.values()).map((entry) => ({
+            ticketTypeId: entry.ticketTypeId,
+            ticketTypeName: ticketTypeNameMap.get(entry.ticketTypeId) ?? 'Unknown ticket type',
+            qty: entry.qty,
+            revenueCents: entry.revenueCents
+        }))
+        .sort((a, b) => b.revenueCents - a.revenueCents);
+        
         return res.json({ data })
     } catch (error) {
         console.error('Failed to fetch ticket type stats:', error);
