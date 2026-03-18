@@ -1,5 +1,13 @@
 import { useEffect, useState } from "react";
 import { getAdminBookingStats, type AdminBookingStats } from "../../lib/api/admin";
+import StatCard from "../../components/admin/StatCard";
+
+function formatCurrency(cents: number) {
+  return new Intl.NumberFormat('en-GB', {
+    style: 'currency',
+    currency: 'GBP',
+  }).format(cents / 100);
+}
 
 export default function AnalyticsPage() {
   const [stats, setStats] = useState<AdminBookingStats | null>(null);
@@ -23,7 +31,7 @@ export default function AnalyticsPage() {
   }, [])
 
   return (
-    <div className="rounded-2xl bg-white p-6 shadow-sm">
+    <div className="rounded-2xl bg-white p-6 shadow-sm border border-slate-200">
       <h2 className="text-xl font-semibold text-slate-900">
         Analytics Dashboard
       </h2>
@@ -37,32 +45,19 @@ export default function AnalyticsPage() {
       )}
 
       {stats && (
-        <div className="mt-6 grid grid-cols-2 gap-4">
-          <div className="rounded-xl bg-white p-4 shadow-sm border border-slate-200">
-            <p className="text-sm text-slate-500">Total Bookings</p>
-            <p className="text-2xl font-bold text-slate-900">{stats.totalBookings}</p>
-          </div>
-
-          <div className="rounded-xl bg-white p-4 shadow-sm border border-slate-200">
-            <p className="text-sm text-slate-500">Confirmed</p>
-            <p className="text-2xl font-bold text-slate-900">
-              {stats.confirmedBookings}
-            </p>
-          </div>
-
-          <div className="rounded-xl bg-white p-4 shadow-sm border border-slate-200">
-            <p className="text-sm text-slate-500">Cancelled</p>
-            <p className="text-2xl font-bold text-slate-900">
-              {stats.cancelledBookings}
-            </p>
-          </div>
-
-          <div className="rounded-xl bg-white p-4 shadow-sm border border-slate-200">
-            <p className="text-sm text-slate-500">Refunded</p>
-            <p className="text-2xl font-bold text-slate-900">
-              {stats.refundedBookings}
-            </p>
-          </div>
+        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          <StatCard label="Total Bookings" value={stats.totalBookings} />
+          <StatCard label="Confirmed" value={stats.confirmedBookings} />
+          <StatCard label="Cancelled" value={stats.cancelledBookings} />
+          <StatCard label="Refunded" value={stats.refundedBookings} />
+          <StatCard
+            label="Confirmed Revenue"
+            value={formatCurrency(stats.confirmedRevenueCents)}
+          />
+          <StatCard
+            label="Refunded Revenue"
+            value={formatCurrency(stats.refundedRevenueCents)}
+          />
         </div>
       )}
     </div>
