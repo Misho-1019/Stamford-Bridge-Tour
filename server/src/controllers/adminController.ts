@@ -390,11 +390,100 @@ adminController.get('/bookings/ticket-type-stats', requireAdmin, async (req, res
             revenueCents: entry.revenueCents
         }))
         .sort((a, b) => b.revenueCents - a.revenueCents);
-        
+
         return res.json({ data })
     } catch (error) {
         console.error('Failed to fetch ticket type stats:', error);
         return res.status(500).json({ error: 'Failed to fetch ticket type stats' });
+    }
+})
+
+adminController.get('/bookings/slot-stats', requireAdmin, async (req, res) => {
+    try {
+        const fromDate =
+          typeof req.query.fromDate === 'string'
+            ? new Date(req.query.fromDate)
+            : undefined;
+    
+        const toDate =
+          typeof req.query.toDate === 'string'
+            ? new Date(req.query.toDate)
+            : undefined;
+    
+        const where: Prisma.BookingWhereInput = {
+          status: BookingStatus.CONFIRMED
+        };
+    
+        if (fromDate || toDate) {
+          where.createdAt = {};
+    
+          if (fromDate) {
+            where.createdAt.gte = fromDate;
+          }
+    
+          if (toDate) {
+            where.createdAt.lte = toDate;
+          }
+        }
+    
+        const bookings = await prisma.booking.findMany({
+          where,
+          include: {
+            slot: true
+          }
+        });
+
+        const statsMap = new Map<
+            string,
+            {
+                slotId: string;
+                startAt: Date;
+                endAt: Date;
+                capacityTotal: number;
+                bookingsCount: number;
+                ticketsSold: number;
+                revenueCents: number;
+            }
+        >();
+
+        for (const booking of bookings) {
+            const existing = statsMap.get(booking.slotId)
+
+            if (existing) {
+                existing.bookingsCount += 1;
+                existing.ticketsSold += booking.qtyTotal;
+                existing.revenueCents += booking.amountTotalCents;
+            } else {
+                statsMap.set(booking.slotId, {
+                    slotId: booking.slot.id,
+                    startAt: booking.slot.startAt,
+                    endAt: booking.slot.endAt,
+                    capacityTotal: booking.slot.capacityTotal,
+                    bookingsCount: 1,
+                    ticketsSold: booking.qtyTotal,
+                    revenueCents: booking.amountTotalCents
+                })
+            }
+        }
+
+        const data = Array.from(statsMap.values()).map((entry) => ({
+            slotId: entry.slotId,
+            startAt: entry.startAt,
+            endAt: entry.endAt,
+            capacityTotal: entry.capacityTotal,
+            bookingsCount: entry.bookingsCount,
+            ticketSold: entry.ticketsSold,
+            revenueCents: entry.revenueCents,
+            usagePercent: entry.capacityTotal > 0
+                ? Math.round((entry.ticketsSold / entry.capacityTotal) * 100)
+                : 0
+        }))
+        .sort((a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime());
+
+        return res.json({ data })
+    } catch (error) {
+        console.error('Failed to fetch slot stats:', error);
+        return res.status(500).json({ error: 'Failed to fetch slot stats' });
     }
 })
 
