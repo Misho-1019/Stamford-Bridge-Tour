@@ -410,36 +410,35 @@ adminController.get('/bookings/slot-stats', requireAdmin, async (req, res) => {
             ? new Date(req.query.toDate)
             : undefined;
     
-        const where: Prisma.BookingWhereInput = {
+        const bookingWhere: Prisma.BookingWhereInput = {
           status: BookingStatus.CONFIRMED
         };
     
         if (fromDate || toDate) {
-          where.createdAt = {};
+          bookingWhere.createdAt = {};
     
           if (fromDate) {
-            where.createdAt.gte = fromDate;
+            bookingWhere.createdAt.gte = fromDate;
           }
     
           if (toDate) {
-            where.createdAt.lte = toDate;
+            bookingWhere.createdAt.lte = toDate;
           }
         }
+
+        const slots = await prisma.tourSlot.findMany({
+            orderBy: {
+                startAt: 'asc'
+            }
+        })
     
         const bookings = await prisma.booking.findMany({
-          where,
-          include: {
-            slot: true
-          }
+          where: bookingWhere,
         });
 
         const statsMap = new Map<
             string,
             {
-                slotId: string;
-                startAt: Date;
-                endAt: Date;
-                capacityTotal: number;
                 bookingsCount: number;
                 ticketsSold: number;
                 revenueCents: number;
@@ -455,30 +454,33 @@ adminController.get('/bookings/slot-stats', requireAdmin, async (req, res) => {
                 existing.revenueCents += booking.amountTotalCents;
             } else {
                 statsMap.set(booking.slotId, {
-                    slotId: booking.slot.id,
-                    startAt: booking.slot.startAt,
-                    endAt: booking.slot.endAt,
-                    capacityTotal: booking.slot.capacityTotal,
                     bookingsCount: 1,
                     ticketsSold: booking.qtyTotal,
-                    revenueCents: booking.amountTotalCents
+                    revenueCents: booking.amountTotalCents,
                 })
             }
         }
 
-        const data = Array.from(statsMap.values()).map((entry) => ({
-            slotId: entry.slotId,
-            startAt: entry.startAt,
-            endAt: entry.endAt,
-            capacityTotal: entry.capacityTotal,
-            bookingsCount: entry.bookingsCount,
-            ticketSold: entry.ticketsSold,
-            revenueCents: entry.revenueCents,
-            usagePercent: entry.capacityTotal > 0
-                ? Math.round((entry.ticketsSold / entry.capacityTotal) * 100)
-                : 0
-        }))
-        .sort((a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime());
+        const data = slots.map((slot) => {
+            const stats = statsMap.get(slot.id);
+
+            const bookingsCount = stats?.bookingsCount ?? 0;
+            const ticketSold = stats?.ticketsSold ?? 0
+            const revenueCents = stats?.revenueCents ?? 0;
+
+            return {
+                slotId: slot.id,
+                startAt: slot.startAt,
+                endAt: slot.endAt,
+                capacityTotal: slot.capacityTotal,
+                bookingsCount,
+                ticketSold,
+                revenueCents,
+                usagePercent: slot.capacityTotal > 0
+                    ? Math.round((ticketSold / slot.capacityTotal) * 100)
+                    : 0
+            }
+        })
 
         return res.json({ data })
     } catch (error) {
