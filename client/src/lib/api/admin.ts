@@ -11,8 +11,10 @@ export type AdminBookingStats = {
     refundedRevenueCents: number;
 }
 
-export async function getAdminBookingStats(): Promise<AdminBookingStats> {
-    const response = await fetch(`${API_BASE_URL}/admin/bookings/stats`, {
+export async function getAdminBookingStats(params?: DateRangeParams): Promise<AdminBookingStats> {
+    const queryString = buildQueryString(params);
+
+    const response = await fetch(`${API_BASE_URL}/admin/bookings/stats${queryString}`, {
         headers: {
             'x-admin-secret': ADMIN_SECRET,
         },
@@ -32,10 +34,12 @@ export type AdminRevenueSeriesItem = {
     bookings: number;
 };
 
-export async function getAdminRevenueSeries(): Promise<{
+export async function getAdminRevenueSeries(params?: DateRangeParams): Promise<{
     data: AdminRevenueSeriesItem[];
 }> {
-    const response = await fetch(`${API_BASE_URL}/admin/bookings/revenue-series`, {
+    const queryString = buildQueryString(params)
+
+    const response = await fetch(`${API_BASE_URL}/admin/bookings/revenue-series${queryString}`, {
         headers: {
             'x-admin-secret': ADMIN_SECRET,
         },
@@ -55,10 +59,11 @@ export type AdminTicketTypeStat = {
     revenueCents: number;
 }
 
-export async function getAdminTicketTypeStats(): Promise<{
+export async function getAdminTicketTypeStats(params?: DateRangeParams): Promise<{
     data: AdminTicketTypeStat[];
 }> {
-    const response = await fetch(`${API_BASE_URL}/admin/bookings/ticket-type-stats`, {
+    const queryString = buildQueryString(params)
+    const response = await fetch(`${API_BASE_URL}/admin/bookings/ticket-type-stats${queryString}`, {
         headers: {
             'x-admin-secret': ADMIN_SECRET,
         }
@@ -82,10 +87,12 @@ export type AdminSlotStat = {
     usagePercent: number;
 };
 
-export async function getAdminSlotStat(): Promise<{
+export async function getAdminSlotStat(params?: DateRangeParams): Promise<{
     data: AdminSlotStat[];
 }> {
-    const response = await fetch(`${API_BASE_URL}/admin/bookings/slot-stats`, {
+    const queryString = buildQueryString(params)
+
+    const response = await fetch(`${API_BASE_URL}/admin/bookings/slot-stats${queryString}`, {
         headers: {
             'x-admin-secret': ADMIN_SECRET,
         }
@@ -96,4 +103,25 @@ export async function getAdminSlotStat(): Promise<{
     }
 
     return response.json()
+}
+
+type DateRangeParams = {
+    fromDate?: string;
+    toDate?: string;
+}
+
+function buildQueryString(params?: DateRangeParams) {
+    const searchParams = new URLSearchParams();
+
+    if (params?.fromDate) {
+        searchParams.set('fromDate', params.fromDate)
+    }
+
+    if (params?.toDate) {
+        searchParams.set('toDate', params.toDate)
+    }
+
+    const queryString = searchParams.toString();
+
+    return queryString ? `?${queryString}` : '';
 }

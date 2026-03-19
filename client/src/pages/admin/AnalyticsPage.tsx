@@ -29,33 +29,39 @@ export default function AnalyticsPage() {
     usagePercent: number;
   }[]>([])
 
-  useEffect(() => {
-    async function loadStats() {
-      try {
-        const [statsData, revenueSeriesData, ticketTypeData, slotStatsData] = await Promise.all([
-          getAdminBookingStats(),
-          getAdminRevenueSeries(),
-          getAdminTicketTypeStats(),
-          getAdminSlotStat(),
-        ]);
-        
-        setStats(statsData)
-        setRevenueSeries(revenueSeriesData.data)
-        setTicketStats(ticketTypeData.data);
-        setSlotStats(slotStatsData.data)
-      } catch (err) {
-        setError('Failed to load admin stats')
-      } finally {
-        setLoading(false)
-      }
-    }
+  const [fromDate, setFromDate] = useState('');
+  const [toDate, setToDate] = useState('');
 
-    loadStats();
+  async function loadDashboardData(params?: { fromDate?: string; toDate?: string }) {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const [statsData, revenueSeriesData, ticketTypeData, slotStatsData] = await Promise.all([
+        getAdminBookingStats(params),
+        getAdminRevenueSeries(params),
+        getAdminTicketTypeStats(params),
+        getAdminSlotStat(params),
+      ])
+
+      setStats(statsData)
+      setRevenueSeries(revenueSeriesData.data)
+      setTicketStats(ticketTypeData.data)
+      setSlotStats(slotStatsData.data)
+    } catch (err) {
+      setError('Failed to load stats')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    loadDashboardData();
   }, [])
 
   return (
-    <div className="rounded-2xl bg-white p-6 shadow-sm border border-slate-200">
-      <h2 className="text-xl font-semibold text-slate-900">
+    <div>
+      <h2 className="text-xl font-semibold text-[#003399]">
         Analytics Dashboard
       </h2>
 
@@ -67,36 +73,86 @@ export default function AnalyticsPage() {
         <p className="mt-4 text-sm text-red-600">{error}</p>
       )}
 
+      <div className="mt-6 rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm backdrop-blur-sm">
+        <div className="flex flex-col gap-4 md:flex-row md:items-end">
+          <div className="flex flex-col">
+            <label
+              htmlFor="fromDate"
+              className="mb-1 text-sm font-medium text-slate-700"
+            >
+              From
+            </label>
+            <input
+              id="fromDate"
+              type="date"
+              value={fromDate}
+              onChange={(e) => setFromDate(e.target.value)}
+              className="rounded-lg border border-slate-300 px-3 py-2 text-slate-900 outline-none focus:border-[#003399]"
+            />
+          </div>
+      
+          <div className="flex flex-col">
+            <label
+              htmlFor="toDate"
+              className="mb-1 text-sm font-medium text-slate-700"
+            >
+              To
+            </label>
+            <input
+              id="toDate"
+              type="date"
+              value={toDate}
+              onChange={(e) => setToDate(e.target.value)}
+              className="rounded-lg border border-slate-300 px-3 py-2 text-slate-900 outline-none focus:border-[#003399]"
+            />
+          </div>
+      
+          <button
+            type="button"
+            onClick={() => loadDashboardData({ fromDate, toDate })}
+            className="rounded-lg bg-[#003399] px-4 py-2 font-medium text-white hover:opacity-90"
+          >
+            Apply
+          </button>
+        </div>
+      </div>
+
       {stats && (
-        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          <StatCard label="Total Bookings" value={stats.totalBookings} />
-          <StatCard label="Confirmed" value={stats.confirmedBookings} />
-          <StatCard label="Cancelled" value={stats.cancelledBookings} />
-          <StatCard label="Refunded" value={stats.refundedBookings} />
-          <StatCard
-            label="Confirmed Revenue"
-            value={formatCurrency(stats.confirmedRevenueCents)}
-          />
-          <StatCard
-            label="Refunded Revenue"
-            value={formatCurrency(stats.refundedRevenueCents)}
-          />
-        </div>
-      )}
-      {revenueSeries.length > 0 && (
-        <div className="mt-8">
-          <RevenueChart data={revenueSeries} />
-        </div>
-      )}
-      {ticketStats.length > 0 && (
-        <div className="mt-8">
-          <TicketTypeChart data={ticketStats} />
-        </div>
-      )}
-      {slotStats.length > 0 && (
-        <div className="mt-8">
-          <SlotStatsTable data={slotStats} />
-        </div>
+        <>
+          {/* Stats */}
+          <div className="mt-6 space-y-8">
+            <StatCard label="Total Bookings" value={stats.totalBookings} />
+            <StatCard label="Confirmed" value={stats.confirmedBookings} />
+            <StatCard label="Cancelled" value={stats.cancelledBookings} />
+            <StatCard label="Refunded" value={stats.refundedBookings} />
+            <StatCard
+              label="Confirmed Revenue"
+              value={formatCurrency(stats.confirmedRevenueCents)}
+            />
+            <StatCard
+              label="Refunded Revenue"
+              value={formatCurrency(stats.refundedRevenueCents)}
+            />
+          </div>
+      
+          {/* Charts */}
+          <div className="mt-8 grid grid-cols-1 gap-6 xl:grid-cols-2">
+            {revenueSeries.length > 0 && (
+              <RevenueChart data={revenueSeries} />
+            )}
+      
+            {ticketStats.length > 0 && (
+              <TicketTypeChart data={ticketStats} />
+            )}
+          </div>
+      
+          {/* Table */}
+          {slotStats.length > 0 && (
+            <div className="mt-8">
+              <SlotStatsTable data={slotStats} />
+            </div>
+          )}
+        </>
       )}
     </div>
   );
