@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { getAdminBookingStats, type AdminBookingStats } from "../../lib/api/admin";
+import { getAdminBookingStats, getAdminRevenueSeries, type AdminBookingStats } from "../../lib/api/admin";
 import StatCard from "../../components/admin/StatCard";
+import RevenueChart from "../../components/admin/RevenueChart";
 
 function formatCurrency(cents: number) {
   return new Intl.NumberFormat('en-GB', {
@@ -13,13 +14,18 @@ export default function AnalyticsPage() {
   const [stats, setStats] = useState<AdminBookingStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [revenueSeries, setRevenueSeries] = useState<{ date: string; revenueCents: number; bookings: number }[]>([])
 
   useEffect(() => {
     async function loadStats() {
       try {
-        const data = await getAdminBookingStats();
+        const [statsData, revenueSeriesData] = await Promise.all([
+          getAdminBookingStats(),
+          getAdminRevenueSeries(),
+        ]);
         
-        setStats(data)
+        setStats(statsData)
+        setRevenueSeries(revenueSeriesData.data)
       } catch (err) {
         setError('Failed to load admin stats')
       } finally {
@@ -58,6 +64,11 @@ export default function AnalyticsPage() {
             label="Refunded Revenue"
             value={formatCurrency(stats.refundedRevenueCents)}
           />
+        </div>
+      )}
+      {revenueSeries.length > 0 && (
+        <div className="mt-8">
+          <RevenueChart data={revenueSeries} />
         </div>
       )}
     </div>

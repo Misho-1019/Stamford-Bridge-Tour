@@ -25,3 +25,25 @@ export async function getAdminBookingStats(): Promise<AdminBookingStats> {
 
     return response.json();
 }
+
+export type AdminRevenueSeriesItem = {
+    date: string;
+    revenueCents: number;
+    bookings: number;
+};
+
+export async function getAdminRevenueSeries(): Promise<{
+    data: AdminRevenueSeriesItem[];
+}> {
+    const response = await fetch(`${API_BASE_URL}/admin/bookings/revenue-series`, {
+        headers: {
+            'x-admin-secret': ADMIN_SECRET,
+        },
+    })
+
+    if (!response.ok) {
+        throw new Error('Failed to fetch admin revenue series')
+    }
+
+    return response.json();
+}
