@@ -71,3 +71,29 @@ export async function getAdminTicketTypeStats(): Promise<{
     return response.json();
 }
 
+export type AdminSlotStat = {
+    slotId: string;
+    startAt: string;
+    endAt: string;
+    capacityTotal: number;
+    bookingsCount: number;
+    ticketsSold: number;
+    revenueCents: number;
+    usagePercent: number;
+};
+
+export async function getAdminSlotStat(): Promise<{
+    data: AdminSlotStat[];
+}> {
+    const response = await fetch(`${API_BASE_URL}/admin/bookings/slot-stats`, {
+        headers: {
+            'x-admin-secret': ADMIN_SECRET,
+        }
+    })
+
+    if (!response.ok) {
+        throw new Error('Failed to fetch slot stats')
+    }
+
+    return response.json()
+}

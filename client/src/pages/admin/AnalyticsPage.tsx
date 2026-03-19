@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import { getAdminBookingStats, getAdminRevenueSeries, getAdminTicketTypeStats, type AdminBookingStats } from "../../lib/api/admin";
+import { getAdminBookingStats, getAdminRevenueSeries, getAdminSlotStat, getAdminTicketTypeStats, type AdminBookingStats } from "../../lib/api/admin";
 import StatCard from "../../components/admin/StatCard";
 import RevenueChart from "../../components/admin/RevenueChart";
 import TicketTypeChart from "../../components/admin/TicketTypeChart";
+import SlotStatsTable from "../../components/admin/SlotStatsTable";
 
 function formatCurrency(cents: number) {
   return new Intl.NumberFormat('en-GB', {
@@ -17,19 +18,31 @@ export default function AnalyticsPage() {
   const [error, setError] = useState<string | null>(null);
   const [revenueSeries, setRevenueSeries] = useState<{ date: string; revenueCents: number; bookings: number }[]>([])
   const [ticketStats, setTicketStats] = useState<{ ticketTypeName: string; revenueCents: number }[]>([])
+  const [slotStats, setSlotStats] = useState<{
+    slotId: string;
+    startAt: string;
+    endAt: string;
+    capacityTotal: number;
+    bookingsCount: number;
+    ticketsSold: number;
+    revenueCents: number;
+    usagePercent: number;
+  }[]>([])
 
   useEffect(() => {
     async function loadStats() {
       try {
-        const [statsData, revenueSeriesData, ticketTypeData] = await Promise.all([
+        const [statsData, revenueSeriesData, ticketTypeData, slotStatsData] = await Promise.all([
           getAdminBookingStats(),
           getAdminRevenueSeries(),
           getAdminTicketTypeStats(),
+          getAdminSlotStat(),
         ]);
         
         setStats(statsData)
         setRevenueSeries(revenueSeriesData.data)
         setTicketStats(ticketTypeData.data);
+        setSlotStats(slotStatsData.data)
       } catch (err) {
         setError('Failed to load admin stats')
       } finally {
@@ -78,6 +91,11 @@ export default function AnalyticsPage() {
       {ticketStats.length > 0 && (
         <div className="mt-8">
           <TicketTypeChart data={ticketStats} />
+        </div>
+      )}
+      {slotStats.length > 0 && (
+        <div className="mt-8">
+          <SlotStatsTable data={slotStats} />
         </div>
       )}
     </div>
