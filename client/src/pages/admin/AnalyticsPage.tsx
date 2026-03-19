@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { getAdminBookingStats, getAdminRevenueSeries, type AdminBookingStats } from "../../lib/api/admin";
+import { getAdminBookingStats, getAdminRevenueSeries, getAdminTicketTypeStats, type AdminBookingStats } from "../../lib/api/admin";
 import StatCard from "../../components/admin/StatCard";
 import RevenueChart from "../../components/admin/RevenueChart";
+import TicketTypeChart from "../../components/admin/TicketTypeChart";
 
 function formatCurrency(cents: number) {
   return new Intl.NumberFormat('en-GB', {
@@ -15,17 +16,20 @@ export default function AnalyticsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [revenueSeries, setRevenueSeries] = useState<{ date: string; revenueCents: number; bookings: number }[]>([])
+  const [ticketStats, setTicketStats] = useState<{ ticketTypeName: string; revenueCents: number }[]>([])
 
   useEffect(() => {
     async function loadStats() {
       try {
-        const [statsData, revenueSeriesData] = await Promise.all([
+        const [statsData, revenueSeriesData, ticketTypeData] = await Promise.all([
           getAdminBookingStats(),
           getAdminRevenueSeries(),
+          getAdminTicketTypeStats(),
         ]);
         
         setStats(statsData)
         setRevenueSeries(revenueSeriesData.data)
+        setTicketStats(ticketTypeData.data);
       } catch (err) {
         setError('Failed to load admin stats')
       } finally {
@@ -69,6 +73,11 @@ export default function AnalyticsPage() {
       {revenueSeries.length > 0 && (
         <div className="mt-8">
           <RevenueChart data={revenueSeries} />
+        </div>
+      )}
+      {ticketStats.length > 0 && (
+        <div className="mt-8">
+          <TicketTypeChart data={ticketStats} />
         </div>
       )}
     </div>

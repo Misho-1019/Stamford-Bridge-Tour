@@ -47,3 +47,27 @@ export async function getAdminRevenueSeries(): Promise<{
 
     return response.json();
 }
+
+export type AdminTicketTypeStat = {
+    ticketTypeId: string;
+    ticketTypeName: string;
+    qty: number;
+    revenueCents: number;
+}
+
+export async function getAdminTicketTypeStats(): Promise<{
+    data: AdminTicketTypeStat[];
+}> {
+    const response = await fetch(`${API_BASE_URL}/admin/bookings/ticket-type-stats`, {
+        headers: {
+            'x-admin-secret': ADMIN_SECRET,
+        }
+    })
+
+    if (!response.ok) {
+        throw new Error('Failed to fetch ticket type stats')
+    }
+
+    return response.json();
+}
+

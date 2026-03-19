@@ -26,7 +26,9 @@ export default function RevenueChart({ data }: { data: RevenueItem[] }) {
             <XAxis dataKey="date" />
             <YAxis tickFormatter={(value) => `£${value / 100}`} />
             <Tooltip
-              formatter={(value: number) => formatCurrency(value)}
+              formatter={(value) =>
+                typeof value === 'number' ? formatCurrency(value) : value
+              }
             />
             <Line
               type="monotone"
