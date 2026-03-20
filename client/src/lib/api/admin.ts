@@ -135,10 +135,27 @@ export type AdminBooking = {
     createdAt: string;
 }
 
-export async function getAdminBooking(): Promise<{
+export async function getAdminBooking(params?: {
+    page?: number;
+    limit?: number;
+}): Promise<{
     bookings: AdminBooking[];
+    page: number;
+    totalPages: number;
 }> {
-    const response = await fetch(`${API_BASE_URL}/admin/bookings`, {
+    const searchParams = new URLSearchParams();
+
+    if (params?.page) {
+        searchParams.set('page', String(params.page))
+    }
+
+    if (params?.limit) {
+        searchParams.set('limit', String(params.limit))
+    }
+
+    const query = searchParams.toString();
+
+    const response = await fetch(`${API_BASE_URL}/admin/bookings${query ? `?${query}` : ''}`, {
         headers: {
             'x-admin-secret': ADMIN_SECRET,
         }

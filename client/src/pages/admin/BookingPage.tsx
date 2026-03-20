@@ -20,6 +20,30 @@ function BookingsPage() {
 
   const [statusUpdating, setStatusUpdating] = useState(false);
 
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1);
+
+  async function loadBookings(currentPage: number) {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const data = await getAdminBooking({ page: currentPage, limit: 10 });
+
+        setBookings(data.bookings);        
+        setPage(data.page);
+        setTotalPages(data.totalPages)
+      } catch (err) {
+        setError("Failed to load bookings");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+  useEffect(() => {
+    loadBookings(1);
+  }, []);
+
   async function handleSelectBooking(id: string) {
     try {
         setSelectedBookingId(id)
@@ -46,29 +70,13 @@ function BookingsPage() {
       const data = await updateAdminBookingStatus(selectedBooking.id, nextStatus);
       setSelectedBooking(data.booking)
 
-      const bookingsData = await getAdminBooking();
-      setBookings(bookingsData.bookings)
+      await loadBookings(page)
     } catch (err) {
       setDetailsError('Failed to update booking status')
     } finally {
       setStatusUpdating(false)
     }
   }
-
-  useEffect(() => {
-    async function loadBookings() {
-      try {
-        const data = await getAdminBooking();
-        setBookings(data.bookings);
-      } catch (err) {
-        setError("Failed to load bookings");
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    loadBookings();
-  }, []);
 
   return (
     <div className="space-y-6">
@@ -272,6 +280,28 @@ function BookingsPage() {
             </div>
           )}
         </div>
+      </div>
+
+      <div className="mt-6 flex items-center justify-between">
+        <button
+          disabled={page === 1}
+          onClick={() => loadBookings(page - 1)}
+          className="rounded-lg border border-slate-300 px-4 py-2 text-sm disabled:opacity-50"
+        >
+          Previous
+        </button>
+      
+        <p className="text-sm text-slate-600">
+          Page {page} of {totalPages}
+        </p>
+      
+        <button
+          disabled={page === totalPages}
+          onClick={() => loadBookings(page + 1)}
+          className="rounded-lg border border-slate-300 px-4 py-2 text-sm disabled:opacity-50"
+        >
+          Next
+        </button>
       </div>
     </div>
   );
