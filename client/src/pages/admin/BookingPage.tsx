@@ -47,35 +47,45 @@ function BookingsPage() {
         )}
 
         {!loading && !error && bookings.length > 0 && (
-          <div className="space-y-3">
-            {bookings.map((b) => (
-              <div
-                key={b.id}
-                className="rounded-lg border border-slate-200 p-4"
-              >
-                <div className="flex justify-between">
-                  <div>
-                    <p className="font-medium text-slate-900">{b.email}</p>
-                    <p className="text-sm text-slate-500">
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead>
+                <tr className="border-b border-slate-200 text-left">
+                  <th className="pb-3 pr-4 text-slate-600">Email</th>
+                  <th className="pb-3 pr-4 text-slate-600">Date</th>
+                  <th className="pb-3 pr-4 text-slate-600">Tickets</th>
+                  <th className="pb-3 pr-4 text-slate-600">Amount</th>
+                  <th className="pb-3 pr-4 text-slate-600">Status</th>
+                </tr>
+              </thead>
+        
+              <tbody>
+                {bookings.map((b) => (
+                  <tr
+                    key={b.id}
+                    className="border-b border-slate-100 hover:bg-slate-50"
+                  >
+                    <td className="py-3 pr-4 text-slate-900">{b.email}</td>
+        
+                    <td className="py-3 pr-4 text-slate-600">
                       {new Date(b.createdAt).toLocaleString()}
-                    </p>
-                  </div>
-
-                  <div className="text-right">
-                    <p className="font-semibold text-slate-900">
+                    </td>
+        
+                    <td className="py-3 pr-4 text-slate-600">
+                      {b.qtyTotal}
+                    </td>
+        
+                    <td className="py-3 pr-4 text-slate-900 font-medium">
                       {formatCurrency(b.amountTotalCents)}
-                    </p>
-                    <p className="text-sm text-slate-500">
-                      {b.qtyTotal} tickets
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mt-2 text-sm text-slate-600">
-                  Status: <span className="font-medium">{b.status}</span>
-                </div>
-              </div>
-            ))}
+                    </td>
+        
+                    <td className="py-3 pr-4">
+                      <StatusBadge status={b.status} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </div>
@@ -84,3 +94,38 @@ function BookingsPage() {
 }
 
 export default BookingsPage;
+
+function StatusBadge({ status }: { status: string }) {
+  const base =
+    'inline-flex rounded-full px-2 py-1 text-xs font-medium';
+
+  if (status === 'CONFIRMED') {
+    return (
+      <span className={`${base} bg-green-100 text-green-700`}>
+        Confirmed
+      </span>
+    );
+  }
+
+  if (status === 'CANCELLED') {
+    return (
+      <span className={`${base} bg-red-100 text-red-700`}>
+        Cancelled
+      </span>
+    );
+  }
+
+  if (status === 'REFUNDED') {
+    return (
+      <span className={`${base} bg-yellow-100 text-yellow-700`}>
+        Refunded
+      </span>
+    );
+  }
+
+  return (
+    <span className={`${base} bg-slate-100 text-slate-600`}>
+      {status}
+    </span>
+  );
+}
