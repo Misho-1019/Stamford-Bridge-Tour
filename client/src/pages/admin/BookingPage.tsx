@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getAdminBooking, getAdminBookingById, type AdminBooking, type AdminBookingDetails } from "../../lib/api/admin";
+import { getAdminBooking, getAdminBookingById, updateAdminBookingStatus, type AdminBooking, type AdminBookingDetails } from "../../lib/api/admin";
 
 function formatCurrency(cents: number) {
   return new Intl.NumberFormat("en-GB", {
@@ -18,6 +18,8 @@ function BookingsPage() {
   const [detailsLoading, setDetailsLoading] = useState(false);
   const [detailsError, setDetailsError] = useState<string | null>(null);
 
+  const [statusUpdating, setStatusUpdating] = useState(false);
+
   async function handleSelectBooking(id: string) {
     try {
         setSelectedBookingId(id)
@@ -31,6 +33,25 @@ function BookingsPage() {
         setSelectedBooking(null)
     } finally {
         setDetailsLoading(false)
+    }
+  }
+
+  async function handleUpdateStatus(nextStatus: 'CONFIRMED' | 'CANCELLED' | 'REFUNDED') {
+    if (!selectedBooking) return;
+
+    try {
+      setStatusUpdating(true)
+      setDetailsError(null);
+
+      const data = await updateAdminBookingStatus(selectedBooking.id, nextStatus);
+      setSelectedBooking(data.booking)
+
+      const bookingsData = await getAdminBooking();
+      setBookings(bookingsData.bookings)
+    } catch (err) {
+      setDetailsError('Failed to update booking status')
+    } finally {
+      setStatusUpdating(false)
     }
   }
 
@@ -144,6 +165,29 @@ function BookingsPage() {
                   <p className="text-slate-500">Status</p>
                   <div className="mt-1">
                     <StatusBadge status={selectedBooking.status} />
+                  </div>
+
+                  <div>
+                    <p className="text-slate-500">Actions</p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        disabled={statusUpdating}
+                        onClick={() => handleUpdateStatus('CANCELLED')}
+                        className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        Cancel Booking
+                      </button>
+                  
+                      <button
+                        type="button"
+                        disabled={statusUpdating}
+                        onClick={() => handleUpdateStatus('REFUNDED')}
+                        className="rounded-lg bg-yellow-500 px-4 py-2 text-sm font-medium text-white hover:bg-yellow-600 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        Mark Refunded
+                      </button>
+                    </div>
                   </div>
                 </div>
         

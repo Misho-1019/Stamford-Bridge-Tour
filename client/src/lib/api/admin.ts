@@ -191,3 +191,23 @@ export async function getAdminBookingById(id: string): Promise<{ booking: AdminB
 
     return response.json();
 }
+
+export async function updateAdminBookingStatus(
+    id: string,
+    status: 'CONFIRMED' | 'CANCELLED' | 'REFUNDED'
+): Promise<{ booking: AdminBookingDetails }> {
+    const response = await fetch(`${API_BASE_URL}/admin/bookings/${id}/status`, {
+        method: 'PATCH',
+        headers: {
+            'Content-Type': 'application/json',
+            'x-admin-secret': ADMIN_SECRET,
+        },
+        body: JSON.stringify({ status })
+    })
+
+    if (!response.ok) {
+        throw new Error('Failed to update booking status');
+    }
+
+    return response.json();
+}
