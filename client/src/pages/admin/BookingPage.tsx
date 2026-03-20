@@ -169,24 +169,46 @@ function BookingsPage() {
 
                   <div>
                     <p className="text-slate-500">Actions</p>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      <button
-                        type="button"
-                        disabled={statusUpdating}
-                        onClick={() => handleUpdateStatus('CANCELLED')}
-                        className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        Cancel Booking
-                      </button>
                   
-                      <button
-                        type="button"
-                        disabled={statusUpdating}
-                        onClick={() => handleUpdateStatus('REFUNDED')}
-                        className="rounded-lg bg-yellow-500 px-4 py-2 text-sm font-medium text-white hover:bg-yellow-600 disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        Mark Refunded
-                      </button>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {selectedBooking.status === 'CONFIRMED' && (
+                        <>
+                          <button
+                            type="button"
+                            disabled={statusUpdating}
+                            onClick={() => handleUpdateStatus('CANCELLED')}
+                            className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            {statusUpdating ? 'Updating...' : 'Cancel Booking'}
+                          </button>
+                  
+                          <button
+                            type="button"
+                            disabled={statusUpdating}
+                            onClick={() => handleUpdateStatus('REFUNDED')}
+                            className="rounded-lg bg-yellow-500 px-4 py-2 text-sm font-medium text-white hover:bg-yellow-600 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            {statusUpdating ? 'Updating...' : 'Mark Refunded'}
+                          </button>
+                        </>
+                      )}
+                  
+                      {selectedBooking.status === 'CANCELLED' && (
+                        <button
+                          type="button"
+                          disabled={statusUpdating}
+                          onClick={() => handleUpdateStatus('REFUNDED')}
+                          className="rounded-lg bg-yellow-500 px-4 py-2 text-sm font-medium text-white hover:bg-yellow-600 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          {statusUpdating ? 'Updating...' : 'Mark Refunded'}
+                        </button>
+                      )}
+                  
+                      {selectedBooking.status === 'REFUNDED' && (
+                        <p className="text-sm text-slate-500">
+                          No actions available for refunded bookings.
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
