@@ -125,3 +125,28 @@ function buildQueryString(params?: DateRangeParams) {
 
     return queryString ? `?${queryString}` : '';
 }
+
+export type AdminBooking = {
+    id: string;
+    email: string;
+    status: string;
+    qtyTotal: number;
+    amountTotalCents: number;
+    createdAt: string;
+}
+
+export async function getAdminBooking(): Promise<{
+    bookings: AdminBooking[];
+}> {
+    const response = await fetch(`${API_BASE_URL}/admin/bookings`, {
+        headers: {
+            'x-admin-secret': ADMIN_SECRET,
+        }
+    })
+
+    if (!response.ok) {
+        throw new Error('Failed to fetch bookings');
+    }
+
+    return response.json();
+}

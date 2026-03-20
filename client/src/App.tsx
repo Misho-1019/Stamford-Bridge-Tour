@@ -1,5 +1,6 @@
 import AnalyticsPage from './pages/admin/AnalyticsPage';
 import bg from "./assets/609888-stamford-bridge-wallpaper.jpg";
+import BookingsPage from './pages/admin/BookingPage';
 
 function App() {
   return (
@@ -16,11 +17,11 @@ function App() {
       {/* Content */}
       <div className="relative z-10 px-6 py-10">
         <h1 className="text-3xl font-bold text-[#003399]">
-          BridgeTour Admin
+          Bridge Tour Admin
         </h1>
 
         <div className="mt-8">
-          <AnalyticsPage />
+          <BookingsPage />
         </div>
       </div>
     </div>
