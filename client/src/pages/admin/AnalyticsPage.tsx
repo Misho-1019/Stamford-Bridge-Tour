@@ -109,10 +109,32 @@ export default function AnalyticsPage() {
       
           <button
             type="button"
+            disabled={loading}
             onClick={() => loadDashboardData({ fromDate, toDate })}
-            className="rounded-lg bg-[#003399] px-4 py-2 font-medium text-white hover:opacity-90"
+            className={`rounded-lg px-4 py-2 font-medium text-white ${
+              loading
+                ? 'bg-slate-400 cursor-not-allowed'
+                : 'bg-[#003399] hover:opacity-90'
+            }`}
           >
-            Apply
+            {loading ? 'Loading...' : 'Apply'}
+          </button>
+
+          <button
+            type="button"
+            disabled={loading}
+            onClick={() => {
+              setFromDate('');
+              setToDate('');
+              loadDashboardData();
+            }}
+            className={`rounded-lg border px-4 py-2 font-medium ${
+              loading
+                ? 'border-slate-200 bg-slate-100 text-slate-400 cursor-not-allowed'
+                : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
+            }`}
+          >
+            Reset
           </button>
         </div>
       </div>
