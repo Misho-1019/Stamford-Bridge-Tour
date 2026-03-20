@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getAdminBooking, type AdminBooking } from "../../lib/api/admin";
+import { getAdminBooking, getAdminBookingById, type AdminBooking, type AdminBookingDetails } from "../../lib/api/admin";
 
 function formatCurrency(cents: number) {
   return new Intl.NumberFormat("en-GB", {
@@ -12,6 +12,27 @@ function BookingsPage() {
   const [bookings, setBookings] = useState<AdminBooking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
+  const [selectedBooking, setSelectedBooking] = useState<AdminBookingDetails | null>(null);
+  const [detailsLoading, setDetailsLoading] = useState(false);
+  const [detailsError, setDetailsError] = useState<string | null>(null);
+
+  async function handleSelectBooking(id: string) {
+    try {
+        setSelectedBookingId(id)
+        setDetailsLoading(true);
+        setDetailsError(null)
+
+        const data = await getAdminBookingById(id)
+        setSelectedBooking(data.booking)
+    } catch (err) {
+        setDetailsError('Failed to load booking details')
+        setSelectedBooking(null)
+    } finally {
+        setDetailsLoading(false)
+    }
+  }
 
   useEffect(() => {
     async function loadBookings() {
@@ -63,7 +84,10 @@ function BookingsPage() {
                 {bookings.map((b) => (
                   <tr
                     key={b.id}
-                    className="border-b border-slate-100 hover:bg-slate-50"
+                    onClick={() => handleSelectBooking(b.id)}
+                    className={`cursor-pointer border-b border-slate-100 hover:bg-slate-50 ${
+                      selectedBookingId === b.id ? 'bg-blue-50' : ''
+                    }`}
                   >
                     <td className="py-3 pr-4 text-slate-900">{b.email}</td>
         
@@ -88,6 +112,100 @@ function BookingsPage() {
             </table>
           </div>
         )}
+
+        <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h3 className="text-lg font-semibold text-slate-900">
+            Booking Details
+          </h3>
+        
+          {!selectedBookingId && (
+            <p className="mt-3 text-sm text-slate-600">
+              Select a booking to view details.
+            </p>
+          )}
+        
+          {detailsLoading && (
+            <p className="mt-3 text-sm text-slate-600">Loading booking details...</p>
+          )}
+        
+          {detailsError && (
+            <p className="mt-3 text-sm text-red-600">{detailsError}</p>
+          )}
+        
+          {selectedBooking && !detailsLoading && (
+            <div className="mt-4 space-y-4 text-sm">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div>
+                  <p className="text-slate-500">Email</p>
+                  <p className="font-medium text-slate-900">{selectedBooking.email}</p>
+                </div>
+        
+                <div>
+                  <p className="text-slate-500">Status</p>
+                  <div className="mt-1">
+                    <StatusBadge status={selectedBooking.status} />
+                  </div>
+                </div>
+        
+                <div>
+                  <p className="text-slate-500">Created At</p>
+                  <p className="font-medium text-slate-900">
+                    {new Date(selectedBooking.createdAt).toLocaleString()}
+                  </p>
+                </div>
+        
+                <div>
+                  <p className="text-slate-500">Amount</p>
+                  <p className="font-medium text-slate-900">
+                    {formatCurrency(selectedBooking.amountTotalCents)}
+                  </p>
+                </div>
+        
+                <div>
+                  <p className="text-slate-500">Stripe Session ID</p>
+                  <p className="break-all font-medium text-slate-900">
+                    {selectedBooking.stripeSessionId ?? '—'}
+                  </p>
+                </div>
+        
+                <div>
+                  <p className="text-slate-500">Payment Intent ID</p>
+                  <p className="break-all font-medium text-slate-900">
+                    {selectedBooking.stripePaymentIntentId ?? '—'}
+                  </p>
+                </div>
+              </div>
+        
+              <div>
+                <p className="text-slate-500">Slot</p>
+                <p className="font-medium text-slate-900">
+                  {new Date(selectedBooking.slot.startAt).toLocaleString()} -{' '}
+                  {new Date(selectedBooking.slot.endAt).toLocaleString()}
+                </p>
+              </div>
+        
+              <div>
+                <p className="text-slate-500">Items</p>
+                <div className="mt-2 space-y-2">
+                  {selectedBooking.items.map((item, index) => (
+                    <div
+                      key={`${item.ticketTypeId}-${index}`}
+                      className="rounded-lg border border-slate-200 p-3"
+                    >
+                      <p className="text-slate-900">
+                        Ticket Type ID: {item.ticketTypeId}
+                      </p>
+                      <p className="text-slate-600">Qty: {item.qty}</p>
+                      <p className="text-slate-600">
+                        Unit Price: {formatCurrency(item.unitPriceCents)}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

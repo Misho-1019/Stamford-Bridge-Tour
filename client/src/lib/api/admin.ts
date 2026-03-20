@@ -150,3 +150,44 @@ export async function getAdminBooking(): Promise<{
 
     return response.json();
 }
+
+export type AdminBookingDetails = {
+    id: string;
+  slotId: string;
+  email: string;
+  items: {
+    ticketTypeId: string;
+    qty: number;
+    unitPriceCents: number;
+  }[];
+  qtyTotal: number;
+  amountTotalCents: number;
+  status: string;
+  stripeSessionId: string | null;
+  stripePaymentIntentId: string | null;
+  createdAt: string;
+  updatedAt: string;
+  slot: {
+    id: string;
+    startAt: string;
+    endAt: string;
+    capacityTotal: number;
+    isActive: boolean;
+    createdAt: string;
+    updatedAt: string;
+  };
+}
+
+export async function getAdminBookingById(id: string): Promise<{ booking: AdminBookingDetails }> {
+    const response = await fetch(`${API_BASE_URL}/admin/bookings/${id}`, {
+      headers: {
+        'x-admin-secret': ADMIN_SECRET,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch booking details');
+    }
+
+    return response.json();
+}
