@@ -23,12 +23,20 @@ function BookingsPage() {
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1);
 
+  const [statusFilter, setStatusFilter] = useState('')
+  const [emailFilter, setEmailFilter] = useState('')
+
   async function loadBookings(currentPage: number) {
       try {
         setLoading(true);
         setError(null);
 
-        const data = await getAdminBooking({ page: currentPage, limit: 10 });
+        const data = await getAdminBooking({ 
+          page: currentPage, 
+          limit: 10,
+          status: statusFilter || undefined,
+          email: emailFilter || undefined,
+        });
 
         setBookings(data.bookings);        
         setPage(data.page);
@@ -88,6 +96,60 @@ function BookingsPage() {
       </div>
 
       <div className="rounded-2xl border border-slate-200 bg-white/95 p-6 shadow-sm backdrop-blur-sm">
+
+        <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-end">
+          {/* Status */}
+          <div className="flex flex-col">
+            <label className="mb-1 text-sm font-medium text-slate-700">
+              Status
+            </label>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="rounded-lg border border-slate-300 px-3 py-2 text-slate-900"
+            >
+              <option value="">All</option>
+              <option value="CONFIRMED">Confirmed</option>
+              <option value="CANCELLED">Cancelled</option>
+              <option value="REFUNDED">Refunded</option>
+            </select>
+          </div>
+        
+          {/* Email */}
+          <div className="flex flex-col">
+            <label className="mb-1 text-sm font-medium text-slate-700">
+              Email
+            </label>
+            <input
+              type="text"
+              value={emailFilter}
+              onChange={(e) => setEmailFilter(e.target.value)}
+              placeholder="Search email..."
+              className="rounded-lg border border-slate-300 px-3 py-2 text-slate-900"
+            />
+          </div>
+        
+          {/* Apply */}
+          <button
+            onClick={() => loadBookings(1)}
+            className="rounded-lg bg-[#003399] px-4 py-2 text-white"
+          >
+            Apply
+          </button>
+        
+          {/* Reset */}
+          <button
+            onClick={() => {
+              setStatusFilter('');
+              setEmailFilter('');
+              loadBookings(1);
+            }}
+            className="rounded-lg border border-slate-300 px-4 py-2"
+          >
+            Reset
+          </button>
+        </div>
+    
         {loading && <p className="text-sm text-slate-600">Loading...</p>}
 
         {error && <p className="text-sm text-red-600">{error}</p>}

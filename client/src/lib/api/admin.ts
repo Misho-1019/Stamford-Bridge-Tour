@@ -138,6 +138,8 @@ export type AdminBooking = {
 export async function getAdminBooking(params?: {
     page?: number;
     limit?: number;
+    status?: string;
+    email?: string;
 }): Promise<{
     bookings: AdminBooking[];
     page: number;
@@ -151,6 +153,14 @@ export async function getAdminBooking(params?: {
 
     if (params?.limit) {
         searchParams.set('limit', String(params.limit))
+    }
+
+    if (params?.status) {
+        searchParams.set('status', String(params.status))
+    }
+
+    if (params?.email) {
+        searchParams.set('email', String(params.email))
     }
 
     const query = searchParams.toString();
