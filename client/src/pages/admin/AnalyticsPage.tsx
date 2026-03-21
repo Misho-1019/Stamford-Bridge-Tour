@@ -4,6 +4,10 @@ import StatCard from "../../components/admin/StatCard";
 import RevenueChart from "../../components/admin/RevenueChart";
 import TicketTypeChart from "../../components/admin/TicketTypeChart";
 import SlotStatsTable from "../../components/admin/SlotStatsTable";
+import Card from "../../components/admin/Card";
+import LoadingSkeleton from "../../components/admin/LoadingSkeleton";
+import EmptyState from "../../components/admin/EmptyState";
+
 
 function formatCurrency(cents: number) {
   return new Intl.NumberFormat('en-GB', {
@@ -60,89 +64,106 @@ export default function AnalyticsPage() {
   }, [])
 
   return (
-    <div>
-      <h2 className="text-xl font-semibold text-[#003399]">
-        Analytics Dashboard
-      </h2>
-
-      {loading && (
-        <p className="mt-4 text-sm text-slate-600">Loading...</p>
-      )}
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-semibold text-[#003399]">
+          Analytics Dashboard
+        </h2>
+        <p className="mt-1 text-sm text-slate-700">
+          Overview of bookings, revenue, and ticket types.
+        </p>
+      </div>
 
       {error && (
-        <p className="mt-4 text-sm text-red-600">{error}</p>
+        <div className="rounded-lg bg-red-50 p-4 text-sm text-red-600">
+          {error}
+        </div>
       )}
 
-      <div className="mt-6 rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm backdrop-blur-sm">
+      <Card className="!bg-white/90 backdrop-blur-sm">
         <div className="flex flex-col gap-4 md:flex-row md:items-end">
-          <div className="flex flex-col">
+          <div className="flex flex-col flex-1 max-w-[200px]">
             <label
               htmlFor="fromDate"
-              className="mb-1 text-sm font-medium text-slate-700"
+              className="mb-1.5 text-sm font-medium text-slate-700"
             >
-              From
+              From Date
             </label>
             <input
               id="fromDate"
               type="date"
               value={fromDate}
               onChange={(e) => setFromDate(e.target.value)}
-              className="rounded-lg border border-slate-300 px-3 py-2 text-slate-900 outline-none focus:border-[#003399]"
+              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none transition-colors focus:border-[#003399] focus:ring-1 focus:ring-[#003399]"
             />
           </div>
       
-          <div className="flex flex-col">
+          <div className="flex flex-col flex-1 max-w-[200px]">
             <label
               htmlFor="toDate"
-              className="mb-1 text-sm font-medium text-slate-700"
+              className="mb-1.5 text-sm font-medium text-slate-700"
             >
-              To
+              To Date
             </label>
             <input
               id="toDate"
               type="date"
               value={toDate}
               onChange={(e) => setToDate(e.target.value)}
-              className="rounded-lg border border-slate-300 px-3 py-2 text-slate-900 outline-none focus:border-[#003399]"
+              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none transition-colors focus:border-[#003399] focus:ring-1 focus:ring-[#003399]"
             />
           </div>
       
-          <button
-            type="button"
-            disabled={loading}
-            onClick={() => loadDashboardData({ fromDate, toDate })}
-            className={`rounded-lg px-4 py-2 font-medium text-white ${
-              loading
-                ? 'bg-slate-400 cursor-not-allowed'
-                : 'bg-[#003399] hover:opacity-90'
-            }`}
-          >
-            {loading ? 'Loading...' : 'Apply'}
-          </button>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              disabled={loading}
+              onClick={() => loadDashboardData({ fromDate, toDate })}
+              className={`rounded-lg px-5 py-2 text-sm font-medium text-white shadow-sm transition-all flex items-center justify-center min-w-[100px] ${
+                loading
+                  ? 'bg-slate-400 cursor-not-allowed opacity-70'
+                  : 'bg-[#003399] hover:bg-[#002266]'
+              }`}
+            >
+              {loading ? 'Applying...' : 'Apply'}
+            </button>
 
-          <button
-            type="button"
-            disabled={loading}
-            onClick={() => {
-              setFromDate('');
-              setToDate('');
-              loadDashboardData();
-            }}
-            className={`rounded-lg border px-4 py-2 font-medium ${
-              loading
-                ? 'border-slate-200 bg-slate-100 text-slate-400 cursor-not-allowed'
-                : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
-            }`}
-          >
-            Reset
-          </button>
+            <button
+              type="button"
+              disabled={loading}
+              onClick={() => {
+                setFromDate('');
+                setToDate('');
+                loadDashboardData();
+              }}
+              className={`rounded-lg border px-5 py-2 text-sm font-medium transition-all ${
+                loading
+                  ? 'border-slate-200 bg-slate-50 text-slate-400 cursor-not-allowed'
+                  : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50 hover:text-slate-900'
+              }`}
+            >
+              Reset
+            </button>
+          </div>
         </div>
-      </div>
+      </Card>
 
-      {stats && (
+      {loading && stats === null ? (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <LoadingSkeleton key={i} className="h-24 w-full" />
+            ))}
+          </div>
+          <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+            <LoadingSkeleton className="h-96 w-full" />
+            <LoadingSkeleton className="h-96 w-full" />
+          </div>
+        </div>
+      ) : stats ? (
         <>
           {/* Stats */}
-          <div className="mt-6 space-y-8">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <StatCard label="Total Bookings" value={stats.totalBookings} />
             <StatCard label="Confirmed" value={stats.confirmedBookings} />
             <StatCard label="Cancelled" value={stats.cancelledBookings} />
@@ -158,24 +179,42 @@ export default function AnalyticsPage() {
           </div>
       
           {/* Charts */}
-          <div className="mt-8 grid grid-cols-1 gap-6 xl:grid-cols-2">
-            {revenueSeries.length > 0 && (
+          <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+            {revenueSeries.length > 0 ? (
               <RevenueChart data={revenueSeries} />
+            ) : (
+              <EmptyState 
+                title="No Revenue Data" 
+                description="There is no revenue data for the selected period." 
+              />
             )}
       
-            {ticketStats.length > 0 && (
+            {ticketStats.length > 0 ? (
               <TicketTypeChart data={ticketStats} />
+            ) : (
+              <EmptyState 
+                title="No Ticket Data" 
+                description="There is no ticket data for the selected period." 
+              />
             )}
           </div>
       
           {/* Table */}
-          {slotStats.length > 0 && (
-            <div className="mt-8">
-              <SlotStatsTable data={slotStats} />
-            </div>
+          {slotStats.length > 0 ? (
+            <SlotStatsTable data={slotStats} />
+          ) : (
+            <EmptyState 
+              title="No Slot Data" 
+              description="There is no slot performance data for the selected period." 
+            />
           )}
         </>
-      )}
+      ) : !loading && !error ? (
+        <EmptyState 
+          title="No Analytics Data" 
+          description="Try adjusting your date filters." 
+        />
+      ) : null}
     </div>
   );
 }

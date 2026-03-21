@@ -1,4 +1,5 @@
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import Card from "./Card";
 
 type Item = {
     ticketTypeName: string;
@@ -14,7 +15,7 @@ function formatCurrency(cents: number) {
 
 export default function TicketTypeChart({ data }: { data: Item[] }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+    <Card>
       <h3 className="text-lg font-semibold text-slate-900">
         Revenue by Ticket Type
       </h3>
@@ -32,6 +33,6 @@ export default function TicketTypeChart({ data }: { data: Item[] }) {
           </BarChart>
         </ResponsiveContainer>
       </div>
-    </div>
+    </Card>
   );
 }

@@ -21,14 +21,14 @@ export default function App() {
           BridgeTour Admin
         </h1>
 
-        <div className="mt-6 flex flex-wrap gap-3">
+        <div className="mt-8 flex w-fit rounded-lg border border-slate-200/50 bg-white/60 p-1 shadow-sm backdrop-blur-md">
           <button
             type="button"
             onClick={() => setView('analytics')}
-            className={`rounded-lg px-4 py-2 text-sm font-medium ${
+            className={`rounded-md px-6 py-2 text-sm font-medium transition-all ${
               view === 'analytics'
-                ? 'bg-[#003399] text-white'
-                : 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
+                ? 'bg-[#003399] text-white shadow hover:bg-[#002266]'
+                : 'text-slate-700 hover:bg-white/60 hover:text-[#003399]'
             }`}
           >
             Analytics
@@ -37,10 +37,10 @@ export default function App() {
           <button
             type="button"
             onClick={() => setView('bookings')}
-            className={`rounded-lg px-4 py-2 text-sm font-medium ${
+            className={`rounded-md px-6 py-2 text-sm font-medium transition-all ${
               view === 'bookings'
-                ? 'bg-[#003399] text-white'
-                : 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
+                ? 'bg-[#003399] text-white shadow hover:bg-[#002266]'
+                : 'text-slate-700 hover:bg-white/60 hover:text-[#003399]'
             }`}
           >
             Bookings

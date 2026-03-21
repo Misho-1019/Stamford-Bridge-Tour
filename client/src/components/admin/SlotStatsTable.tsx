@@ -1,3 +1,4 @@
+import Card from "./Card";
 
 type SlotStatsItem = {
     slotId: string;
@@ -29,7 +30,7 @@ export default function SlotStatsTable({
   data: SlotStatsItem[];
 }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+    <Card>
       <h3 className="text-lg font-semibold text-slate-900">
         Slot Performance
       </h3>
@@ -73,6 +74,6 @@ export default function SlotStatsTable({
           </tbody>
         </table>
       </div>
-    </div>
+    </Card>
   );
 }

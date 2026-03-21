@@ -1,3 +1,5 @@
+import Card from "./Card";
+
 type StatCardProps = {
     label: string;
     value: string | number;
@@ -5,10 +7,10 @@ type StatCardProps = {
 
 function StatCard({ label, value }: StatCardProps) {
     return (
-        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-          <p className="text-sm text-slate-500">{label}</p>
-          <p className="mt-2 text-2xl font-bold text-slate-900">{value}</p>
-        </div>
+        <Card className="flex h-full flex-col justify-center text-center !p-6">
+          <p className="text-sm font-medium text-slate-500">{label}</p>
+          <p className="mt-2 text-3xl font-bold tracking-tight text-[#003399]">{value}</p>
+        </Card>
     )
 }
 
