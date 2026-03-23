@@ -124,8 +124,55 @@ webhookController.post('/stripe', async (req, res) => {
 
             return res.status(200).json({ received: true })
         }
-
-        return res.status(200).json({ received: true, ignored: true });
+        
+        if (event.type === 'charge.refunded') {
+            const charge = event.data.object as Stripe.Charge;
+        
+            const paymentIntentId =
+                typeof charge.payment_intent === 'string'
+                    ? charge.payment_intent
+                    : charge.payment_intent?.id;
+        
+            if (!paymentIntentId) {
+                return res.status(200).json({
+                    received: true,
+                    skipped: 'payment_intent_not_found',
+                });
+            }
+        
+            const refundId = charge.refunds?.data?.[0]?.id ?? null;
+        
+            const booking = await prisma.booking.findFirst({
+                where: {
+                    stripePaymentIntentId: paymentIntentId,
+                },
+            });
+        
+            if (!booking) {
+                return res.status(200).json({
+                    received: true,
+                    skipped: 'booking_not_found',
+                });
+            }
+        
+            if (booking.status === 'REFUNDED') {
+                return res.status(200).json({
+                    received: true,
+                    duplicate: true,
+                });
+            }
+        
+            await prisma.booking.update({
+                where: { id: booking.id },
+                data: {
+                    status: 'REFUNDED',
+                    stripeRefundId: refundId ?? booking.stripeRefundId,
+                    refundedAt: booking.refundedAt ?? new Date(),
+                },
+            });
+        
+            return res.status(200).json({ received: true });
+        }
     } catch (error) {
         console.error("Stripe webhook handling failed:", error);
         return res.status(500).json({ error: "Webhook handling failed" });
