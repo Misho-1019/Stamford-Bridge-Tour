@@ -29,15 +29,20 @@ export async function refundBookingById({
         throw new BookingRefundError('Booking not found', 404);
     }
 
-    if (booking.status !== BookingStatus.CONFIRMED) {
-        throw new BookingRefundError("Only confirmed bookings can be refunded", 400)
+    const refundableStatuses: BookingStatus[] = [
+        BookingStatus.CONFIRMED,
+        BookingStatus.CANCELLED,
+    ]
+
+    if (!refundableStatuses.includes(booking.status)) {
+        throw new BookingRefundError('Only confirmed or cancelled bookings can be refunded', 400)
     }
 
     if (!booking.stripePaymentIntentId) {
         throw new BookingRefundError("Booking has no Stripe payment intent id", 400)
     }
 
-    if (booking.stripeRefundId) {
+    if (booking.status === BookingStatus.REFUNDED || booking.stripeRefundId) {
         throw new BookingRefundError("Booking has already been refunded", 400)
     }
 
