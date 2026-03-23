@@ -92,6 +92,7 @@ model Booking {
   stripePaymentIntentId String?       @unique
   stripeRefundId        String?       @unique
   refundedAt            DateTime?
+  refundReason          String?
 
   createdAt             DateTime      @default(now())
   updatedAt             DateTime      @updatedAt

@@ -16,10 +16,12 @@ export class BookingRefundError extends Error {
 
 type RefundBookingParams = {
     bookingId: string;
+    reason?: string;
 }
 
 export async function refundBookingById({
     bookingId,
+    reason,
 }: RefundBookingParams) {
     const booking = await prisma.booking.findUnique({
         where: { id: bookingId },
@@ -85,6 +87,7 @@ export async function refundBookingById({
                 bookingId: booking.id,
                 slotId: booking.slotId,
                 email: booking.email,
+                reason: reason ?? '',
             }
         })
     } catch (error) {
@@ -101,6 +104,7 @@ export async function refundBookingById({
             status: BookingStatus.REFUNDED,
             stripeRefundId: refund.id,
             refundedAt: new Date(),
+            refundReason: reason ?? null,
         }
     })
 

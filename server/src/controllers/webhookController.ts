@@ -168,6 +168,7 @@ webhookController.post('/stripe', async (req, res) => {
                     status: 'REFUNDED',
                     stripeRefundId: refundId ?? booking.stripeRefundId,
                     refundedAt: booking.refundedAt ?? new Date(),
+                    refundReason: booking.refundReason,
                 },
             });
         
