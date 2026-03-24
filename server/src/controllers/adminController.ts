@@ -329,6 +329,14 @@ adminController.get('/bookings/ticket-type-stats', requireAdmin, async (req, res
             typeof req.query.toDate === 'string'
                 ? new Date(req.query.toDate)
                 : undefined;
+        
+        if (fromDate && Number.isNaN(fromDate.getTime())) {
+            return res.status(400).json({ error: 'Invalid fromDate' })
+        }
+
+        if (toDate && Number.isNaN(toDate.getTime())) {
+            return res.status(400).json({ error: 'Invalid toDate' })
+        }
 
         const where: Prisma.BookingWhereInput = {
             status: BookingStatus.CONFIRMED
@@ -432,6 +440,14 @@ adminController.get('/bookings/slot-stats', requireAdmin, async (req, res) => {
           typeof req.query.toDate === 'string'
             ? new Date(req.query.toDate)
             : undefined;
+
+        if (fromDate && Number.isNaN(fromDate.getTime())) {
+            return res.status(400).json({ error: 'Invalid fromDate' })
+        }
+
+        if (toDate && Number.isNaN(toDate.getTime())) {
+            return res.status(400).json({ error: 'Invalid toDate' })
+        }
     
         const bookingWhere: Prisma.BookingWhereInput = {
           status: BookingStatus.CONFIRMED
@@ -488,7 +504,7 @@ adminController.get('/bookings/slot-stats', requireAdmin, async (req, res) => {
             const stats = statsMap.get(slot.id);
 
             const bookingsCount = stats?.bookingsCount ?? 0;
-            const ticketSold = stats?.ticketsSold ?? 0
+            const ticketsSold = stats?.ticketsSold ?? 0
             const revenueCents = stats?.revenueCents ?? 0;
 
             return {
@@ -497,10 +513,10 @@ adminController.get('/bookings/slot-stats', requireAdmin, async (req, res) => {
                 endAt: slot.endAt,
                 capacityTotal: slot.capacityTotal,
                 bookingsCount,
-                ticketSold,
+                ticketsSold,
                 revenueCents,
                 usagePercent: slot.capacityTotal > 0
-                    ? Math.round((ticketSold / slot.capacityTotal) * 100)
+                    ? Math.round((ticketsSold / slot.capacityTotal) * 100)
                     : 0
             }
         })
