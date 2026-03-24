@@ -1,5 +1,6 @@
 import { DateTime } from "luxon";
 import { prisma } from "../db";
+import { getActiveBlackoutByLondonDate } from "./blackout";
 
 const DEFAULT_SLOT_HOURS = [10, 11, 12, 13, 14, 15, 16];
 const DEFAULT_CAPACITY = 30;
@@ -11,6 +12,11 @@ export async function generateSlots(days: number) {
 
     for (let offset = 0; offset < days; offset++) {
         const day = todayLondon.plus({ days: offset });
+
+        const londonDate = day.toFormat('yyyy-MM-dd')
+        const blackout = await getActiveBlackoutByLondonDate(londonDate)
+
+        if (blackout) continue;
 
         const dayStartUtc = day.startOf('day').toUTC().toJSDate();
         const dayEndUtc = day.endOf('day').toUTC().toJSDate();
