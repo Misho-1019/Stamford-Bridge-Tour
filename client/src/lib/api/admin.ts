@@ -1,4 +1,3 @@
-
 const API_BASE_URL = 'http://localhost:8080';
 const ADMIN_SECRET = import.meta.env.VITE_ADMIN_SECRET;
 
@@ -11,7 +10,9 @@ export type AdminBookingStats = {
     refundedRevenueCents: number;
 }
 
-export async function getAdminBookingStats(params?: DateRangeParams): Promise<AdminBookingStats> {
+export async function getAdminBookingStats(
+    params?: DateRangeParams
+): Promise<AdminBookingStats> {
     const queryString = buildQueryString(params);
 
     const response = await fetch(`${API_BASE_URL}/admin/bookings/stats${queryString}`, {
@@ -22,7 +23,7 @@ export async function getAdminBookingStats(params?: DateRangeParams): Promise<Ad
     });
 
     if (!response.ok) {
-        throw new Error('Failed to fetch admin booking stats')
+        throw new Error('Failed to fetch admin booking stats');
     }
 
     return response.json();
@@ -34,19 +35,21 @@ export type AdminRevenueSeriesItem = {
     bookings: number;
 };
 
-export async function getAdminRevenueSeries(params?: DateRangeParams): Promise<{
+export async function getAdminRevenueSeries(
+    params?: DateRangeParams
+): Promise<{
     data: AdminRevenueSeriesItem[];
 }> {
-    const queryString = buildQueryString(params)
+    const queryString = buildQueryString(params);
 
     const response = await fetch(`${API_BASE_URL}/admin/bookings/revenue-series${queryString}`, {
         headers: {
             'x-admin-secret': ADMIN_SECRET,
         },
-    })
+    });
 
     if (!response.ok) {
-        throw new Error('Failed to fetch admin revenue series')
+        throw new Error('Failed to fetch admin revenue series');
     }
 
     return response.json();
@@ -57,20 +60,23 @@ export type AdminTicketTypeStat = {
     ticketTypeName: string;
     qty: number;
     revenueCents: number;
-}
+};
 
-export async function getAdminTicketTypeStats(params?: DateRangeParams): Promise<{
+export async function getAdminTicketTypeStats(
+    params?: DateRangeParams
+): Promise<{
     data: AdminTicketTypeStat[];
 }> {
-    const queryString = buildQueryString(params)
+    const queryString = buildQueryString(params);
+
     const response = await fetch(`${API_BASE_URL}/admin/bookings/ticket-type-stats${queryString}`, {
         headers: {
             'x-admin-secret': ADMIN_SECRET,
-        }
-    })
+        },
+    });
 
     if (!response.ok) {
-        throw new Error('Failed to fetch ticket type stats')
+        throw new Error('Failed to fetch ticket type stats');
     }
 
     return response.json();
@@ -87,38 +93,40 @@ export type AdminSlotStat = {
     usagePercent: number;
 };
 
-export async function getAdminSlotStat(params?: DateRangeParams): Promise<{
+export async function getAdminSlotStat(
+    params?: DateRangeParams
+): Promise<{
     data: AdminSlotStat[];
 }> {
-    const queryString = buildQueryString(params)
+    const queryString = buildQueryString(params);
 
     const response = await fetch(`${API_BASE_URL}/admin/bookings/slot-stats${queryString}`, {
         headers: {
             'x-admin-secret': ADMIN_SECRET,
-        }
-    })
+        },
+    });
 
     if (!response.ok) {
-        throw new Error('Failed to fetch slot stats')
+        throw new Error('Failed to fetch slot stats');
     }
 
-    return response.json()
+    return response.json();
 }
 
 type DateRangeParams = {
     fromDate?: string;
     toDate?: string;
-}
+};
 
 function buildQueryString(params?: DateRangeParams) {
     const searchParams = new URLSearchParams();
 
     if (params?.fromDate) {
-        searchParams.set('fromDate', params.fromDate)
+        searchParams.set('fromDate', params.fromDate);
     }
 
     if (params?.toDate) {
-        searchParams.set('toDate', params.toDate)
+        searchParams.set('toDate', params.toDate);
     }
 
     const queryString = searchParams.toString();
@@ -133,7 +141,7 @@ export type AdminBooking = {
     qtyTotal: number;
     amountTotalCents: number;
     createdAt: string;
-}
+};
 
 export async function getAdminBooking(params?: {
     page?: number;
@@ -148,19 +156,19 @@ export async function getAdminBooking(params?: {
     const searchParams = new URLSearchParams();
 
     if (params?.page) {
-        searchParams.set('page', String(params.page))
+        searchParams.set('page', String(params.page));
     }
 
     if (params?.limit) {
-        searchParams.set('limit', String(params.limit))
+        searchParams.set('limit', String(params.limit));
     }
 
     if (params?.status) {
-        searchParams.set('status', String(params.status))
+        searchParams.set('status', String(params.status));
     }
 
     if (params?.email) {
-        searchParams.set('email', String(params.email))
+        searchParams.set('email', String(params.email));
     }
 
     const query = searchParams.toString();
@@ -168,8 +176,8 @@ export async function getAdminBooking(params?: {
     const response = await fetch(`${API_BASE_URL}/admin/bookings${query ? `?${query}` : ''}`, {
         headers: {
             'x-admin-secret': ADMIN_SECRET,
-        }
-    })
+        },
+    });
 
     if (!response.ok) {
         throw new Error('Failed to fetch bookings');
@@ -180,40 +188,45 @@ export async function getAdminBooking(params?: {
 
 export type AdminBookingDetails = {
     id: string;
-  slotId: string;
-  email: string;
-  items: {
-    ticketTypeId: string;
-    qty: number;
-    unitPriceCents: number;
-  }[];
-  qtyTotal: number;
-  amountTotalCents: number;
-  status: string;
-  stripeSessionId: string | null;
-  stripePaymentIntentId: string | null;
-  createdAt: string;
-  updatedAt: string;
-  slot: {
-    id: string;
-    startAt: string;
-    endAt: string;
-    capacityTotal: number;
-    isActive: boolean;
+    slotId: string;
+    email: string;
+    items: {
+        ticketTypeId: string;
+        qty: number;
+        unitPriceCents: number;
+    }[];
+    qtyTotal: number;
+    amountTotalCents: number;
+    status: string;
+    stripeSessionId: string | null;
+    stripePaymentIntentId: string | null;
+    stripeRefundId?: string | null;
+    refundReason?: string | null;
+    refundedAt?: string | null;
     createdAt: string;
     updatedAt: string;
-  };
-}
+    slot: {
+        id: string;
+        startAt: string;
+        endAt: string;
+        capacityTotal: number;
+        isActive: boolean;
+        createdAt: string;
+        updatedAt: string;
+    };
+};
 
-export async function getAdminBookingById(id: string): Promise<{ booking: AdminBookingDetails }> {
+export async function getAdminBookingById(
+    id: string
+): Promise<{ booking: AdminBookingDetails }> {
     const response = await fetch(`${API_BASE_URL}/admin/bookings/${id}`, {
-      headers: {
-        'x-admin-secret': ADMIN_SECRET,
-      },
+        headers: {
+            'x-admin-secret': ADMIN_SECRET,
+        },
     });
 
     if (!response.ok) {
-      throw new Error('Failed to fetch booking details');
+        throw new Error('Failed to fetch booking details');
     }
 
     return response.json();
@@ -221,7 +234,8 @@ export async function getAdminBookingById(id: string): Promise<{ booking: AdminB
 
 export async function updateAdminBookingStatus(
     id: string,
-    status: 'CONFIRMED' | 'CANCELLED' | 'REFUNDED'
+    status: 'CONFIRMED' | 'CANCELLED' | 'REFUNDED',
+    options?: { reason?: string; amountCents?: number }
 ): Promise<{ booking: AdminBookingDetails }> {
     const response = await fetch(`${API_BASE_URL}/admin/bookings/${id}/status`, {
         method: 'PATCH',
@@ -229,12 +243,14 @@ export async function updateAdminBookingStatus(
             'Content-Type': 'application/json',
             'x-admin-secret': ADMIN_SECRET,
         },
-        body: JSON.stringify({ status })
-    })
+        body: JSON.stringify({ status, ...(options || {}) }),
+    });
+
+    const data = await response.json();
 
     if (!response.ok) {
-        throw new Error('Failed to update booking status');
+        throw new Error(data.error || 'Failed to update booking status');
     }
 
-    return response.json();
+    return data;
 }
