@@ -530,6 +530,7 @@ adminController.patch('/bookings/:id/status', requireAdmin, async (req, res) => 
 
         const rawStatus = req.body?.status;
         const reason = req.body?.reason;
+        const amountCents = req.body?.amountCents;
 
         if (typeof rawStatus !== 'string') {
             return res.status(400).json({ error: 'Status is required' })
@@ -537,6 +538,10 @@ adminController.patch('/bookings/:id/status', requireAdmin, async (req, res) => 
 
         if (reason !== undefined && typeof reason !== 'string') {
             return res.status(400).json({ error: 'Reason must be a string' })
+        }
+
+        if (amountCents !== undefined && typeof amountCents !== 'number') {
+            return res.status(400).json({ error: 'amountCents must be a number' })
         }
 
         if (!Object.values(BookingStatus).includes(rawStatus as BookingStatus)) {
@@ -572,7 +577,7 @@ adminController.patch('/bookings/:id/status', requireAdmin, async (req, res) => 
         }
 
         if (nextStatus === BookingStatus.REFUNDED) {
-            const result = await refundBookingById({ bookingId: id, reason });
+            const result = await refundBookingById({ bookingId: id, reason, amountCents });
 
             const booking = await prisma.booking.findUnique({
                 where: { id: result.booking.id },

@@ -17,11 +17,13 @@ export class BookingRefundError extends Error {
 type RefundBookingParams = {
     bookingId: string;
     reason?: string;
+    amountCents?: number;
 }
 
 export async function refundBookingById({
     bookingId,
     reason,
+    amountCents
 }: RefundBookingParams) {
     const booking = await prisma.booking.findUnique({
         where: { id: bookingId },
@@ -71,10 +73,24 @@ export async function refundBookingById({
         throw new BookingRefundError("No charge found for this payment", 400)
     }
 
-    const refundableAmount = charge.amount - charge.amount_refunded;
+    const remainingAmount = charge.amount - charge.amount_refunded;
 
-    if (refundableAmount <= 0) {
-        throw new BookingRefundError("Payment has already been fully refunded", 400)
+    if (remainingAmount <= 0) {
+        throw new BookingRefundError('Payment has already been fully refunded', 400)
+    }
+
+    let refundAmount = remainingAmount;
+
+    if (amountCents !== undefined) {
+        if (!Number.isInteger(amountCents) || amountCents <= 0) {
+            throw new BookingRefundError('Invalid refund amount', 400)
+        }
+
+        if (amountCents > remainingAmount) {
+            throw new BookingRefundError('Refund amount exceeds remaining amount', 400)
+        }
+
+        refundAmount = amountCents;
     }
 
     let refund: Stripe.Refund;
@@ -82,7 +98,7 @@ export async function refundBookingById({
     try {
         refund = await stripe.refunds.create({
             payment_intent: booking.stripePaymentIntentId,
-            amount: refundableAmount,
+            amount: refundAmount,
             metadata: {
                 bookingId: booking.id,
                 slotId: booking.slotId,
