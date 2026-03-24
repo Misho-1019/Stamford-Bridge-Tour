@@ -7,6 +7,7 @@ import { RealFixtureProvider } from "../providers/realFixtureProvider";
 import { prisma } from "../db";
 import { BookingStatus, Prisma } from "@prisma/client";
 import { BookingRefundError, refundBookingById } from "../services/bookingRefundService";
+import { DateTime } from "luxon";
 
 const adminController = Router();
 
@@ -226,6 +227,14 @@ adminController.get('/bookings/revenue-series', requireAdmin, async (req, res) =
 
         const toDate = typeof req.query.toDate === 'string' ? new Date(req.query.toDate) : undefined;
 
+        if (fromDate && Number.isNaN(fromDate.getTime())) {
+            return res.status(400).json({ error: 'Invalid fromDate' })
+        }
+
+        if (toDate && Number.isNaN(toDate.getTime())) {
+            return res.status(400).json({ error: 'Invalid toDate' })
+        }
+
         const where: Prisma.BookingWhereInput = {
             status: BookingStatus.CONFIRMED
         }
@@ -253,7 +262,7 @@ adminController.get('/bookings/revenue-series', requireAdmin, async (req, res) =
         const map = new Map<string, { revenueCents: number; bookings: number }>();
 
         for (const b of bookings) {
-            const date = b.createdAt.toISOString().split('T')[0];
+            const date = DateTime.fromJSDate(b.createdAt).setZone('Europe/London').toFormat('yyyy-MM-dd');
 
             if (!map.has(date)) {
                 map.set(date, { revenueCents: 0, bookings: 0 })
