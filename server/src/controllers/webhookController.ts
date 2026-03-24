@@ -60,6 +60,13 @@ webhookController.post('/stripe', async (req, res) => {
                 return res.status(200).json({ received: true, skipped: 'hold_not_found' })
             }
 
+            if (hold.status !== 'HELD') {
+                return res.status(200).json({
+                    received: true,
+                    skipped: 'hold_not_held',
+                })
+            }
+
             await prisma.$transaction(async (tx) => {
                 const bookingAlreadyExists = await tx.booking.findUnique({
                     where: {
@@ -71,13 +78,23 @@ webhookController.post('/stripe', async (req, res) => {
                     return;
                 }
 
+                const currentHold = await tx.hold.findUnique({
+                    where: {
+                        id: hold.id,
+                    }
+                })
+
+                if (!currentHold || currentHold.status !== 'HELD') {
+                    return;
+                }
+
                 await tx.booking.create({
                     data: {
-                        slotId: hold.slotId,
-                        email: hold.email,
-                        items: hold.items as Prisma.InputJsonValue,
-                        qtyTotal: hold.qtyTotal,
-                        amountTotalCents: hold.amountTotalCents,
+                        slotId: currentHold.slotId,
+                        email: currentHold.email,
+                        items: currentHold.items as Prisma.InputJsonValue,
+                        qtyTotal: currentHold.qtyTotal,
+                        amountTotalCents: currentHold.amountTotalCents,
                         status: 'CONFIRMED',
                         stripeSessionId: session.id,
                         stripePaymentIntentId:
@@ -88,7 +105,7 @@ webhookController.post('/stripe', async (req, res) => {
                 });
 
                 await tx.hold.update({
-                    where: { id: hold.id },
+                    where: { id: currentHold.id },
                     data: {
                         status: 'CONVERTED',
                     }
@@ -113,6 +130,13 @@ webhookController.post('/stripe', async (req, res) => {
 
             if (!hold) {
                 return res.status(200).json({ received: true, skipped: "hold_not_found" });
+            }
+
+            if (hold.status !== 'HELD') {
+                return res.status(200).json({
+                    received: true,
+                    skipped: 'hold_not_held',
+                })
             }
 
             await prisma.hold.update({
