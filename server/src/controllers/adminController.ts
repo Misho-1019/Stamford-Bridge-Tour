@@ -137,6 +137,14 @@ adminController.get('/bookings/stats', requireAdmin, async (req, res) => {
 
         const toDate = typeof req.query.toDate === 'string' ? new Date(req.query.toDate) : undefined;
 
+        if (fromDate && Number.isNaN(fromDate.getTime())) {
+            return res.status(400).json({ error: 'Invalid fromDate' })
+        }
+
+        if (toDate && Number.isNaN(toDate.getTime())) {
+            return res.status(400).json({ error: 'Invalid toDate' })
+        }
+
         const where: Prisma.BookingWhereInput = {};
 
         if (fromDate || toDate) {
@@ -159,24 +167,28 @@ adminController.get('/bookings/stats', requireAdmin, async (req, res) => {
             confirmedRevenueAgg,
             refundedRevenueAgg,
         ] = await Promise.all([
-            prisma.booking.count(),
+            prisma.booking.count({ where }),
             prisma.booking.count({
                 where: {
+                    ...where,
                     status: BookingStatus.CONFIRMED
                 }
             }),
             prisma.booking.count({
                 where: {
+                    ...where,
                     status: BookingStatus.CANCELLED,
                 }
             }),
             prisma.booking.count({
                 where: {
+                    ...where,
                     status: BookingStatus.REFUNDED,
                 }
             }),
             prisma.booking.aggregate({
                 where: {
+                    ...where,
                     status: BookingStatus.CONFIRMED,
                 },
                 _sum: {
@@ -185,6 +197,7 @@ adminController.get('/bookings/stats', requireAdmin, async (req, res) => {
             }),
             prisma.booking.aggregate({
                 where: {
+                    ...where,
                     status: BookingStatus.REFUNDED,
                 },
                 _sum: {
