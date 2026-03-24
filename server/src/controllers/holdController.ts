@@ -71,6 +71,15 @@ createHold.post('/', async (req, res) => {
         const expiresAt = new Date(Date.now() + HOLD_DURATION_MINUTES * 60 * 1000);
 
         const hold = await prisma.$transaction(async (tx) => {
+            const now = new Date();
+
+            await tx.$queryRaw`
+                SELECT id
+                FROM 'TourSlot'
+                WHERE id = ${slotId}
+                FOR UPDATE
+            `
+
             const slot = await tx.tourSlot.findUnique({
                 where: { id: slotId },
                 include: {
@@ -78,7 +87,7 @@ createHold.post('/', async (req, res) => {
                         where: {
                             status: "HELD",
                             expiresAt: {
-                                gt: new Date(),
+                                gt: now,
                             },
                         },
                         select: {
