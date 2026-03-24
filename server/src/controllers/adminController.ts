@@ -39,7 +39,7 @@ adminController.post('/blackouts/sync', requireAdmin, async (req, res) => {
 
         try {
             const realProvider = new RealFixtureProvider();
-            const result = await syncBlackouts(realProvider, daysAhead);
+            const result = await syncBlackouts(realProvider, daysAhead, 'football_api');
 
             return res.json({
                 provider: 'real_api',
@@ -49,7 +49,7 @@ adminController.post('/blackouts/sync', requireAdmin, async (req, res) => {
             console.error("Real fixture provider failed, falling back to dataset:", realError);
 
             const datasetProvider = new DatasetFixtureProvider();
-            const result = await syncBlackouts(datasetProvider, daysAhead);
+            const result = await syncBlackouts(datasetProvider, daysAhead, 'dataset');
 
             return res.json({
                 provider: 'dataset_fallback',

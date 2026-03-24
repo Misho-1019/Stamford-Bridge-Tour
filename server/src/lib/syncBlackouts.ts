@@ -6,7 +6,8 @@ const LONDON_TZ = "Europe/London";
 
 export async function syncBlackouts(
     provider: FixtureProvider,
-    daysAhead: number
+    daysAhead: number,
+    source: 'football_api' | 'dataset'
 ) {
     const fixtures = await provider.getFixtures(daysAhead);
 
@@ -26,7 +27,7 @@ export async function syncBlackouts(
             },
             update: {
                 reason: "MATCHDAY",
-                source: "dataset",
+                source,
                 sourceEventId: fixture.id,
                 opponent: fixture.opponent,
                 competition: fixture.competition,
@@ -36,7 +37,7 @@ export async function syncBlackouts(
             create: {
                 date: londonDate,
                 reason: "MATCHDAY",
-                source: "dataset",
+                source,
                 sourceEventId: fixture.id,
                 opponent: fixture.opponent,
                 competition: fixture.competition,
