@@ -2,16 +2,26 @@ import { Router } from "express";
 import { DateTime } from "luxon";
 import { prisma } from "../db";
 import { getActiveBlackoutByLondonDate } from "../lib/blackout";
+import { getSlotsQuerySchema } from "../schemas/slot";
+import { getZodErrorResponse } from "../lib/zod";
 
 const slotController = Router();
 
 const LONDON_TZ = 'Europe/London';
 
 slotController.get('/', async (req, res) => {
-    const { date } = req.query;
+    const parsedQuery = getSlotsQuerySchema.safeParse(req.query);
 
-    if (!date || typeof date !== 'string') {
-        return res.status(400).json({ error: 'date query is required' });
+    if (!parsedQuery.success) {
+        return res.status(400).json(getZodErrorResponse(parsedQuery.error))
+    }
+
+    const { date } = parsedQuery.data;
+
+    const parsedDate = DateTime.fromISO(date, { zone: LONDON_TZ });
+
+    if (!parsedDate.isValid) {
+        return res.status(400).json({ error: 'invalid date format, use YYYY-MM-DD' })
     }
 
     const blackout = await getActiveBlackoutByLondonDate(date);
@@ -22,12 +32,6 @@ slotController.get('/', async (req, res) => {
             reason: blackout.reason,
             slots: [],
         })
-    }
-
-    const parsedDate = DateTime.fromISO(date, { zone: LONDON_TZ });
-
-    if (!parsedDate.isValid) {
-        return res.status(400).json({ error: 'invalid date format, use YYYY-MM-DD' })
     }
 
     const startOfDayUtc = parsedDate.startOf('day').toUTC().toJSDate()

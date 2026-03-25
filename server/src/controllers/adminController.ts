@@ -8,16 +8,19 @@ import { prisma } from "../db";
 import { BookingStatus, Prisma } from "@prisma/client";
 import { BookingRefundError, refundBookingById } from "../services/bookingRefundService";
 import { DateTime } from "luxon";
+import { adminDateRangeQuerySchema, bookingIdParamsSchema, generateSlotsQuerySchema, getAdminBookingsQuerySchema, syncBlackoutsQuerySchema, updateBookingStatusSchema } from "../schemas/admin";
+import { getZodErrorResponse } from "../lib/zod";
 
 const adminController = Router();
 
 adminController.post('/slots/generate', requireAdmin, async (req, res) => {
-    const rawDays = req.query.days;
-    const days = rawDays ? Number(rawDays) : 60;
+    const parsedQuery = generateSlotsQuerySchema.safeParse(req.query)
 
-    if (!Number.isInteger(days) || days <= 0) {
-        return res.status(400).json({ error: 'days must be a positive integer' });
+    if (!parsedQuery.success) {
+        return res.status(400).json(getZodErrorResponse(parsedQuery.error))
     }
+
+    const { days } = parsedQuery.data
 
     try {
         const result = await generateSlots(days)
@@ -31,12 +34,13 @@ adminController.post('/slots/generate', requireAdmin, async (req, res) => {
 
 adminController.post('/blackouts/sync', requireAdmin, async (req, res) => {
     try {
-        const rawDaysAhead = req.query.daysAhead;
-        const daysAhead = rawDaysAhead ? Number(rawDaysAhead) : 180;
+        const parsedQuery = syncBlackoutsQuerySchema.safeParse(req.query)
 
-        if (!Number.isInteger(daysAhead) || daysAhead <= 0) {
-            return res.status(400).json({ error: 'daysAhead must be a positive integer' })
+        if (!parsedQuery.success) {
+            return res.status(400).json(getZodErrorResponse(parsedQuery.error))
         }
+
+        const { daysAhead } = parsedQuery.data
 
         try {
             const realProvider = new RealFixtureProvider();
@@ -65,25 +69,14 @@ adminController.post('/blackouts/sync', requireAdmin, async (req, res) => {
 
 adminController.get('/bookings', requireAdmin, async (req, res) => {
     try {
-        const page = Math.max(Number(req.query.page) || 1, 1);
-        const limit = Math.min(Math.max(Number(req.query.limit) || 10, 1), 100);
-        const skip = (page - 1) * limit;
+        const parsedQuery = getAdminBookingsQuerySchema.safeParse(req.query);
 
-        const rawStatus = typeof req.query.status === 'string' ? req.query.status : undefined;
-
-        const email = typeof req.query.email === 'string' ? req.query.email.trim() : undefined;
-
-        const slotId = typeof req.query.slotId === 'string' ? req.query.slotId : undefined;
-
-        let status: BookingStatus | undefined;
-
-        if (rawStatus) {
-            if (!Object.values(BookingStatus).includes(rawStatus as BookingStatus)) {
-                return res.status(400).json({ error: 'Invalid status' })
-            }
-
-            status = rawStatus as BookingStatus;
+        if (!parsedQuery.success) {
+            return res.status(400).json(getZodErrorResponse(parsedQuery.error))
         }
+
+        const { page, limit, status, email, slotId } = parsedQuery.data;
+        const skip = (page - 1) * limit;
 
         const where: Prisma.BookingWhereInput = {};
 
@@ -134,9 +127,16 @@ adminController.get('/bookings', requireAdmin, async (req, res) => {
 
 adminController.get('/bookings/stats', requireAdmin, async (req, res) => {
     try {
-        const fromDate = typeof req.query.fromDate === 'string' ? new Date(req.query.fromDate) : undefined;
+        const parsedQuery = adminDateRangeQuerySchema.safeParse(req.query);
 
-        const toDate = typeof req.query.toDate === 'string' ? new Date(req.query.toDate) : undefined;
+        if (!parsedQuery.success) {
+            return res.status(400).json(getZodErrorResponse(parsedQuery.error))
+        }
+
+        const { fromDate: rawFromDate, toDate: rawToDate } = parsedQuery.data;
+
+        const fromDate = rawFromDate ? new Date(rawFromDate) : undefined;
+        const toDate = rawToDate ? new Date(rawToDate) : undefined;
 
         if (fromDate && Number.isNaN(fromDate.getTime())) {
             return res.status(400).json({ error: 'Invalid fromDate' })
@@ -223,9 +223,16 @@ adminController.get('/bookings/stats', requireAdmin, async (req, res) => {
 
 adminController.get('/bookings/revenue-series', requireAdmin, async (req, res) => {
     try {
-        const fromDate = typeof req.query.fromDate === 'string' ? new Date(req.query.fromDate) : undefined;
+        const parsedQuery = adminDateRangeQuerySchema.safeParse(req.query);
 
-        const toDate = typeof req.query.toDate === 'string' ? new Date(req.query.toDate) : undefined;
+        if (!parsedQuery.success) {
+            return res.status(400).json(getZodErrorResponse(parsedQuery.error))
+        }
+
+        const { fromDate: rawFromDate, toDate: rawToDate } = parsedQuery.data;
+
+        const fromDate = rawFromDate ? new Date(rawFromDate) : undefined;
+        const toDate = rawToDate ? new Date(rawToDate) : undefined;
 
         if (fromDate && Number.isNaN(fromDate.getTime())) {
             return res.status(400).json({ error: 'Invalid fromDate' })
@@ -320,15 +327,16 @@ adminController.get('/bookings/revenue-series', requireAdmin, async (req, res) =
 
 adminController.get('/bookings/ticket-type-stats', requireAdmin, async (req, res) => {
     try {
-        const fromDate =
-            typeof req.query.fromDate === 'string'
-                ? new Date(req.query.fromDate)
-                : undefined;
+        const parsedQuery = adminDateRangeQuerySchema.safeParse(req.query);
 
-        const toDate =
-            typeof req.query.toDate === 'string'
-                ? new Date(req.query.toDate)
-                : undefined;
+        if (!parsedQuery.success) {
+            return res.status(400).json(getZodErrorResponse(parsedQuery.error))
+        }
+
+        const { fromDate: rawFromDate, toDate: rawToDate } = parsedQuery.data;
+
+        const fromDate = rawFromDate ? new Date(rawFromDate) : undefined;
+        const toDate = rawToDate ? new Date(rawToDate) : undefined;
         
         if (fromDate && Number.isNaN(fromDate.getTime())) {
             return res.status(400).json({ error: 'Invalid fromDate' })
@@ -431,15 +439,16 @@ adminController.get('/bookings/ticket-type-stats', requireAdmin, async (req, res
 
 adminController.get('/bookings/slot-stats', requireAdmin, async (req, res) => {
     try {
-        const fromDate =
-          typeof req.query.fromDate === 'string'
-            ? new Date(req.query.fromDate)
-            : undefined;
-    
-        const toDate =
-          typeof req.query.toDate === 'string'
-            ? new Date(req.query.toDate)
-            : undefined;
+        const parsedQuery = adminDateRangeQuerySchema.safeParse(req.query);
+
+        if (!parsedQuery.success) {
+            return res.status(400).json(getZodErrorResponse(parsedQuery.error))
+        }
+
+        const { fromDate: rawFromDate, toDate: rawToDate } = parsedQuery.data;
+
+        const fromDate = rawFromDate ? new Date(rawFromDate) : undefined;
+        const toDate = rawToDate ? new Date(rawToDate) : undefined;
 
         if (fromDate && Number.isNaN(fromDate.getTime())) {
             return res.status(400).json({ error: 'Invalid fromDate' })
@@ -530,11 +539,13 @@ adminController.get('/bookings/slot-stats', requireAdmin, async (req, res) => {
 
 adminController.get('/bookings/:id', requireAdmin, async (req, res) => {
     try {
-        const id = req.params.id;
+        const parsedParams = bookingIdParamsSchema.safeParse(req.params);
 
-        if (typeof id !== 'string') {
-            return res.status(400).json({ error: 'Invalid booking id' })
+        if (!parsedParams.success) {
+            return res.status(400).json(getZodErrorResponse(parsedParams.error))
         }
+
+        const { id } = parsedParams.data;
 
         const booking = await prisma.booking.findUnique({
             where: {
@@ -560,33 +571,20 @@ adminController.get('/bookings/:id', requireAdmin, async (req, res) => {
 
 adminController.patch('/bookings/:id/status', requireAdmin, async (req, res) => {
     try {
-        const id = req.params.id;
+        const parsedParams = bookingIdParamsSchema.safeParse(req.params);
 
-        if (typeof id !== 'string') {
-            return res.status(400).json({ error: 'Invalid booking id' })
+        if (!parsedParams.success) {
+            return res.status(400).json(getZodErrorResponse(parsedParams.error));
         }
 
-        const rawStatus = req.body?.status;
-        const reason = req.body?.reason;
-        const amountCents = req.body?.amountCents;
+        const parsedBody = updateBookingStatusSchema.safeParse(req.body);
 
-        if (typeof rawStatus !== 'string') {
-            return res.status(400).json({ error: 'Status is required' })
+        if (!parsedBody.success) {
+            return res.status(400).json(getZodErrorResponse(parsedBody.error));
         }
 
-        if (reason !== undefined && typeof reason !== 'string') {
-            return res.status(400).json({ error: 'Reason must be a string' })
-        }
-
-        if (amountCents !== undefined && typeof amountCents !== 'number') {
-            return res.status(400).json({ error: 'amountCents must be a number' })
-        }
-
-        if (!Object.values(BookingStatus).includes(rawStatus as BookingStatus)) {
-            return res.status(400).json({ error: 'Invalid status' })
-        }
-
-        const nextStatus = rawStatus as BookingStatus;
+        const { id } = parsedParams.data;
+        const { status: nextStatus, reason, amountCents } = parsedBody.data;
 
         const existingBooking = await prisma.booking.findUnique({
             where: { id },
