@@ -2,6 +2,7 @@ import { Router } from "express";
 import { prisma } from "../db";
 import { getActiveBlackoutByLondonDate, getLondonDateFromUtc } from "../lib/blackout";
 import { stripe } from "../lib/stripe";
+import { createHoldSchema } from "../schemas/hold";
 
 const createHold = Router();
 
@@ -9,11 +10,16 @@ const HOLD_DURATION_MINUTES = 10;
 
 createHold.post('/', async (req, res) => {
     try {
-        const { slotId, email, items } = req.body;
+        const parsedBody = createHoldSchema.safeParse(req.body)
 
-        if (!slotId || !email || !Array.isArray(items) || items.length === 0) {
-            return res.status(400).json({ error: "Invalid request body" });
+        if (!parsedBody.success) {
+            return res.status(400).json({
+                error: 'Invalid request body',
+                details: parsedBody.error.flatten()
+            })
         }
+
+        const { slotId, email, items } = parsedBody.data;
 
         const ticketTypes = await prisma.ticketType.findMany({
             where: { isActive: true },
@@ -37,11 +43,7 @@ createHold.post('/', async (req, res) => {
                 return res.status(400).json({ error: "Invalid ticket type" });
             }
 
-            const qty = Number(item.qty);
-
-            if (!Number.isInteger(qty) || qty <= 0) {
-                return res.status(400).json({ error: "Invalid quantity" });
-            }
+            const qty = item.qty;
 
             qtyTotal += qty;
             amountTotalCents += ticket.priceCents * qty;

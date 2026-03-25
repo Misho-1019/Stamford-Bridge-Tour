@@ -21,7 +21,7 @@ export async function generateSlots(days: number) {
         const dayStartUtc = day.startOf('day').toUTC().toJSDate();
         const dayEndUtc = day.endOf('day').toUTC().toJSDate();
 
-        const existingSlotsCOunt = await prisma.tourSlot.count({
+        const existingSlotsCount = await prisma.tourSlot.count({
             where: {
                 startAt: {
                     gte: dayStartUtc,
@@ -30,7 +30,7 @@ export async function generateSlots(days: number) {
             }
         })
 
-        if (existingSlotsCOunt > 0) {
+        if (existingSlotsCount > 0) {
             continue;
         }
 
