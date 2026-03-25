@@ -2,7 +2,7 @@ import { Router } from "express";
 import { prisma } from "../db";
 import { comparePassword, hashPassword } from "../lib/password";
 import { hashToken, signAccessToken, signRefreshToken, verifyRefreshToken } from "../lib/auth";
-import { setAuthCookies } from "../lib/cookies";
+import { clearAuthCookies, setAuthCookies } from "../lib/cookies";
 import { email } from "zod";
 
 const adminAuthController = Router();
@@ -227,7 +227,35 @@ adminAuthController.post("/refresh", async (req, res) => {
 });
 
 adminAuthController.post("/logout", async (req, res) => {
-    return res.status(501).json({ message: "Admin logout not implemented yet" });
+    try {
+        const refreshToken = req.cookies?.refreshToken as string | undefined;
+
+        if (refreshToken) {
+            const tokenHash = hashToken(refreshToken);
+
+            await prisma.refreshToken.updateMany({
+                where: {
+                    tokenHash,
+                    revokedAt: null,
+                },
+                data: {
+                    revokedAt: new Date(),
+                }
+            })
+        }
+
+        clearAuthCookies(res)
+
+        return res.status(200).json({ message: "Logged out successfully", })
+    } catch (error) {
+        console.error("Admin logout error:", error);
+
+        clearAuthCookies(res);
+    
+        return res.status(200).json({
+          message: "Logged out",
+        });
+    }
 });
 
 export default adminAuthController;
