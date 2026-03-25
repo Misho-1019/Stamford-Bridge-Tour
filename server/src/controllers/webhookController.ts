@@ -198,6 +198,8 @@ webhookController.post('/stripe', async (req, res) => {
         
             return res.status(200).json({ received: true });
         }
+
+        return res.status(200).json({ received: true, ignored: event.type });
     } catch (error) {
         console.error("Stripe webhook handling failed:", error);
         return res.status(500).json({ error: "Webhook handling failed" });

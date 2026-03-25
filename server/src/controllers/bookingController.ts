@@ -1,15 +1,19 @@
 import { Router } from "express";
 import { prisma } from "../db";
+import { bookingSessionParamsSchema } from "../schemas/booking";
+import { getZodErrorResponse } from "../lib/zod";
 
 const bookingController = Router();
 
 bookingController.get('/by-session/:sessionId', async (req, res) => {
     try {
-        const { sessionId } = req.params;
+        const parsedParams = bookingSessionParamsSchema.safeParse(req.params);
 
-        if (!sessionId) {
-            return res.status(400).json({ error: 'sessionId is required' })
+        if (!parsedParams.success) {
+            return res.status(400).json(getZodErrorResponse(parsedParams.error));
         }
+
+        const { sessionId } = parsedParams.data;
 
         const booking = await prisma.booking.findUnique({
             where: {

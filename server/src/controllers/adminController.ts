@@ -591,7 +591,7 @@ adminController.patch('/bookings/:id/status', requireAdmin, async (req, res) => 
         })
 
         if (!existingBooking) {
-            return res.status(400).json({ error: 'Booking not found' })
+            return res.status(404).json({ error: 'Booking not found' })
         }
 
         const currentStatus = existingBooking.status;
