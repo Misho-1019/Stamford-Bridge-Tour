@@ -2,6 +2,8 @@ import { Router } from "express";
 import { requireAdmin } from "../middleware/admin";
 import { DateTime } from "luxon";
 import { prisma } from "../db";
+import { createBlackoutSchema } from "../schemas/blackout";
+import { getZodErrorResponse } from "../lib/zod";
 
 const LONDON_TZ = 'Europe/London';
 
@@ -39,11 +41,13 @@ blackoutRoutes.get('/', requireAdmin, async (req, res) => {
 
 blackoutRoutes.post('/', requireAdmin, async (req, res) => {
     try {
-        const { date, reason = 'MANUAL' } = req.body;
+        const parsedBody = createBlackoutSchema.safeParse(req.body)
 
-        if (!date || typeof date !== 'string') {
-            return res.status(400).json({ error: 'date is required (YYYY-MM-DD)' })
+        if (!parsedBody.success) {
+            return res.status(400).json(getZodErrorResponse(parsedBody.error))
         }
+
+        const { date, reason = 'MANUAL' } = parsedBody.data;
 
         const parsed = DateTime.fromISO(date, { zone: LONDON_TZ })
 
