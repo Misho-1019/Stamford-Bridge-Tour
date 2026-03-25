@@ -13,10 +13,15 @@ export async function generateSlots(days: number) {
     for (let offset = 0; offset < days; offset++) {
         const day = todayLondon.plus({ days: offset });
 
-        const londonDate = day.toFormat('yyyy-MM-dd')
-        const blackout = await getActiveBlackoutByLondonDate(londonDate)
+        const blackoutDate = day.startOf('day').toJSDate();
 
-        if (blackout) continue;
+        const existingBlackout = await prisma.blackoutDate.findUnique({
+            where: {
+                date: blackoutDate,
+            }
+        })
+
+        if (existingBlackout) continue;
 
         const dayStartUtc = day.startOf('day').toUTC().toJSDate();
         const dayEndUtc = day.endOf('day').toUTC().toJSDate();
