@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import cookieParser from "cookie-parser";
 import routes from "./routes";
 import webhookController from "./controllers/webhookController";
 
@@ -19,6 +20,8 @@ app.post(
 )
 
 app.use(express.json())
+
+app.use(cookieParser())
 
 app.get('/health', (req, res) => {
     res.json({ ok: true, services: 'bridge-tour-api' })

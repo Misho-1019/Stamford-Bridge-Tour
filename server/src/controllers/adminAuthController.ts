@@ -1,8 +1,9 @@
 import { Router } from "express";
 import { prisma } from "../db";
 import { comparePassword, hashPassword } from "../lib/password";
-import { hashToken, signAccessToken, signRefreshToken } from "../lib/auth";
+import { hashToken, signAccessToken, signRefreshToken, verifyRefreshToken } from "../lib/auth";
 import { setAuthCookies } from "../lib/cookies";
+import { email } from "zod";
 
 const adminAuthController = Router();
 
@@ -107,7 +108,7 @@ adminAuthController.post('/login', async (req, res) => {
 
         await prisma.refreshToken.create({
             data: {
-                tokenHash: refreshToken,
+                tokenHash: refreshTokenHash,
                 userType: 'ADMIN',
                 adminUserId: admin.id,
                 expiresAt: refreshTokenExpiresAt,
@@ -131,7 +132,98 @@ adminAuthController.post('/login', async (req, res) => {
 })
 
 adminAuthController.post("/refresh", async (req, res) => {
-    return res.status(501).json({ message: "Admin refresh not implemented yet" });
+    try {
+        const refreshToken = req.cookies?.refreshToken as string | undefined;
+
+        if (!refreshToken) {
+            return res.status(401).json({ error: "Missing refresh token", })
+        }
+
+        const decoded = verifyRefreshToken(refreshToken);
+
+        if (decoded.userType !== 'ADMIN') {
+            return res.status(401).json({ error: "Invalid refresh token", })
+        }
+
+        const currentTokenHash = hashToken(refreshToken);
+
+        const existingToken = await prisma.refreshToken.findUnique({
+            where: {
+                tokenHash: currentTokenHash,
+            },
+            include: {
+                adminUser: true,
+            },
+        })
+
+        if (!existingToken) {
+            return res.status(401).json({ error: "Refresh token not found" })
+        }
+
+        if (existingToken.userType !== 'ADMIN' || !existingToken.adminUser) {
+            return res.status(401).json({ error: "Invalid refresh token", })
+        }
+
+        if (existingToken.revokedAt) {
+            return res.status(401).json({ error: "Refresh token has been revoked", })
+        }
+
+        if (existingToken.expiresAt <= new Date()) {
+            return res.status(401).json({ error: "Refresh token has expired", })
+        }
+
+        const admin = existingToken.adminUser;
+
+        const newAccessToken = signAccessToken({
+            sub: admin.id,
+            email: admin.email,
+            userType: 'ADMIN'
+        })
+
+        const newRefreshToken = signRefreshToken({
+            sub: admin.id,
+            userType: 'ADMIN',
+        })
+
+        const newRefreshTokenHash = hashToken(newRefreshToken);
+        const newRefreshTokenExpiresAt = new Date(
+            Date.now() + Number(process.env.REFRESH_TOKEN_EXPIRES_DAYS || 7) * 24 * 60 * 60 * 1000,
+        );
+
+        await prisma.$transaction([
+            prisma.refreshToken.update({
+                where: {
+                    tokenHash: currentTokenHash,
+                },
+                data: {
+                    revokedAt: new Date(),
+                    replacedByTokenHash: newRefreshTokenHash,
+                }
+            }),
+            prisma.refreshToken.create({
+                data: {
+                    tokenHash: newRefreshTokenHash,
+                    userType: 'ADMIN',
+                    adminUserId: admin.id,
+                    expiresAt: newRefreshTokenExpiresAt,
+                }
+            })
+        ]);
+
+        setAuthCookies(res, newAccessToken, newRefreshToken);
+
+        return res.status(200).json({
+            admin: {
+                id: admin.id,
+                email: admin.email,
+            }
+        })
+    } catch (error) {
+        console.error("Admin refresh error:", error);
+        return res.status(401).json({
+            error: "Invalid or expired refresh token",
+        });
+    }
 });
 
 adminAuthController.post("/logout", async (req, res) => {
