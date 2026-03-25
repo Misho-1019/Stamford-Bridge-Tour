@@ -3,6 +3,7 @@ import { prisma } from "../db";
 import { getActiveBlackoutByLondonDate, getLondonDateFromUtc } from "../lib/blackout";
 import { stripe } from "../lib/stripe";
 import { createHoldSchema } from "../schemas/hold";
+import { getZodErrorResponse } from "../lib/zod";
 
 const createHold = Router();
 
@@ -13,10 +14,7 @@ createHold.post('/', async (req, res) => {
         const parsedBody = createHoldSchema.safeParse(req.body)
 
         if (!parsedBody.success) {
-            return res.status(400).json({
-                error: 'Invalid request body',
-                details: parsedBody.error.flatten()
-            })
+            return res.status(400).json(getZodErrorResponse(parsedBody.error));
         }
 
         const { slotId, email, items } = parsedBody.data;
