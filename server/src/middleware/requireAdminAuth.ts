@@ -15,7 +15,7 @@ export function requireAdminAuth(req: Request, res: Response, next: NextFunction
             return res.status(403).json({ error: "Forbidden", });
         }
 
-        (req as any).admin = {
+        req.admin = {
             id: decoded.sub,
             email: decoded.email,
         };

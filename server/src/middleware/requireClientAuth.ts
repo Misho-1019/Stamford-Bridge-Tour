@@ -15,7 +15,7 @@ export function requireClientAuth(req: Request, res: Response, next: NextFunctio
             return res.status(403).json({ error: "Forbidden", });
         }
 
-        (req as any).client = {
+        req.client = {
             id: decoded.sub,
             email: decoded.email,
         }
