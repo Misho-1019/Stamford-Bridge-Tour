@@ -3,7 +3,6 @@ import { prisma } from "../db";
 import { comparePassword, hashPassword } from "../lib/password";
 import { hashToken, signAccessToken, signRefreshToken, verifyRefreshToken } from "../lib/auth";
 import { clearAuthCookies, setAuthCookies } from "../lib/cookies";
-import { email } from "zod";
 
 const adminAuthController = Router();
 
