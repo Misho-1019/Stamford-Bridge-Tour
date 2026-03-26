@@ -4,6 +4,7 @@ import { comparePassword, hashPassword } from "../lib/password";
 import { hashToken, signAccessToken, signRefreshToken, verifyRefreshToken } from "../lib/auth";
 import { clearAuthCookies, setAuthCookies } from "../lib/cookies";
 import { getRefreshTokenExpiresAt } from "../lib/authDates";
+import { createRefreshToken } from "../lib/refreshTokens";
 
 const clientAuthController = Router();
 
@@ -91,16 +92,10 @@ clientAuthController.post("/login", async (req, res) => {
             userType: 'CLIENT',
         })
 
-        const refreshTokenHash = hashToken(refreshToken);
-        const refreshTokenExpiresAt = getRefreshTokenExpiresAt();
-        
-        await prisma.refreshToken.create({
-            data: {
-                tokenHash: refreshTokenHash,
-                userType: 'CLIENT',
-                clientUserId: client.id,
-                expiresAt: refreshTokenExpiresAt,
-            },
+        await createRefreshToken({
+            token: refreshToken,
+            userType: 'CLIENT',
+            clientUserId: client.id,
         })
 
         setAuthCookies(res, accessToken, refreshToken);
