@@ -6,6 +6,7 @@ import createHold from "./controllers/holdController";
 import bookingController from "./controllers/bookingController";
 import blackoutRoutes from "./controllers/blackoutController";
 import adminAuthController from "./controllers/adminAuthController";
+import clientAuthController from "./controllers/clientAuthController";
 
 const routes = Router();
 
@@ -16,5 +17,6 @@ routes.use('/holds', createHold)
 routes.use('/bookings', bookingController)
 routes.use('/admin/blackouts', blackoutRoutes)
 routes.use('/auth/admin', adminAuthController)
+routes.use('/auth/client', clientAuthController)
 
 export default routes;
