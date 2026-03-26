@@ -13,7 +13,9 @@ import { requireAdminAuth } from "../middleware/requireAdminAuth";
 
 const adminController = Router();
 
-adminController.post('/slots/generate', requireAdminAuth, async (req, res) => {
+adminController.use(requireAdminAuth)
+
+adminController.post('/slots/generate', async (req, res) => {
     const parsedQuery = generateSlotsQuerySchema.safeParse(req.query)
 
     if (!parsedQuery.success) {
@@ -32,7 +34,7 @@ adminController.post('/slots/generate', requireAdminAuth, async (req, res) => {
     }
 })
 
-adminController.post('/blackouts/sync', requireAdminAuth, async (req, res) => {
+adminController.post('/blackouts/sync', async (req, res) => {
     try {
         const parsedQuery = syncBlackoutsQuerySchema.safeParse(req.query)
 
@@ -67,7 +69,7 @@ adminController.post('/blackouts/sync', requireAdminAuth, async (req, res) => {
     }
 })
 
-adminController.get('/bookings', requireAdminAuth, async (req, res) => {
+adminController.get('/bookings', async (req, res) => {
     try {
         const parsedQuery = getAdminBookingsQuerySchema.safeParse(req.query);
 
@@ -125,7 +127,7 @@ adminController.get('/bookings', requireAdminAuth, async (req, res) => {
     }
 })
 
-adminController.get('/bookings/stats', requireAdminAuth, async (req, res) => {
+adminController.get('/bookings/stats', async (req, res) => {
     try {
         const parsedQuery = adminDateRangeQuerySchema.safeParse(req.query);
 
@@ -221,7 +223,7 @@ adminController.get('/bookings/stats', requireAdminAuth, async (req, res) => {
     }
 })
 
-adminController.get('/bookings/revenue-series', requireAdminAuth, async (req, res) => {
+adminController.get('/bookings/revenue-series', async (req, res) => {
     try {
         const parsedQuery = adminDateRangeQuerySchema.safeParse(req.query);
 
@@ -325,7 +327,7 @@ adminController.get('/bookings/revenue-series', requireAdminAuth, async (req, re
     }
 })
 
-adminController.get('/bookings/ticket-type-stats', requireAdminAuth, async (req, res) => {
+adminController.get('/bookings/ticket-type-stats', async (req, res) => {
     try {
         const parsedQuery = adminDateRangeQuerySchema.safeParse(req.query);
 
@@ -437,7 +439,7 @@ adminController.get('/bookings/ticket-type-stats', requireAdminAuth, async (req,
     }
 })
 
-adminController.get('/bookings/slot-stats', requireAdminAuth, async (req, res) => {
+adminController.get('/bookings/slot-stats', async (req, res) => {
     try {
         const parsedQuery = adminDateRangeQuerySchema.safeParse(req.query);
 
@@ -537,7 +539,7 @@ adminController.get('/bookings/slot-stats', requireAdminAuth, async (req, res) =
     }
 })
 
-adminController.get('/bookings/:id', requireAdminAuth, async (req, res) => {
+adminController.get('/bookings/:id', async (req, res) => {
     try {
         const parsedParams = bookingIdParamsSchema.safeParse(req.params);
 
@@ -569,7 +571,7 @@ adminController.get('/bookings/:id', requireAdminAuth, async (req, res) => {
     }
 })
 
-adminController.patch('/bookings/:id/status', requireAdminAuth, async (req, res) => {
+adminController.patch('/bookings/:id/status', async (req, res) => {
     try {
         const parsedParams = bookingIdParamsSchema.safeParse(req.params);
 

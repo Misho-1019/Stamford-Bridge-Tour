@@ -1,15 +1,17 @@
 import { Router } from "express";
-import { requireAdmin } from "../middleware/admin";
 import { DateTime } from "luxon";
 import { prisma } from "../db";
 import { createBlackoutSchema } from "../schemas/blackout";
 import { getZodErrorResponse } from "../lib/zod";
+import { requireAdminAuth } from "../middleware/requireAdminAuth";
 
 const LONDON_TZ = 'Europe/London';
 
 const blackoutRoutes = Router();
 
-blackoutRoutes.get('/', requireAdmin, async (req, res) => {
+blackoutRoutes.use(requireAdminAuth)
+
+blackoutRoutes.get('/', async (req, res) => {
     try {
         const rawActive = req.query.active;
 
@@ -39,7 +41,7 @@ blackoutRoutes.get('/', requireAdmin, async (req, res) => {
     }
 })
 
-blackoutRoutes.post('/', requireAdmin, async (req, res) => {
+blackoutRoutes.post('/', async (req, res) => {
     try {
         const parsedBody = createBlackoutSchema.safeParse(req.body)
 
@@ -78,7 +80,7 @@ blackoutRoutes.post('/', requireAdmin, async (req, res) => {
     }
 })
 
-blackoutRoutes.delete('/:id', requireAdmin, async(req, res) => {
+blackoutRoutes.delete('/:id', async(req, res) => {
     try {
         const { id } = req.params;
         
