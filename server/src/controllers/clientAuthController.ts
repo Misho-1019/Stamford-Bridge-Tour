@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { prisma } from "../db";
 import { comparePassword, hashPassword } from "../lib/password";
-import { hashToken, signAccessToken, signRefreshToken } from "../lib/auth";
+import { hashToken, signAccessToken, signRefreshToken, verifyRefreshToken } from "../lib/auth";
 import { setAuthCookies } from "../lib/cookies";
 
 const clientAuthController = Router();
@@ -121,7 +121,96 @@ clientAuthController.post("/login", async (req, res) => {
 });
 
 clientAuthController.post("/refresh", async (req, res) => {
-  return res.status(501).json({ message: "Client refresh not implemented yet" });
+    try {
+        const refreshToken = req.cookies?.refreshToken as string | undefined;
+
+        if (!refreshToken) {
+            return res.status(401).json({ error: "Missing refresh token", });
+        }
+
+        const decoded = verifyRefreshToken(refreshToken);
+
+        if (decoded.userType !== 'CLIENT') {
+            return res.status(401).json({ error: "Invalid refresh token", });
+        }
+
+        const currentTokenHash = hashToken(refreshToken);
+
+        const existingToken = await prisma.refreshToken.findUnique({
+            where: {
+                tokenHash: currentTokenHash,
+            },
+            include: {
+                clientUser: true,
+            }
+        })
+
+        if (!existingToken) {
+            return res.status(401).json({ error: "Refresh token not found", });
+        }
+
+        if (existingToken.userType !== 'CLIENT' || !existingToken.clientUser) {
+            return res.status(401).json({ error: "Invalid refresh token", });
+        }
+
+        if (existingToken.revokedAt) {
+            return res.status(401).json({ error: "Refresh token has been revoked", });
+        }
+
+        if (existingToken.expiresAt <= new Date()) {
+            return res.status(401).json({ error: "Refresh token has expired", });
+        }
+
+        const client = existingToken.clientUser;
+
+        const newAccessToken = signAccessToken({
+            sub: client.id,
+            email: client.email,
+            userType: 'CLIENT',
+        })
+        
+        const newRefreshToken = signRefreshToken({
+            sub: client.id,
+            userType: 'CLIENT',
+        })
+
+        const newRefreshTokenHash = hashToken(newRefreshToken);
+        const newRefreshTokenExpiresAt = new Date(
+            Date.now() + Number(process.env.REFRESH_TOKEN_EXPIRES_DAYS || 7) * 24 * 60 * 60 * 1000,
+        )
+
+        await prisma.$transaction([
+            prisma.refreshToken.update({
+                where: { tokenHash: currentTokenHash },
+                data: {
+                    revokedAt: new Date(),
+                    replacedByTokenHash: newRefreshTokenHash,
+                }
+            }),
+            prisma.refreshToken.create({
+                data: {
+                    tokenHash: newRefreshTokenHash,
+                    userType: 'CLIENT',
+                    clientUserId: client.id,
+                    expiresAt: newRefreshTokenExpiresAt,
+                }
+            })
+        ]);
+
+        setAuthCookies(res, newAccessToken, newRefreshToken);
+
+        return res.status(200).json({
+            client: {
+                id: client.id,
+                email: client.email,
+            },
+        });
+    } catch (error) {
+        console.error("Client refresh error:", error);
+        return res.status(401).json({
+            error: "Invalid or expired refresh token",
+        });
+    }
 });
 
 clientAuthController.post("/logout", async (req, res) => {
