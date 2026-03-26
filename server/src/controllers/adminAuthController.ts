@@ -5,6 +5,7 @@ import { hashToken, signAccessToken, signRefreshToken, verifyRefreshToken } from
 import { clearAuthCookies, setAuthCookies } from "../lib/cookies";
 import { getRefreshTokenExpiresAt } from "../lib/authDates";
 import { createRefreshToken } from "../lib/refreshTokens";
+import { rotateRefreshToken } from "../lib/refreshTokenRotation";
 
 const adminAuthController = Router();
 
@@ -178,28 +179,12 @@ adminAuthController.post("/refresh", async (req, res) => {
             userType: 'ADMIN',
         })
 
-        const newRefreshTokenHash = hashToken(newRefreshToken);
-        const newRefreshTokenExpiresAt = getRefreshTokenExpiresAt();
-
-        await prisma.$transaction([
-            prisma.refreshToken.update({
-                where: {
-                    tokenHash: currentTokenHash,
-                },
-                data: {
-                    revokedAt: new Date(),
-                    replacedByTokenHash: newRefreshTokenHash,
-                }
-            }),
-            prisma.refreshToken.create({
-                data: {
-                    tokenHash: newRefreshTokenHash,
-                    userType: 'ADMIN',
-                    adminUserId: admin.id,
-                    expiresAt: newRefreshTokenExpiresAt,
-                }
-            })
-        ]);
+        await rotateRefreshToken({
+            currentToken: refreshToken,
+            newToken: newRefreshToken,
+            userType: 'ADMIN',
+            adminUserId: admin.id,
+        })
 
         setAuthCookies(res, newAccessToken, newRefreshToken);
 

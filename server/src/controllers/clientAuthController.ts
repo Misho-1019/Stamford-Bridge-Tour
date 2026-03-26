@@ -5,6 +5,7 @@ import { hashToken, signAccessToken, signRefreshToken, verifyRefreshToken } from
 import { clearAuthCookies, setAuthCookies } from "../lib/cookies";
 import { getRefreshTokenExpiresAt } from "../lib/authDates";
 import { createRefreshToken } from "../lib/refreshTokens";
+import { rotateRefreshToken } from "../lib/refreshTokenRotation";
 
 const clientAuthController = Router();
 
@@ -168,26 +169,12 @@ clientAuthController.post("/refresh", async (req, res) => {
             userType: 'CLIENT',
         })
 
-        const newRefreshTokenHash = hashToken(newRefreshToken);
-        const newRefreshTokenExpiresAt = getRefreshTokenExpiresAt();
-
-        await prisma.$transaction([
-            prisma.refreshToken.update({
-                where: { tokenHash: currentTokenHash },
-                data: {
-                    revokedAt: new Date(),
-                    replacedByTokenHash: newRefreshTokenHash,
-                }
-            }),
-            prisma.refreshToken.create({
-                data: {
-                    tokenHash: newRefreshTokenHash,
-                    userType: 'CLIENT',
-                    clientUserId: client.id,
-                    expiresAt: newRefreshTokenExpiresAt,
-                }
-            })
-        ]);
+        await rotateRefreshToken({
+            currentToken: refreshToken,
+            newToken: newRefreshToken,
+            userType: 'CLIENT',
+            clientUserId: client.id,
+        })
 
         setAuthCookies(res, newAccessToken, newRefreshToken);
 
