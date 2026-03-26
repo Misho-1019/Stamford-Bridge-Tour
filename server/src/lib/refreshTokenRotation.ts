@@ -14,6 +14,36 @@ export async function rotateRefreshToken(params: {
     const currentTokenHash = hashToken(params.currentToken);
     const newTokenHash = hashToken(params.newToken);
 
+    if (params.userType === 'ADMIN') {
+        if (!params.adminUserId) {
+            throw new Error("adminUserId is required for ADMIN refresh tokens");
+        }
+
+        await prisma.$transaction([
+            prisma.refreshToken.update({
+                where: { tokenHash: currentTokenHash },
+                data: {
+                    revokedAt: new Date(),
+                    replacedByTokenHash: newTokenHash,
+                }
+            }),
+            prisma.refreshToken.create({
+                data: {
+                    tokenHash: newTokenHash,
+                    userType: 'ADMIN',
+                    adminUserId: params.adminUserId,
+                    expiresAt: getRefreshTokenExpiresAt(),
+                }
+            })
+        ])
+
+        return;
+    }
+
+    if (!params.clientUserId) {
+        throw new Error("clientUserId is required for CLIENT refresh tokens");
+    }
+
     await prisma.$transaction([
         prisma.refreshToken.update({
             where: { tokenHash: currentTokenHash },
@@ -25,8 +55,7 @@ export async function rotateRefreshToken(params: {
         prisma.refreshToken.create({
             data: {
                 tokenHash: newTokenHash,
-                userType: params.userType,
-                adminUserId: params.adminUserId,
+                userType: 'CLIENT',
                 clientUserId: params.clientUserId,
                 expiresAt: getRefreshTokenExpiresAt(),
             }

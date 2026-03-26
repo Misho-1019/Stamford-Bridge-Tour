@@ -12,12 +12,30 @@ export async function createRefreshToken(params: {
 }) {
     const tokenHash = hashToken(params.token);
 
+    if (params.userType === 'ADMIN') {
+        if (!params.adminUserId) {
+            throw new Error("adminUserId is required for ADMIN refresh tokens");
+        }
+
+        return prisma.refreshToken.create({
+            data: {
+                tokenHash,
+                userType: 'ADMIN',
+                adminUserId: params.adminUserId,
+                expiresAt: getRefreshTokenExpiresAt(),
+            }
+        })
+    }
+
+    if (!params.clientUserId) {
+        throw new Error("clientUserId is required for CLIENT refresh tokens");
+    }
+
     return prisma.refreshToken.create({
         data: {
             tokenHash,
-            userType: params.userType,
-            adminUserId: params.adminUserId,
-            clientUserId: params.adminUserId,
+            userType: 'CLIENT',
+            clientUserId: params.clientUserId,
             expiresAt: getRefreshTokenExpiresAt(),
         }
     })
