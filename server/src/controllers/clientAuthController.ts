@@ -3,6 +3,7 @@ import { prisma } from "../db";
 import { comparePassword, hashPassword } from "../lib/password";
 import { hashToken, signAccessToken, signRefreshToken, verifyRefreshToken } from "../lib/auth";
 import { clearAuthCookies, setAuthCookies } from "../lib/cookies";
+import { getRefreshTokenExpiresAt } from "../lib/authDates";
 
 const clientAuthController = Router();
 
@@ -91,9 +92,7 @@ clientAuthController.post("/login", async (req, res) => {
         })
 
         const refreshTokenHash = hashToken(refreshToken);
-        const refreshTokenExpiresAt = new Date(
-            Date.now() + Number(process.env.REFRESH_TOKEN_EXPIRES_DAYS || 7) * 24 * 60 * 60 * 1000,
-        )
+        const refreshTokenExpiresAt = getRefreshTokenExpiresAt();
         
         await prisma.refreshToken.create({
             data: {
@@ -175,9 +174,7 @@ clientAuthController.post("/refresh", async (req, res) => {
         })
 
         const newRefreshTokenHash = hashToken(newRefreshToken);
-        const newRefreshTokenExpiresAt = new Date(
-            Date.now() + Number(process.env.REFRESH_TOKEN_EXPIRES_DAYS || 7) * 24 * 60 * 60 * 1000,
-        )
+        const newRefreshTokenExpiresAt = getRefreshTokenExpiresAt();
 
         await prisma.$transaction([
             prisma.refreshToken.update({
