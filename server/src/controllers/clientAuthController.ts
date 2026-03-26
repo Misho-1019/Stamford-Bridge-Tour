@@ -1,6 +1,8 @@
 import { Router } from "express";
 import { prisma } from "../db";
-import { hashPassword } from "../lib/password";
+import { comparePassword, hashPassword } from "../lib/password";
+import { hashToken, signAccessToken, signRefreshToken } from "../lib/auth";
+import { setAuthCookies } from "../lib/cookies";
 
 const clientAuthController = Router();
 
@@ -51,7 +53,71 @@ clientAuthController.post("/register", async (req, res) => {
 });
 
 clientAuthController.post("/login", async (req, res) => {
-  return res.status(501).json({ message: "Client login not implemented yet" });
+    try {
+        const { email, password } = req.body as {
+            email?: string;
+            password?: string;
+        }
+
+        if (!email || !password) {
+            return res.status(400).json({ error: "Email and password are required", });
+        }
+
+        const normalizedEmail = email.trim().toLowerCase();
+
+        const client = await prisma.clientUser.findUnique({
+            where: { email: normalizedEmail },
+        })
+
+        if (!client) {
+            return res.status(401).json({ error: "Invalid email or password", });
+        }
+
+        const isPasswordValid = await comparePassword(password, client.passwordHash)
+
+        if (!isPasswordValid) {
+            return res.status(401).json({ error: "Invalid email or password", });
+        }
+
+        const accessToken = signAccessToken({
+            sub: client.id,
+            email: client.email,
+            userType: 'CLIENT',
+        })
+
+        const refreshToken = signRefreshToken({
+            sub: client.id,
+            userType: 'CLIENT',
+        })
+
+        const refreshTokenHash = hashToken(refreshToken);
+        const refreshTokenExpiresAt = new Date(
+            Date.now() + Number(process.env.REFRESH_TOKEN_EXPIRES_DAYS || 7) * 24 * 60 * 60 * 1000,
+        )
+        
+        await prisma.refreshToken.create({
+            data: {
+                tokenHash: refreshTokenHash,
+                userType: 'CLIENT',
+                clientUserId: client.id,
+                expiresAt: refreshTokenExpiresAt,
+            },
+        })
+
+        setAuthCookies(res, accessToken, refreshToken);
+
+        return res.status(200).json({
+            client: {
+                id: client.id,
+                email: client.email,
+            },
+        });
+    } catch (error) {
+        console.error("Client login error:", error);
+        return res.status(500).json({
+            error: "Failed to login client",
+        });
+    }
 });
 
 clientAuthController.post("/refresh", async (req, res) => {
