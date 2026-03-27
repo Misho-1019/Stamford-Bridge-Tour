@@ -82,6 +82,9 @@ model Booking {
   slot                  TourSlot      @relation(fields: [slotId], references: [id], onDelete: Cascade)
 
   email                 String
+  clientUserId          String?
+  clientUser            ClientUser?   @relation(fields: [clientUserId], references: [id], onDelete: SetNull)
+
   items                 Json
   qtyTotal              Int
   amountTotalCents      Int
@@ -138,6 +141,7 @@ model ClientUser {
   updatedAt    DateTime            @updatedAt
 
   refreshTokens RefreshToken[]
+  bookings      Booking[]
 }
 
 model RefreshToken {

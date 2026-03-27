@@ -7,6 +7,7 @@ export function setAuthCookies(res: Response, accessToken: string, refreshToken:
         httpOnly: true,
         secure: isProduction,
         sameSite: 'lax',
+        path: '/',
         maxAge: 15 * 60 * 1000,
     })
     
@@ -14,6 +15,7 @@ export function setAuthCookies(res: Response, accessToken: string, refreshToken:
         httpOnly: true,
         secure: isProduction,
         sameSite: 'lax',
+        path: '/',
         maxAge: 7 * 24 * 60 * 60 * 1000,
     })
 }
@@ -23,11 +25,13 @@ export function clearAuthCookies(res: Response) {
         httpOnly: true,
         secure: isProduction,
         sameSite: 'lax',
+        path: '/',
     })
 
     res.clearCookie('refreshToken', {
         httpOnly: true,
         secure: isProduction,
         sameSite: 'lax',
+        path: '/',
     })
 }
