@@ -4,6 +4,7 @@ import { getActiveBlackoutByLondonDate, getLondonDateFromUtc } from "../lib/blac
 import { stripe } from "../lib/stripe";
 import { createHoldSchema } from "../schemas/hold";
 import { getZodErrorResponse } from "../lib/zod";
+import { verifyAccessToken } from "../lib/auth";
 
 const createHold = Router();
 
@@ -18,6 +19,21 @@ createHold.post('/', async (req, res) => {
         }
 
         const { slotId, email, items } = parsedBody.data;
+
+        let clientId: string | null = null;
+
+        try {
+            const accessToken = req.cookies?.accessToken as string | undefined;
+
+            if (accessToken) {
+                const decoded = verifyAccessToken(accessToken);
+
+                if (decoded.userType === 'CLIENT') {
+                    clientId = decoded.sub;
+                }
+            }
+        } catch (error) {
+        }
 
         const ticketTypes = await prisma.ticketType.findMany({
             where: { isActive: true },
@@ -75,7 +91,7 @@ createHold.post('/', async (req, res) => {
 
             await tx.$queryRaw`
                 SELECT id
-                FROM 'TourSlot'
+                FROM "TourSlot"
                 WHERE id = ${slotId}
                 FOR UPDATE
             `
@@ -148,6 +164,7 @@ createHold.post('/', async (req, res) => {
                     holdId: hold.id,
                     slotId: hold.slotId,
                     email,
+                    clientUserId: clientId || '',
                 },
                 customer_email: email,
                 success_url: `${process.env.APP_BASE_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,

@@ -88,10 +88,13 @@ webhookController.post('/stripe', async (req, res) => {
                     return;
                 }
 
+                const clientUserId = session.metadata?.clientUserId && session.metadata.clientUserId.trim() !== '' ? session.metadata.clientUserId : null;
+
                 await tx.booking.create({
                     data: {
                         slotId: currentHold.slotId,
                         email: currentHold.email,
+                        clientUserId,
                         items: currentHold.items as Prisma.InputJsonValue,
                         qtyTotal: currentHold.qtyTotal,
                         amountTotalCents: currentHold.amountTotalCents,
