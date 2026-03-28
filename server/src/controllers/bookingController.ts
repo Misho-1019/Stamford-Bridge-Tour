@@ -52,7 +52,22 @@ bookingController.get('/my-bookings', requireClientAuth, async (req, res) => {
             },
             orderBy: {
                 createdAt: 'desc',
-            }
+            },
+            select: {
+                id: true,
+                email: true,
+                qtyTotal: true,
+                amountTotalCents: true,
+                status: true,
+                createdAt: true,
+                slot: {
+                    select: {
+                        id: true,
+                        startAt: true,
+                        endAt: true,
+                    }
+                },
+            },
         })
 
         return res.status(200).json({ bookings })
@@ -61,6 +76,51 @@ bookingController.get('/my-bookings', requireClientAuth, async (req, res) => {
         return res.status(500).json({
             error: "Failed to fetch bookings",
         });
+    }
+})
+
+bookingController.get('/my-bookings/:id', requireClientAuth, async (req, res) => {
+    try {
+        const clientId = req.client?.id;
+        const bookingId = String(req.params.id);
+
+        if (!clientId) {
+            return res.status(401).json({ error: "Unauthorized", });
+        }
+
+        const booking = await prisma.booking.findFirst({
+            where: {
+                id: bookingId,
+                clientUserId: clientId,
+            },
+            select: {
+                id: true,
+                email: true,
+                items: true,
+                qtyTotal: true,
+                amountTotalCents: true,
+                status: true,
+                createdAt: true,
+                refundedAt: true,
+                refundReason: true,
+                slot: {
+                    select: {
+                        id: true,
+                        startAt: true,
+                        endAt: true,
+                    }
+                },
+            }
+        })
+
+        if (!booking) {
+            return res.status(401).json({ error: "Unauthorized", });
+        }
+
+        return res.status(200).json({ booking })
+    } catch (error) {
+        console.error("Get client booking details error:", error);
+        return res.status(500).json({ error: "Failed to fetch booking", });
     }
 })
 
