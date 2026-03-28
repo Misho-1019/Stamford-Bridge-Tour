@@ -117,7 +117,41 @@ bookingController.get('/my-bookings/:id', requireClientAuth, async (req, res) =>
             return res.status(401).json({ error: "Unauthorized", });
         }
 
-        return res.status(200).json({ booking })
+        if (!booking.items || !Array.isArray(booking.items)) {
+            return res.status(500).json({ error: 'Invalid booking items format' })
+        }
+
+        const items = booking.items as Array<{
+            ticketTypeId: string;
+            qty: number;
+            unitPriceCents: number;
+        }>
+
+        const ticketTypeIds = items.map(
+            (item: any) => item.ticketTypeId
+        )
+
+        const ticketTypes = await prisma.ticketType.findMany({
+            where: {
+                id: {
+                    in: ticketTypeIds,
+                }
+            }
+        })
+
+        const ticketMap = new Map(ticketTypes.map((t) => [t.id, t.name]))
+
+        const itemsWithNames = items.map((item: any) => ({
+            ...item,
+            ticketName: ticketMap.get(item.ticketTypeId) || 'Unknown',
+        }))
+
+        return res.status(200).json({
+            booking: {
+                ...booking,
+                items: itemsWithNames,
+            }  
+        })
     } catch (error) {
         console.error("Get client booking details error:", error);
         return res.status(500).json({ error: "Failed to fetch booking", });
