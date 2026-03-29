@@ -6,7 +6,7 @@ import { requireClientAuth } from "../middleware/requireClientAuth";
 
 const bookingController = Router();
 
-bookingController.get('/by-session/:sessionId', async (req, res) => {
+bookingController.get("/by-session/:sessionId", async (req, res) => {
     try {
         const parsedParams = bookingSessionParamsSchema.safeParse(req.params);
 
@@ -24,26 +24,26 @@ bookingController.get('/by-session/:sessionId', async (req, res) => {
 
         if (!booking) {
             return res.json({
-                status: 'PENDING',
+                status: "PENDING",
             })
         }
 
         return res.json({
-            status: 'CONFIRMED',
+            status: "CONFIRMED",
             booking,
-        })
+        });
     } catch (error) {
         console.error("Get booking by session error:", error);
-        return res.status(500).json({ error: 'Failed to fetch booking status' })
+        return res.status(500).json({ error: "Failed to fetch booking status" });
     }
-})
+});
 
-bookingController.get('/my-bookings', requireClientAuth, async (req, res) => {
+bookingController.get("/my-bookings", requireClientAuth, async (req, res) => {
     try {
         const clientId = req.client?.id;
 
         if (!clientId) {
-            return res.status(401).json({ error: 'Unauthorized' })
+            return res.status(401).json({ error: "Unauthorized" });
         }
 
         const bookings = await prisma.booking.findMany({
@@ -51,11 +51,12 @@ bookingController.get('/my-bookings', requireClientAuth, async (req, res) => {
                 clientUserId: clientId,
             },
             orderBy: {
-                createdAt: 'desc',
+                createdAt: "desc",
             },
             select: {
                 id: true,
                 email: true,
+                items: true,
                 qtyTotal: true,
                 amountTotalCents: true,
                 status: true,
@@ -65,27 +66,77 @@ bookingController.get('/my-bookings', requireClientAuth, async (req, res) => {
                         id: true,
                         startAt: true,
                         endAt: true,
-                    }
+                    },
                 },
             },
-        })
+        });
 
-        return res.status(200).json({ bookings })
+        const allTicketTypeIds = new Set<string>();
+
+        for (const booking of bookings) {
+            if (Array.isArray(booking.items)) {
+                for (const item of booking.items as Array<{
+                    ticketTypeId?: string;
+                }>) {
+                    if (item.ticketTypeId) {
+                        allTicketTypeIds.add(item.ticketTypeId);
+                    }
+                }
+            }
+        }
+
+        const ticketTypes = await prisma.ticketType.findMany({
+            where: {
+                id: {
+                    in: Array.from(allTicketTypeIds),
+                },
+            },
+        });
+
+        const ticketMap = new Map(ticketTypes.map((ticket) => [ticket.id, ticket.name]));
+
+        const formattedBookings = bookings.map((booking) => {
+            let ticketSummary: string[] = [];
+
+            if (Array.isArray(booking.items)) {
+                ticketSummary = (booking.items as Array<{
+                    ticketTypeId: string;
+                    qty: number;
+                    unitPriceCents: number;
+                }>).map((item) => {
+                    const name = ticketMap.get(item.ticketTypeId) || "Ticket";
+                    return `${name} × ${item.qty}`;
+                });
+            }
+
+            return {
+                ...booking,
+                ticketSummary,
+            };
+        });
+
+        return res.status(200).json({
+            bookings: formattedBookings,
+        });
     } catch (error) {
         console.error("Get my bookings error:", error);
         return res.status(500).json({
             error: "Failed to fetch bookings",
         });
     }
-})
+});
 
-bookingController.get('/my-bookings/:id', requireClientAuth, async (req, res) => {
+bookingController.get("/my-bookings/:id", requireClientAuth, async (req, res) => {
     try {
         const clientId = req.client?.id;
-        const bookingId = String(req.params.id);
+        const bookingId = req.params.id;
 
         if (!clientId) {
-            return res.status(401).json({ error: "Unauthorized", });
+            return res.status(401).json({ error: "Unauthorized" });
+        }
+
+        if (!bookingId || Array.isArray(bookingId)) {
+            return res.status(400).json({ error: "Invalid booking id" });
         }
 
         const booking = await prisma.booking.findFirst({
@@ -108,54 +159,52 @@ bookingController.get('/my-bookings/:id', requireClientAuth, async (req, res) =>
                         id: true,
                         startAt: true,
                         endAt: true,
-                    }
+                    },
                 },
-            }
-        })
+            },
+        });
 
         if (!booking) {
-            return res.status(401).json({ error: "Unauthorized", });
+            return res.status(404).json({ error: "Booking not found" });
         }
 
         if (!booking.items || !Array.isArray(booking.items)) {
-            return res.status(500).json({ error: 'Invalid booking items format' })
+            return res.status(500).json({ error: "Invalid booking items format" });
         }
 
         const items = booking.items as Array<{
             ticketTypeId: string;
             qty: number;
             unitPriceCents: number;
-        }>
+        }>;
 
-        const ticketTypeIds = items.map(
-            (item: any) => item.ticketTypeId
-        )
+        const ticketTypeIds = items.map((item) => item.ticketTypeId);
 
         const ticketTypes = await prisma.ticketType.findMany({
             where: {
                 id: {
                     in: ticketTypeIds,
-                }
-            }
-        })
+                },
+            },
+        });
 
-        const ticketMap = new Map(ticketTypes.map((t) => [t.id, t.name]))
+        const ticketMap = new Map(ticketTypes.map((ticket) => [ticket.id, ticket.name]));
 
-        const itemsWithNames = items.map((item: any) => ({
+        const itemsWithNames = items.map((item) => ({
             ...item,
-            ticketName: ticketMap.get(item.ticketTypeId) || 'Unknown',
-        }))
+            ticketName: ticketMap.get(item.ticketTypeId) || "Unknown",
+        }));
 
         return res.status(200).json({
             booking: {
                 ...booking,
                 items: itemsWithNames,
-            }  
-        })
+            },
+        });
     } catch (error) {
         console.error("Get client booking details error:", error);
-        return res.status(500).json({ error: "Failed to fetch booking", });
+        return res.status(500).json({ error: "Failed to fetch booking" });
     }
-})
+});
 
 export default bookingController;
