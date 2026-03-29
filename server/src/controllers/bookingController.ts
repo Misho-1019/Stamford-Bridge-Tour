@@ -3,6 +3,7 @@ import { prisma } from "../db";
 import { bookingSessionParamsSchema } from "../schemas/booking";
 import { getZodErrorResponse } from "../lib/zod";
 import { requireClientAuth } from "../middleware/requireClientAuth";
+import { bookingIdParamsSchema } from "../schemas/admin";
 
 const bookingController = Router();
 
@@ -243,15 +244,18 @@ bookingController.get("/my-bookings/:id", requireClientAuth, async (req, res) =>
 bookingController.post('/my-bookings/:id/cancel', requireClientAuth, async (req, res) => {
     try {
         const clientId = req.client?.id;
-        const bookingId = req.params.id;
-
+        
         if (!clientId) {
             return res.status(401).json({ error: "Unauthorized" });
         }
 
-        if (!bookingId || Array.isArray(bookingId)) {
-            return res.status(400).json({ error: "Invalid booking id" });
+        const parsedParams = bookingIdParamsSchema.safeParse(req.params);
+
+        if (!parsedParams.success) {
+            return res.status(400).json(getZodErrorResponse(parsedParams.error));
         }
+
+        const {id: bookingId} = parsedParams.data;
 
         const booking = await prisma.booking.findFirst({
             where: {
