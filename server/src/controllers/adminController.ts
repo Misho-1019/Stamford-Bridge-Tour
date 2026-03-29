@@ -5,9 +5,9 @@ import { syncBlackouts } from "../lib/syncBlackouts";
 import { RealFixtureProvider } from "../providers/realFixtureProvider";
 import { prisma } from "../db";
 import { BookingStatus, Prisma } from "@prisma/client";
-import { BookingRefundError, refundBookingById } from "../services/bookingRefundService";
+import { BookingRefundError } from "../services/bookingRefundService";
 import { DateTime } from "luxon";
-import { adminDateRangeQuerySchema, bookingIdParamsSchema, generateSlotsQuerySchema, getAdminBookingsQuerySchema, syncBlackoutsQuerySchema, updateBookingStatusSchema } from "../schemas/admin";
+import { adminDateRangeQuerySchema, bookingIdParamsSchema, generateSlotsQuerySchema, getAdminBookingsQuerySchema, refundBookingSchema, syncBlackoutsQuerySchema, updateBookingStatusSchema } from "../schemas/admin";
 import { getZodErrorResponse } from "../lib/zod";
 import { requireAdminAuth } from "../middleware/requireAdminAuth";
 import { stripe } from "../lib/stripe";
@@ -641,12 +641,20 @@ adminController.patch('/bookings/:id/status', async (req, res) => {
 
 adminController.post('/bookings/:id/refund', async (req, res) => {
     try {
-        const bookingId = req.params.id;
-        const { reason } = req.body as { reason?: string }; 
+        const parsedParams = bookingIdParamsSchema.safeParse(req.params);
 
-        if (!bookingId || Array.isArray(bookingId)) {
-            return res.status(400).json({ error: "Invalid booking id" });
+        if (!parsedParams.success) {
+            return res.status(400).json(getZodErrorResponse(parsedParams.error));
         }
+
+        const parsedBody = refundBookingSchema.safeParse(req.body);
+
+        if (!parsedBody.success) {
+            return res.status(400).json(getZodErrorResponse(parsedBody.error))
+        }
+
+        const { id: bookingId } = parsedParams.data;
+        const { reason } = parsedBody.data;
 
         const booking = await prisma.booking.findUnique({
             where: {
