@@ -654,6 +654,7 @@ adminController.patch('/bookings/:id/status', async (req, res) => {
 adminController.post('/bookings/:id/refund', async (req, res) => {
     try {
         const bookingId = req.params.id;
+        const { reason } = req.body as { reason?: string }; 
 
         if (!bookingId || Array.isArray(bookingId)) {
             return res.status(400).json({ error: "Invalid booking id" });
@@ -669,6 +670,10 @@ adminController.post('/bookings/:id/refund', async (req, res) => {
             return res.status(404).json({ error: "Booking not found" });
         }
 
+        if (booking.status === 'REFUNDED') {
+            return res.status(400).json({ error: 'Booking is already refunded' })
+        }
+
         if (booking.status !== 'CONFIRMED') {
             return res.status(400).json({ error: "Only confirmed bookings can be refunded" });
         }
@@ -677,14 +682,28 @@ adminController.post('/bookings/:id/refund', async (req, res) => {
             return res.status(400).json({ error: "Booking has no Stripe payment intent" });
         }
 
+        if (booking.stripeRefundId) {
+            return res.status(400).json({ error: 'Refund already exists for this booking' })
+        }
+
         const refund = await stripe.refunds.create({
             payment_intent: booking.stripePaymentIntentId,
+        })
+
+        await prisma.booking.update({
+            where: { id: booking.id },
+            data: {
+                refundReason: reason || null,
+            }
         })
 
         return res.status(200).json({
             message: 'Refund initiated successfully',
             refundId: refund.id,
             status: refund.status,
+            metadata: {
+                reason: reason || '',
+            }
         })
     } catch (error) {
         console.error("Admin refund booking error:", error);
