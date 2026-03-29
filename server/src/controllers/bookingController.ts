@@ -240,4 +240,46 @@ bookingController.get("/my-bookings/:id", requireClientAuth, async (req, res) =>
     }
 });
 
+bookingController.post('/my-bookings/:id/cancel', requireClientAuth, async (req, res) => {
+    try {
+        const clientId = req.client?.id;
+        const bookingId = req.params.id;
+
+        if (!clientId) {
+            return res.status(401).json({ error: "Unauthorized" });
+        }
+
+        if (!bookingId || Array.isArray(bookingId)) {
+            return res.status(400).json({ error: "Invalid booking id" });
+        }
+
+        const booking = await prisma.booking.findFirst({
+            where: {
+                id: bookingId,
+                clientUserId: clientId,
+            },
+        })
+
+        if (!booking) {
+            return res.status(404).json({ error: "Booking not found" });
+        }
+
+        if (booking.status !== 'CONFIRMED') {
+            return res.status(400).json({ error: "Only confirmed bookings can be canceled" });
+        }
+
+        await prisma.booking.update({
+            where: { id: bookingId },
+            data: {
+                status: 'CANCELLED',
+            }
+        })
+
+        return res.status(200).json({ message: 'Booking canceled successfully' });
+    } catch (error) {
+        console.error("Cancel booking error:", error);
+        return res.status(500).json({ error: "Failed to cancel booking" })
+    }
+})
+
 export default bookingController;
