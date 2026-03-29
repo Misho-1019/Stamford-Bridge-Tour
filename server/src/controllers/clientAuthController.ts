@@ -6,6 +6,7 @@ import { clearAuthCookies, setAuthCookies } from "../lib/cookies";
 import { getRefreshTokenExpiresAt } from "../lib/authDates";
 import { createRefreshToken } from "../lib/refreshTokens";
 import { rotateRefreshToken } from "../lib/refreshTokenRotation";
+import { revokeUserRefreshTokens } from "../lib/revokeUserRefreshTokens";
 
 const clientAuthController = Router();
 
@@ -149,7 +150,14 @@ clientAuthController.post("/refresh", async (req, res) => {
         }
 
         if (existingToken.revokedAt) {
-            return res.status(401).json({ error: "Refresh token has been revoked", });
+            await revokeUserRefreshTokens({
+                userType: 'CLIENT',
+                clientUserId: existingToken.clientUserId ?? undefined,
+            })
+
+            clearAuthCookies(res);
+            
+            return res.status(401).json({ error: "Invalid or expired refresh token", });
         }
 
         if (existingToken.expiresAt <= new Date()) {

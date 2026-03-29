@@ -5,6 +5,7 @@ import { hashToken, signAccessToken, signRefreshToken, verifyRefreshToken } from
 import { clearAuthCookies, setAuthCookies } from "../lib/cookies";
 import { createRefreshToken } from "../lib/refreshTokens";
 import { rotateRefreshToken } from "../lib/refreshTokenRotation";
+import { revokeUserRefreshTokens } from "../lib/revokeUserRefreshTokens";
 
 const adminAuthController = Router();
 
@@ -162,7 +163,14 @@ adminAuthController.post("/refresh", async (req, res) => {
         }
 
         if (existingToken.expiresAt <= new Date()) {
-            return res.status(401).json({ error: "Refresh token has expired", })
+            await revokeUserRefreshTokens({
+                userType: 'ADMIN',
+                adminUserId: existingToken.adminUserId ?? undefined,
+            })
+
+            clearAuthCookies(res);
+
+            return res.status(401).json({ error: "Invalid or expired refresh token", })
         }
 
         const admin = existingToken.adminUser;
