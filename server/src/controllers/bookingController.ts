@@ -74,9 +74,18 @@ bookingController.get("/my-bookings", requireClientAuth, async (req, res) => {
                     }]
                 })
             },
-            orderBy: {
-                createdAt: "desc",
-            },
+            orderBy:
+                type === 'upcoming' 
+                    ? {
+                        slot: {
+                            startAt: 'asc',
+                        },
+                    }
+                    : {
+                        slot: {
+                            startAt: 'desc',
+                        }
+                    },
             select: {
                 id: true,
                 email: true,
