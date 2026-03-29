@@ -41,14 +41,38 @@ bookingController.get("/by-session/:sessionId", async (req, res) => {
 bookingController.get("/my-bookings", requireClientAuth, async (req, res) => {
     try {
         const clientId = req.client?.id;
+        const type = req.query.type as string | undefined;
 
         if (!clientId) {
             return res.status(401).json({ error: "Unauthorized" });
         }
 
+        const now = new Date();
+
         const bookings = await prisma.booking.findMany({
             where: {
                 clientUserId: clientId,
+                ...(type === 'upcoming' && {
+                    status: 'CONFIRMED',
+                    slot: {
+                        startAt: {
+                            gte: now,
+                        }
+                    }
+                }),
+                ...(type === 'past' && {
+                    OR: [{
+                        slot: {
+                            startAt: {
+                                lt: now,
+                            }
+                        }
+                    }, {
+                        status: {
+                            in: ['CANCELLED', 'REFUNDED'],
+                        }
+                    }]
+                })
             },
             orderBy: {
                 createdAt: "desc",
