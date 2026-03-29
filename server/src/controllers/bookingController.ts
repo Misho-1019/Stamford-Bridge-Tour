@@ -258,10 +258,17 @@ bookingController.post('/my-bookings/:id/cancel', requireClientAuth, async (req,
                 id: bookingId,
                 clientUserId: clientId,
             },
+            include: {
+                slot: true,
+            }
         })
 
         if (!booking) {
             return res.status(404).json({ error: "Booking not found" });
+        }
+
+        if (booking.slot.startAt <= new Date()) {
+            return res.status(400).json({ error: "Past bookings cannot be cancelled" });
         }
 
         if (booking.status !== 'CONFIRMED') {
