@@ -10,6 +10,7 @@ import { DateTime } from "luxon";
 import { adminDateRangeQuerySchema, bookingIdParamsSchema, generateSlotsQuerySchema, getAdminBookingsQuerySchema, syncBlackoutsQuerySchema, updateBookingStatusSchema } from "../schemas/admin";
 import { getZodErrorResponse } from "../lib/zod";
 import { requireAdminAuth } from "../middleware/requireAdminAuth";
+import { stripe } from "../lib/stripe";
 
 const adminController = Router();
 
@@ -647,6 +648,47 @@ adminController.patch('/bookings/:id/status', async (req, res) => {
         }
         console.error('Failed to update booking status:', error);
         return res.status(500).json({ error: 'Failed to update booking status' });
+    }
+})
+
+adminController.post('/bookings/:id/refund', async (req, res) => {
+    try {
+        const bookingId = req.params.id;
+
+        if (!bookingId || Array.isArray(bookingId)) {
+            return res.status(400).json({ error: "Invalid booking id" });
+        }
+
+        const booking = await prisma.booking.findUnique({
+            where: {
+                id: bookingId,
+            }
+        })
+
+        if (!booking) {
+            return res.status(404).json({ error: "Booking not found" });
+        }
+
+        if (booking.status !== 'CONFIRMED') {
+            return res.status(400).json({ error: "Only confirmed bookings can be refunded" });
+        }
+
+        if (!booking.stripePaymentIntentId) {
+            return res.status(400).json({ error: "Booking has no Stripe payment intent" });
+        }
+
+        const refund = await stripe.refunds.create({
+            payment_intent: booking.stripePaymentIntentId,
+        })
+
+        return res.status(200).json({
+            message: 'Refund initiated successfully',
+            refundId: refund.id,
+            status: refund.status,
+        })
+    } catch (error) {
+        console.error("Admin refund booking error:", error);
+        return res.status(500).json({ error: "Failed to refund booking" });
     }
 })
 

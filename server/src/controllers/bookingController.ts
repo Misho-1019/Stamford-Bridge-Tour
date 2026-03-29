@@ -282,7 +282,7 @@ bookingController.post('/my-bookings/:id/cancel', requireClientAuth, async (req,
             }
         })
 
-        return res.status(200).json({ message: 'Booking canceled successfully' });
+        return res.status(200).json({ message: 'Booking cancelled successfully. Refund (if applicable) will be handled separately.' });
     } catch (error) {
         console.error("Cancel booking error:", error);
         return res.status(500).json({ error: "Failed to cancel booking" })
