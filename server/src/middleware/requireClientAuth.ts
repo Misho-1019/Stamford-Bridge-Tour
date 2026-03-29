@@ -20,6 +20,8 @@ export function requireClientAuth(req: Request, res: Response, next: NextFunctio
             email: decoded.email,
         }
 
+        req.admin = undefined;
+
         next();
     } catch (error) {
         return res.status(401).json({ error: "Invalid or expired access token", });

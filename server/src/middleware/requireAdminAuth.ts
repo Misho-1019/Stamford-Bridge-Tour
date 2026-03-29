@@ -20,6 +20,8 @@ export function requireAdminAuth(req: Request, res: Response, next: NextFunction
             email: decoded.email,
         };
 
+        req.client = undefined;
+
         next();
     } catch (error) {
         return res.status(401).json({ error: "Invalid or expired access token", });

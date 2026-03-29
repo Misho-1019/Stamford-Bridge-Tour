@@ -163,11 +163,18 @@ bookingController.get("/my-bookings", requireClientAuth, async (req, res) => {
 bookingController.get("/my-bookings/:id", requireClientAuth, async (req, res) => {
     try {
         const clientId = req.client?.id;
-        const bookingId = req.params.id;
 
         if (!clientId) {
             return res.status(401).json({ error: "Unauthorized" });
         }
+
+        const parsedParams = bookingIdParamsSchema.safeParse(req.params);
+
+        if (!parsedParams.success) {
+            return res.status(400).json(getZodErrorResponse(parsedParams.error));
+        }
+        
+        const { id: bookingId } = parsedParams.data;
 
         if (!bookingId || Array.isArray(bookingId)) {
             return res.status(400).json({ error: "Invalid booking id" });
