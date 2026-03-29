@@ -616,19 +616,7 @@ adminController.patch('/bookings/:id/status', async (req, res) => {
         }
 
         if (nextStatus === BookingStatus.REFUNDED) {
-            const result = await refundBookingById({ bookingId: id, reason, amountCents });
-
-            const booking = await prisma.booking.findUnique({
-                where: { id: result.booking.id },
-                include: {
-                    slot: true,
-                }
-            })
-
-            return res.json({
-                booking,
-                refundId: result.refund.id,
-            })
+            return res.status(400).json({ error: 'Use /bookings/:id/refund endpoint to process refunds' })
         }
 
         const booking = await prisma.booking.update({
@@ -688,6 +676,9 @@ adminController.post('/bookings/:id/refund', async (req, res) => {
 
         const refund = await stripe.refunds.create({
             payment_intent: booking.stripePaymentIntentId,
+            metadata: {
+                reason: reason || '',
+            }
         })
 
         await prisma.booking.update({
