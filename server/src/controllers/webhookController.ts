@@ -90,22 +90,30 @@ webhookController.post('/stripe', async (req, res) => {
 
                 const clientUserId = session.metadata?.clientUserId && session.metadata.clientUserId.trim() !== '' ? session.metadata.clientUserId : null;
 
-                await tx.booking.create({
-                    data: {
-                        slotId: currentHold.slotId,
-                        email: currentHold.email,
-                        clientUserId,
-                        items: currentHold.items as Prisma.InputJsonValue,
-                        qtyTotal: currentHold.qtyTotal,
-                        amountTotalCents: currentHold.amountTotalCents,
-                        status: 'CONFIRMED',
-                        stripeSessionId: session.id,
-                        stripePaymentIntentId:
-                            typeof session.payment_intent === 'string'
-                                ? session.payment_intent
-                                : session.payment_intent?.id ?? null,
-                    },
+                try {
+                    await tx.booking.create({
+                        data: {
+                            slotId: currentHold.slotId,
+                            email: currentHold.email,
+                            clientUserId,
+                            items: currentHold.items as Prisma.InputJsonValue,
+                            qtyTotal: currentHold.qtyTotal,
+                            amountTotalCents: currentHold.amountTotalCents,
+                            status: 'CONFIRMED',
+                            stripeSessionId: session.id,
+                            stripePaymentIntentId:
+                                typeof session.payment_intent === 'string'
+                                    ? session.payment_intent
+                                    : session.payment_intent?.id ?? null,
+                        },
                 });
+                } catch (error: any) {
+                    if (error.code === 'P2002') {
+                        return;
+                    }
+
+                    throw error;
+                }
 
                 await tx.hold.update({
                     where: { id: currentHold.id },
