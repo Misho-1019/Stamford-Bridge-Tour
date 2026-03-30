@@ -5,12 +5,11 @@ import { syncBlackouts } from "../lib/syncBlackouts";
 import { RealFixtureProvider } from "../providers/realFixtureProvider";
 import { prisma } from "../db";
 import { BookingStatus, Prisma } from "@prisma/client";
-import { BookingRefundError } from "../services/bookingRefundService";
+import { BookingRefundError, refundBookingById } from "../services/bookingRefundService";
 import { DateTime } from "luxon";
 import { adminDateRangeQuerySchema, bookingIdParamsSchema, generateSlotsQuerySchema, getAdminBookingsQuerySchema, refundBookingSchema, syncBlackoutsQuerySchema, updateBookingStatusSchema } from "../schemas/admin";
 import { getZodErrorResponse } from "../lib/zod";
 import { requireAdminAuth } from "../middleware/requireAdminAuth";
-import { stripe } from "../lib/stripe";
 
 const adminController = Router();
 
@@ -654,55 +653,19 @@ adminController.post('/bookings/:id/refund', async (req, res) => {
         }
 
         const { id: bookingId } = parsedParams.data;
-        const { reason } = parsedBody.data;
+        const { reason, amountCents } = parsedBody.data;
 
-        const booking = await prisma.booking.findUnique({
-            where: {
-                id: bookingId,
-            }
-        })
-
-        if (!booking) {
-            return res.status(404).json({ error: "Booking not found" });
-        }
-
-        if (booking.status === 'REFUNDED') {
-            return res.status(400).json({ error: 'Booking is already refunded' })
-        }
-
-        if (booking.status !== 'CONFIRMED') {
-            return res.status(400).json({ error: "Only confirmed bookings can be refunded" });
-        }
-
-        if (!booking.stripePaymentIntentId) {
-            return res.status(400).json({ error: "Booking has no Stripe payment intent" });
-        }
-
-        if (booking.stripeRefundId) {
-            return res.status(400).json({ error: 'Refund already exists for this booking' })
-        }
-
-        const refund = await stripe.refunds.create({
-            payment_intent: booking.stripePaymentIntentId,
-            metadata: {
-                reason: reason || '',
-            }
-        })
-
-        await prisma.booking.update({
-            where: { id: booking.id },
-            data: {
-                refundReason: reason || null,
-            }
+        const result = await refundBookingById({
+            bookingId,
+            reason,
+            amountCents,
         })
 
         return res.status(200).json({
             message: 'Refund initiated successfully',
-            refundId: refund.id,
-            status: refund.status,
-            metadata: {
-                reason: reason || '',
-            }
+            booking: result.booking,
+            refundId: result.refund.id,
+            status: result.refund.status,
         })
     } catch (error) {
         console.error("Admin refund booking error:", error);

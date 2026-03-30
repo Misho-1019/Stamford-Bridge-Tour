@@ -34,4 +34,5 @@ export const updateBookingStatusSchema = z.object({
 
 export const refundBookingSchema = z.object({
     reason: z.string().trim().min(1).max(500).optional(),
+    amountCents: z.number().int().positive().optional(),
 })
