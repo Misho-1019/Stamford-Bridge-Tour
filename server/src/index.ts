@@ -6,6 +6,7 @@ import routes from "./routes";
 import webhookController from "./controllers/webhookController";
 import { requestLogger } from "./middleware/requestLogger";
 import { env } from "./lib/env";
+import { errorHandler } from "./middleware/errorHandler";
 
 dotenv.config();
 
@@ -33,6 +34,8 @@ app.get('/health', (req, res) => {
 
 app.use('/webhooks', webhookController)
 app.use(routes)
+
+app.use(errorHandler);
 
 const PORT = env.PORT;
 
