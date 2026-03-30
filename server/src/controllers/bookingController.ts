@@ -30,7 +30,7 @@ bookingController.get("/by-session/:sessionId", async (req, res) => {
         }
 
         return res.json({
-            status: "CONFIRMED",
+            status: booking.status,
             booking,
         });
     } catch (error) {

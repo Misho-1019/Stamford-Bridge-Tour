@@ -6,6 +6,9 @@ import { clearAuthCookies, setAuthCookies } from "../lib/cookies";
 import { createRefreshToken } from "../lib/refreshTokens";
 import { rotateRefreshToken } from "../lib/refreshTokenRotation";
 import { revokeUserRefreshTokens } from "../lib/revokeUserRefreshTokens";
+import { adminLoginSchema } from "../schemas/auth";
+import { getZodErrorResponse } from "../lib/zod";
+import { authRateLimit } from "../middleware/rateLimit";
 
 const adminAuthController = Router();
 
@@ -65,16 +68,15 @@ adminAuthController.post('/register', async (req, res) => {
     }
 })
 
-adminAuthController.post('/login', async (req, res) => {
+adminAuthController.post('/login', authRateLimit, async (req, res) => {
     try {
-        const { email, password } = req.body as {
-            email?: string;
-            password?: string;
+        const parsedBody = adminLoginSchema.safeParse(req.body);
+
+        if (!parsedBody.success) {
+            return res.status(400).json(getZodErrorResponse(parsedBody.error));
         }
 
-        if (!email || !password) {
-            return res.status(400).json({ error: "Email and password are required", })
-        }
+        const { email, password } = parsedBody.data;
 
         const normalizedEmail = email.trim().toLowerCase();
 
