@@ -1,14 +1,14 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import routes from "./routes";
 import webhookController from "./controllers/webhookController";
 import { requestLogger } from "./middleware/requestLogger";
 import { env } from "./lib/env";
 import { errorHandler } from "./middleware/errorHandler";
-
-dotenv.config();
 
 const app = express();
 
