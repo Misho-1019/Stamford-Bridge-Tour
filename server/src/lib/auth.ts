@@ -1,5 +1,6 @@
 import jwt, { JwtPayload, SignOptions } from "jsonwebtoken";
 import crypto from "crypto";
+import { getEnv } from "./getEnv";
 
 export type UserType = 'ADMIN' | 'CLIENT';
 
@@ -12,16 +13,6 @@ export type AccessTokenPayload = JwtPayload & {
 export type RefreshTokenPayload = JwtPayload & {
     sub: string;
     userType: UserType;
-}
-
-function getEnv(name: string): string {
-    const value = process.env[name];
-
-    if (!value) {
-        throw new Error(`${name} is not configured`)
-    }
-
-    return value;
 }
 
 const accessSecret = getEnv('JWT_ACCESS_SECRET');
@@ -58,7 +49,7 @@ function isAccessTokenPayload(decoded: string | JwtPayload): decoded is AccessTo
         typeof decoded !== 'string' &&
         typeof decoded.sub === 'string' &&
         typeof decoded.email === 'string' &&
-        (decoded.userType === 'ADMIN' || decoded.userType === 'ADMIN')
+        (decoded.userType === 'ADMIN' || decoded.userType === 'CLIENT')
     )
 }
 

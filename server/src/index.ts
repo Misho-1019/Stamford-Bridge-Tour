@@ -5,6 +5,7 @@ import cookieParser from "cookie-parser";
 import routes from "./routes";
 import webhookController from "./controllers/webhookController";
 import { requestLogger } from "./middleware/requestLogger";
+import { env } from "./lib/env";
 
 dotenv.config();
 
@@ -33,6 +34,6 @@ app.get('/health', (req, res) => {
 app.use('/webhooks', webhookController)
 app.use(routes)
 
-const PORT = process.env.PORT ? Number(process.env.PORT) : 3030;
+const PORT = env.PORT;
 
 app.listen(PORT, () => console.log(`Server is listening on: http://localhost:${PORT}`))
