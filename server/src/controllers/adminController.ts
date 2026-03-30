@@ -10,6 +10,7 @@ import { DateTime } from "luxon";
 import { adminDateRangeQuerySchema, bookingIdParamsSchema, generateSlotsQuerySchema, getAdminBookingsQuerySchema, refundBookingSchema, syncBlackoutsQuerySchema, updateBookingStatusSchema } from "../schemas/admin";
 import { getZodErrorResponse } from "../lib/zod";
 import { requireAdminAuth } from "../middleware/requireAdminAuth";
+import { parseFromDate, parseToDate } from "../utils/date";
 
 const adminController = Router();
 
@@ -137,8 +138,8 @@ adminController.get('/bookings/stats', async (req, res) => {
 
         const { fromDate: rawFromDate, toDate: rawToDate } = parsedQuery.data;
 
-        const fromDate = rawFromDate ? new Date(rawFromDate) : undefined;
-        const toDate = rawToDate ? new Date(rawToDate) : undefined;
+        const fromDate = parseFromDate(rawFromDate);
+        const toDate = parseToDate(rawToDate);
 
         if (fromDate && Number.isNaN(fromDate.getTime())) {
             return res.status(400).json({ error: 'Invalid fromDate' })
@@ -233,8 +234,8 @@ adminController.get('/bookings/revenue-series', async (req, res) => {
 
         const { fromDate: rawFromDate, toDate: rawToDate } = parsedQuery.data;
 
-        const fromDate = rawFromDate ? new Date(rawFromDate) : undefined;
-        const toDate = rawToDate ? new Date(rawToDate) : undefined;
+        const fromDate = parseFromDate(rawFromDate);
+        const toDate = parseToDate(rawToDate);
 
         if (fromDate && Number.isNaN(fromDate.getTime())) {
             return res.status(400).json({ error: 'Invalid fromDate' })
@@ -271,7 +272,7 @@ adminController.get('/bookings/revenue-series', async (req, res) => {
         const map = new Map<string, { revenueCents: number; bookings: number }>();
 
         for (const b of bookings) {
-            const date = DateTime.fromJSDate(b.createdAt).setZone('Europe/London').toFormat('yyyy-MM-dd');
+            const date = DateTime.fromJSDate(b.createdAt, { zone: 'utc' }).setZone('Europe/London').toFormat('yyyy-MM-dd');
 
             if (!map.has(date)) {
                 map.set(date, { revenueCents: 0, bookings: 0 })
@@ -282,42 +283,50 @@ adminController.get('/bookings/revenue-series', async (req, res) => {
             entry.bookings += 1;
         }
 
-        let startDate = fromDate;
-        let endDate = toDate;
-
-        if (!startDate || !endDate) {
+        let startDateTime = fromDate
+            ? DateTime.fromJSDate(fromDate, { zone: 'utc' }).setZone('Europe/London').startOf('day')
+            : null;
+        
+        let endDateTime = toDate
+            ? DateTime.fromJSDate(toDate, { zone: 'utc' }).setZone('Europe/London').startOf('day')
+            : null;
+        
+        if (!startDateTime || !endDateTime) {
             const allDates = Array.from(map.keys()).sort();
-
+        
             if (allDates.length > 0) {
-                startDate = startDate ?? new Date(allDates[0]);
-                endDate = endDate ?? new Date(allDates[allDates.length - 1])
+                startDateTime =
+                    startDateTime ?? DateTime.fromISO(allDates[0], { zone: 'Europe/London' }).startOf('day');
+        
+                endDateTime =
+                    endDateTime ?? DateTime.fromISO(allDates[allDates.length - 1], { zone: 'Europe/London' }).startOf('day');
             }
         }
-
-        if (!startDate || !endDate) {
-            return res.json({ data: [] })
+        
+        if (!startDateTime || !endDateTime) {
+            return res.json({ data: [] });
         }
-
+        
         const data: {
             date: string;
             revenueCents: number;
             bookings: number;
         }[] = [];
-
-        const current = new Date(startDate);
-
-        while (current <= endDate) {
-            const dateStr = current.toISOString().split('T')[0];
-
+        
+        let current = startDateTime;
+        
+        while (current <= endDateTime) {
+            const dateStr = current.toFormat('yyyy-MM-dd');
+        
             const entry = map.get(dateStr);
-
+        
             data.push({
                 date: dateStr,
                 revenueCents: entry?.revenueCents ?? 0,
                 bookings: entry?.bookings ?? 0,
-            })
-
-            current.setDate(current.getDate() + 1)
+            });
+        
+            current = current.plus({ days: 1 });
         }
 
         return res.json({ data })
@@ -337,8 +346,8 @@ adminController.get('/bookings/ticket-type-stats', async (req, res) => {
 
         const { fromDate: rawFromDate, toDate: rawToDate } = parsedQuery.data;
 
-        const fromDate = rawFromDate ? new Date(rawFromDate) : undefined;
-        const toDate = rawToDate ? new Date(rawToDate) : undefined;
+        const fromDate = parseFromDate(rawFromDate);
+        const toDate = parseToDate(rawToDate);
         
         if (fromDate && Number.isNaN(fromDate.getTime())) {
             return res.status(400).json({ error: 'Invalid fromDate' })
@@ -449,8 +458,8 @@ adminController.get('/bookings/slot-stats', async (req, res) => {
 
         const { fromDate: rawFromDate, toDate: rawToDate } = parsedQuery.data;
 
-        const fromDate = rawFromDate ? new Date(rawFromDate) : undefined;
-        const toDate = rawToDate ? new Date(rawToDate) : undefined;
+        const fromDate = parseFromDate(rawFromDate);
+        const toDate = parseToDate(rawToDate);
 
         if (fromDate && Number.isNaN(fromDate.getTime())) {
             return res.status(400).json({ error: 'Invalid fromDate' })
