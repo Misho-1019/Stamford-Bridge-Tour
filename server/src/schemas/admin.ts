@@ -10,11 +10,11 @@ export const syncBlackoutsQuerySchema = z.object({
 });
 
 export const getAdminBookingsQuerySchema = z.object({
-    page: z.coerce.number().int().positive().default(1),
-    limit: z.coerce.number().int().positive().max(100).default(10),
+    page: z.coerce.number().int().min(1).default(1),
+    limit: z.coerce.number().int().min(1).max(100).default(10),
     status: z.nativeEnum(BookingStatus).optional(),
-    email: z.string().trim().optional(),
-    slotId: z.string().uuid("slotId must be a valid UUID").optional(),
+    email: z.string().trim().min(1).optional(),
+    slotId: z.string().uuid().optional(),
 });
 
 export const adminDateRangeQuerySchema = z.object({
