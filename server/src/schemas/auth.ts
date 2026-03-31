@@ -12,5 +12,5 @@ export const clientLoginSchema = z.object({
 
 export const clientRegisterSchema = z.object({
     email: z.string().trim().email(),
-    password: z.string().min(8).max(255),
+    password: z.string().min(6).max(255),
 });

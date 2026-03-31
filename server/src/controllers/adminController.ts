@@ -474,18 +474,39 @@ adminController.get('/bookings/slot-stats', async (req, res) => {
         };
     
         if (fromDate || toDate) {
-          bookingWhere.createdAt = {};
+            const slotStartAtFilter: Prisma.DateTimeFilter = {};
     
           if (fromDate) {
-            bookingWhere.createdAt.gte = fromDate;
+            slotStartAtFilter.gte = fromDate;
           }
     
           if (toDate) {
-            bookingWhere.createdAt.lte = toDate;
+            slotStartAtFilter.lte = toDate;
+          }
+
+          bookingWhere.slot = {
+            is: {
+                startAt: slotStartAtFilter,
+            }
           }
         }
 
+        const slotWhere: Prisma.TourSlotWhereInput = {};
+
+        if (fromDate || toDate) {
+            slotWhere.startAt = {};
+
+            if (fromDate) {
+                slotWhere.startAt.gte = fromDate;
+            }
+
+            if (toDate) {
+                slotWhere.startAt.lte = toDate;
+            }
+        }
+
         const slots = await prisma.tourSlot.findMany({
+            where: slotWhere,
             orderBy: {
                 startAt: 'asc'
             }
