@@ -36,6 +36,17 @@ createHold.post('/', async (req, res) => {
         } catch {
         }
 
+        let clientEmail: string | null = null;
+
+        if (clientId) {
+            const user = await prisma.clientUser.findUnique({
+                where: { id: clientId },
+                select: { email: true },
+            })
+
+            clientEmail = user?.email ?? null;
+        }
+
         const ticketTypes = await prisma.ticketType.findMany({
             where: { isActive: true },
         });
@@ -166,6 +177,7 @@ createHold.post('/', async (req, res) => {
                     slotId: hold.slotId,
                     email: normalizedEmail,
                     clientUserId: clientId || '',
+                    clientEmail: clientEmail || '',
                 },
                 customer_email: normalizedEmail,
                 success_url: `${process.env.APP_BASE_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
