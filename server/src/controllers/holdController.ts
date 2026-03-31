@@ -19,6 +19,7 @@ createHold.post('/', async (req, res) => {
         }
 
         const { slotId, email, items } = parsedBody.data;
+        const normalizedEmail = email.trim().toLowerCase();
 
         let clientId: string | null = null;
 
@@ -32,7 +33,7 @@ createHold.post('/', async (req, res) => {
                     clientId = decoded.sub;
                 }
             }
-        } catch (error) {
+        } catch {
         }
 
         const ticketTypes = await prisma.ticketType.findMany({
@@ -144,7 +145,7 @@ createHold.post('/', async (req, res) => {
             return tx.hold.create({
                 data: {
                     slotId: slot.id,
-                    email,
+                    email: normalizedEmail,
                     items: normalizedItems,
                     qtyTotal,
                     amountTotalCents,
@@ -163,10 +164,10 @@ createHold.post('/', async (req, res) => {
                 metadata: {
                     holdId: hold.id,
                     slotId: hold.slotId,
-                    email,
+                    email: normalizedEmail,
                     clientUserId: clientId || '',
                 },
-                customer_email: email,
+                customer_email: normalizedEmail,
                 success_url: `${process.env.APP_BASE_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
                 cancel_url: `${process.env.APP_BASE_URL}/checkout/cancelled`,
             });
