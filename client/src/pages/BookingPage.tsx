@@ -4,6 +4,7 @@ import { getTicketTypes } from "../api/ticketTypes";
 import { formatPrice } from "../lib/format";
 import type { Slot, SlotsResponse } from "../types/slot";
 import type { TicketType } from "../types/ticket";
+import { createHold } from "../api/holds";
 
 function BookingPage() {
     const [date, setDate] = useState("");
@@ -17,6 +18,9 @@ function BookingPage() {
     const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null);
     const [email, setEmail] = useState("");
     const [quantities, setQuantities] = useState<Record<string, number>>({});
+
+    const [bookingError, setBookingError] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
         async function loadTicketTypes() {
@@ -75,6 +79,52 @@ function BookingPage() {
         const qty = quantities[ticket.id] || 0;
         return sum + qty * ticket.priceCents;
     }, 0);
+
+    const selectedItems = Object.entries(quantities)
+        .filter(([, qty]) => qty > 0)
+        .map(([ticketTypeId, qty]) => ({
+            ticketTypeId,
+            qty,
+        }));
+    
+    async function handleContinueToPayment() {
+        if (!selectedSlotId) {
+            setBookingError('Please select a slot');
+            return;
+        }
+
+        if (!email.trim()) {
+            setBookingError('Please enter your email');
+            return;
+        }
+
+        if (selectedItems.length === 0) {
+            setBookingError('Please select at least one ticket');
+            return;
+        }
+
+        try {
+            setIsSubmitting(true);
+            setBookingError('');
+
+            const response = await createHold({
+                slotId: selectedSlotId,
+                email: email.trim(),
+                items: selectedItems,
+            })
+
+            window.location.href = response.checkoutUrl;
+        } catch (error) {
+            if (error instanceof Error) {
+                setBookingError(error.message);
+                return;
+            }
+
+            setBookingError('Failed to continue to payment');
+        } finally {
+            setIsSubmitting(false);
+        }
+    }
 
     return (
         <section className="space-y-8">
@@ -258,12 +308,17 @@ function BookingPage() {
                     Total: {formatPrice(totalCents)}
                 </p>
 
+                {bookingError && (
+                    <p className="text-sm text-red-600">{bookingError}</p>
+                )}
+
                 <button
                     type="button"
-                    disabled={!selectedSlotId || totalCents === 0 || !email}
+                    onClick={handleContinueToPayment}
+                    disabled={!selectedSlotId || totalCents === 0 || !email || isSubmitting}
                     className="w-full rounded bg-blue-700 px-4 py-3 font-medium text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                    Continue to Payment
+                    {isSubmitting ? "Redirecting..." : "Continue to Payment"}
                 </button>
             </div>
         </section>
