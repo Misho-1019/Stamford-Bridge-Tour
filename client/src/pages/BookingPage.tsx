@@ -1,93 +1,105 @@
 import { useEffect, useState } from "react";
+import { getSlots } from "../api/slots";
+import { getTicketTypes } from "../api/ticketTypes";
+import { formatPrice } from "../lib/format";
 import type { Slot, SlotsResponse } from "../types/slot";
 import type { TicketType } from "../types/ticket";
-import { getTicketTypes } from "../api/ticketTypes";
-import { getSlots } from "../api/slots";
-import { formatPrice } from "../lib/format";
 
 function BookingPage() {
-    const [date, setDate] = useState('');
+    const [date, setDate] = useState("");
     const [slotsData, setSlotsData] = useState<SlotsResponse | null>(null);
     const [ticketTypes, setTicketTypes] = useState<TicketType[]>([]);
     const [isLoadingSlots, setIsLoadingSlots] = useState(false);
     const [isLoadingTickets, setIsLoadingTickets] = useState(false);
-    const [slotsError, setSlotsError] = useState('');
-    const [ticketsError, setTicketsError] = useState('');
+    const [slotsError, setSlotsError] = useState("");
+    const [ticketsError, setTicketsError] = useState("");
+
+    const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null);
+    const [email, setEmail] = useState("");
+    const [quantities, setQuantities] = useState<Record<string, number>>({});
 
     useEffect(() => {
         async function loadTicketTypes() {
             try {
                 setIsLoadingTickets(true);
-                setTicketsError('');
+                setTicketsError("");
 
                 const data = await getTicketTypes();
-                setTicketTypes(data)
+                setTicketTypes(data);
             } catch (error) {
                 if (error instanceof Error) {
                     setTicketsError(error.message);
                     return;
                 }
 
-                setTicketsError('Failed to load ticket types');
+                setTicketsError("Failed to load ticket types");
             } finally {
                 setIsLoadingTickets(false);
             }
         }
 
         loadTicketTypes();
-    }, [])
+    }, []);
 
     async function handleLoadSlots() {
         if (!date) {
-            setSlotsError('Please select a date');
+            setSlotsError("Please select a date");
             setSlotsData(null);
+            setSelectedSlotId(null);
             return;
         }
 
         try {
             setIsLoadingSlots(true);
-            setSlotsError('')
+            setSlotsError("");
+            setSelectedSlotId(null);
 
             const data = await getSlots(date);
             setSlotsData(data);
         } catch (error) {
             setSlotsData(null);
+            setSelectedSlotId(null);
 
             if (error instanceof Error) {
                 setSlotsError(error.message);
                 return;
             }
-            
-            setSlotsError('Failed to load slots');
+
+            setSlotsError("Failed to load slots");
         } finally {
             setIsLoadingSlots(false);
         }
     }
+
+    const totalCents = ticketTypes.reduce((sum, ticket) => {
+        const qty = quantities[ticket.id] || 0;
+        return sum + qty * ticket.priceCents;
+    }, 0);
 
     return (
         <section className="space-y-8">
             <div>
                 <h1 className="text-2xl font-semibold">Booking Page</h1>
                 <p className="mt-2 text-sm text-slate-600">
-                    For now we are only testing backend connection.
+                    For now we are testing the booking flow UI and backend connection.
                 </p>
             </div>
 
             <div className="space-y-3">
                 <h2 className="text-lg font-semibold">Select Date</h2>
 
-                <div className="flex items-center gap-3">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                     <input
                         type="date"
                         value={date}
                         onChange={(event) => setDate(event.target.value)}
-                        className="rounded border border-slate-300 px-3 py-2"
+                        className="rounded border border-slate-300 bg-white px-3 py-2"
                     />
 
                     <button
                         type="button"
                         onClick={handleLoadSlots}
-                        className="rounded border border-slate-300 px-4 py-2"
+                        className="rounded bg-blue-700 px-4 py-2 font-medium text-white transition hover:bg-blue-800"
                     >
                         Load Slots
                     </button>
@@ -113,7 +125,7 @@ function BookingPage() {
 
                 {slotsData?.blocked && (
                     <p className="text-sm text-red-600">
-                        This date is blocked{slotsData.reason ? `: ${slotsData.reason}` : '.'}
+                        This date is blocked{slotsData.reason ? `: ${slotsData.reason}` : "."}
                     </p>
                 )}
 
@@ -125,19 +137,28 @@ function BookingPage() {
 
                 {slotsData && !slotsData.blocked && slotsData.slots.length > 0 && (
                     <ul className="space-y-2">
-                        {slotsData.slots.map((slot: Slot) => (
-                            <li
-                                key={slot.id}
-                                className="rounded border border-slate-200 p-3"
-                            >
-                                <p className="font-medium">
-                                    {slot.startAt} - {slot.endAt}
-                                </p>
-                                <p className="text-sm text-slate-600">
-                                    Remaining seats: {slot.remainingSeats} / {slot.capacityTotal}
-                                </p>
-                            </li>
-                        ))}
+                        {slotsData.slots.map((slot: Slot) => {
+                            const isSelected = selectedSlotId === slot.id;
+
+                            return (
+                                <li
+                                    key={slot.id}
+                                    onClick={() => setSelectedSlotId(slot.id)}
+                                    className={`cursor-pointer rounded border p-3 transition ${
+                                        isSelected
+                                            ? "border-blue-700 bg-blue-50"
+                                            : "border-slate-200 bg-white/90 hover:border-blue-400"
+                                    }`}
+                                >
+                                    <p className="font-medium">
+                                        {slot.startAt} - {slot.endAt}
+                                    </p>
+                                    <p className="text-sm text-slate-600">
+                                        Remaining: {slot.remainingSeats} / {slot.capacityTotal}
+                                    </p>
+                                </li>
+                            );
+                        })}
                     </ul>
                 )}
             </div>
@@ -160,23 +181,90 @@ function BookingPage() {
                 )}
 
                 {ticketTypes.length > 0 && (
-                    <ul className="space-y-2">
-                        {ticketTypes.map((ticketType) => (
-                            <li
-                                key={ticketType.id}
-                                className="rounded border border-slate-200 p-3"
-                            >
-                                <p className="font-medium">{ticketType.name}</p>
-                                <p className="text-sm text-slate-600">
-                                    {formatPrice(ticketType.priceCents)}
-                                </p>
-                                <p className="text-sm text-slate-600">
-                                    Active: {ticketType.isActive ? 'Yes' : 'No'}
-                                </p>
-                            </li>
-                        ))}
+                    <ul className="space-y-3">
+                        {ticketTypes.map((ticket) => {
+                            const qty = quantities[ticket.id] || 0;
+
+                            return (
+                                <li
+                                    key={ticket.id}
+                                    className="flex items-center justify-between rounded border border-slate-200 bg-white/90 p-3"
+                                >
+                                    <div>
+                                        <p className="font-medium">{ticket.name}</p>
+                                        <p className="text-sm text-slate-600">
+                                            {formatPrice(ticket.priceCents)}
+                                        </p>
+                                    </div>
+
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                setQuantities((prev) => ({
+                                                    ...prev,
+                                                    [ticket.id]: Math.max(0, qty - 1),
+                                                }))
+                                            }
+                                            className="rounded border border-slate-300 bg-white px-3 py-1"
+                                        >
+                                            -
+                                        </button>
+
+                                        <span className="w-8 text-center font-medium">
+                                            {qty}
+                                        </span>
+
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                setQuantities((prev) => ({
+                                                    ...prev,
+                                                    [ticket.id]: qty + 1,
+                                                }))
+                                            }
+                                            className="rounded border border-slate-300 bg-white px-3 py-1"
+                                        >
+                                            +
+                                        </button>
+                                    </div>
+                                </li>
+                            );
+                        })}
                     </ul>
                 )}
+            </div>
+
+            <div className="space-y-2">
+                <h2 className="text-lg font-semibold">Your Email</h2>
+
+                <input
+                    type="email"
+                    value={email}
+                    onChange={(event) => setEmail(event.target.value)}
+                    placeholder="you@example.com"
+                    className="w-full rounded border border-slate-300 bg-white px-3 py-2"
+                />
+            </div>
+
+            <div className="space-y-3 rounded border border-slate-200 bg-white/90 p-4">
+                <h2 className="text-lg font-semibold">Booking Summary</h2>
+
+                <p className="text-sm text-slate-600">
+                    Selected slot: {selectedSlotId ? "Chosen" : "Not selected"}
+                </p>
+
+                <p className="text-lg font-semibold">
+                    Total: {formatPrice(totalCents)}
+                </p>
+
+                <button
+                    type="button"
+                    disabled={!selectedSlotId || totalCents === 0 || !email}
+                    className="w-full rounded bg-blue-700 px-4 py-3 font-medium text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                    Continue to Payment
+                </button>
             </div>
         </section>
     );
