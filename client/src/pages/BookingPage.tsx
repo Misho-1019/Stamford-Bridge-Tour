@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { getSlots } from "../api/slots";
 import { getTicketTypes } from "../api/ticketTypes";
-import { formatPrice } from "../lib/format";
+import { formatDateTime, formatPrice } from "../lib/format";
 import type { Slot, SlotsResponse } from "../types/slot";
 import type { TicketType } from "../types/ticket";
 import { createHold } from "../api/holds";
@@ -126,6 +126,8 @@ function BookingPage() {
         }
     }
 
+    const selectedSlot = slotsData?.slots.find(slot => slot.id === selectedSlotId)
+
     return (
         <section className="space-y-8">
             <div>
@@ -190,18 +192,26 @@ function BookingPage() {
                         {slotsData.slots.map((slot: Slot) => {
                             const isSelected = selectedSlotId === slot.id;
 
+                            const isFull = slot.remainingSeats === 0;
+
                             return (
                                 <li
                                     key={slot.id}
-                                    onClick={() => setSelectedSlotId(slot.id)}
-                                    className={`cursor-pointer rounded border p-3 transition ${
-                                        isSelected
-                                            ? "border-blue-700 bg-blue-50"
-                                            : "border-slate-200 bg-white/90 hover:border-blue-400"
+                                    onClick={() => {
+                                        if (!isFull) {
+                                            setSelectedSlotId(slot.id);
+                                        }
+                                    }}
+                                    className={`rounded border p-3 transition ${
+                                        isFull
+                                            ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400"
+                                            : isSelected
+                                            ? "cursor-pointer border-blue-700 bg-blue-50"
+                                            : "cursor-pointer border-slate-200 bg-white/90 hover:border-blue-400"
                                     }`}
                                 >
                                     <p className="font-medium">
-                                        {slot.startAt} - {slot.endAt}
+                                        {formatDateTime(slot.startAt)} - {formatDateTime(slot.endAt)}
                                     </p>
                                     <p className="text-sm text-slate-600">
                                         Remaining: {slot.remainingSeats} / {slot.capacityTotal}
@@ -295,13 +305,23 @@ function BookingPage() {
                     placeholder="you@example.com"
                     className="w-full rounded border border-slate-300 bg-white px-3 py-2"
                 />
+
+                {email && !email.includes('@') && (
+                    <p className="text-sm text-red-600">
+                        Please enter a valid email address
+                    </p>
+                )}
             </div>
 
             <div className="space-y-3 rounded border border-slate-200 bg-white/90 p-4">
                 <h2 className="text-lg font-semibold">Booking Summary</h2>
 
                 <p className="text-sm text-slate-600">
-                    Selected slot: {selectedSlotId ? "Chosen" : "Not selected"}
+                    Selected slot: {' '}
+                    {selectedSlot
+                        ? `${formatDateTime(selectedSlot.startAt)} - ${formatDateTime(selectedSlot.endAt)}`
+                        : 'Not selected'
+                    }
                 </p>
 
                 <p className="text-lg font-semibold">
