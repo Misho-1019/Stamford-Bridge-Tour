@@ -13,6 +13,9 @@ function AppLayout() {
                         <Link to="/" className="hover:underline">
                             Home
                         </Link>
+                        <Link to="/book" className="hover:underline">
+                            Book
+                        </Link>
                         <Link to="/admin" className="hover:underline">
                             Admin
                         </Link>
