@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { AdminBooking } from "../types/adminBooking";
 import { getAdminBookings } from "../api/adminBookings";
 import { formatDateTime, formatPrice } from "../lib/format";
+import { refundBooking } from "../api/adminRefunds";
 
 type AdminTab = 'bookings' | 'slots' | 'tickets' | 'operations';
 
@@ -15,35 +16,36 @@ function AdminPage() {
     const [isLoadingBookings, setIsLoadingBookings] = useState(false)
     const [bookingsError, setBookingsError] = useState('')
 
+    const [refundingBookingId, setRefundingBookingId] = useState<string | null>(null);
+
+    async function loadBookings(page: number) {
+        try {
+            setIsLoadingBookings(true);
+            setBookingsError('');
+
+            const data = await getAdminBookings(page, 10);
+
+            setBookings(data.bookings);
+            setBookingsPage(data.page);
+            setBookingsTotalPages(data.totalPages);
+            setBookingsTotal(data.total);
+        } catch (error) {
+            if (error instanceof Error) {
+                setBookingsError(error.message)
+                return;
+            }
+            setBookingsError('Failed to load bookings')
+        } finally {
+            setIsLoadingBookings(false);
+        }
+    }
+
     useEffect(() => {
         if (activeTab !== 'bookings') {
             return;
         }
 
-        async function loadBookings() {
-            try {
-                setIsLoadingBookings(true);
-                setBookingsError('');
-
-                const data = await getAdminBookings(bookingsPage, 10);
-
-                setBookings(data.bookings);
-                setBookingsPage(data.page);
-                setBookingsTotalPages(data.totalPages);
-                setBookingsTotal(data.total);
-            } catch (error) {
-                if (error instanceof Error) {
-                    setBookingsError(error.message)
-                    return;
-                }
-
-                setBookingsError('Failed to load bookings')
-            } finally {
-                setIsLoadingBookings(false);
-            }
-        }
-
-        loadBookings();
+        loadBookings(bookingsPage);
     }, [activeTab, bookingsPage])
 
     function getStatusClasses(status: AdminBooking['status']) {
@@ -56,6 +58,35 @@ function AdminPage() {
         }
 
         return "bg-slate-200 text-slate-700";
+    }
+
+    async function handleRefund(bookingId: string) {
+        const reason = window.prompt('Enter refund reason:');
+
+        if (!reason || !reason.trim()) {
+            return;
+        }
+
+        try {
+            setRefundingBookingId(bookingId);
+
+            await refundBooking({
+                bookingId,
+                reason: reason.trim(),
+            })
+
+            await loadBookings(bookingsPage)
+        } catch (error) {
+            if (error instanceof Error) {
+                setBookingsError(error.message)
+
+                return;
+            }
+
+            setBookingsError('Failed to refund booking')
+        } finally {
+            setRefundingBookingId(null);
+        }
     }
 
     return (
@@ -211,6 +242,17 @@ function AdminPage() {
                                                         >
                                                             {booking.status}
                                                         </span>
+
+                                                        {booking.status === "CONFIRMED" ? (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleRefund(booking.id)}
+                                                                disabled={refundingBookingId === booking.id}
+                                                                className="rounded-lg bg-slate-100 px-3 py-2 text-sm font-medium text-slate-800 hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-50"
+                                                            >
+                                                                {refundingBookingId === booking.id ? "Refunding..." : "Refund"}
+                                                            </button>
+                                                        ) : null}
 
                                                         {booking.refundReason && (
                                                             <p className="max-w-xs text-sm text-slate-600">
