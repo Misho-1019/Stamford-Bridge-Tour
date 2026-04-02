@@ -19,7 +19,7 @@ function BookingPage() {
     const [email, setEmail] = useState("");
     const [quantities, setQuantities] = useState<Record<string, number>>({});
 
-    const [bookingError, setBookingError] = useState('');
+    const [bookingError, setBookingError] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
@@ -86,32 +86,32 @@ function BookingPage() {
             ticketTypeId,
             qty,
         }));
-    
+
     async function handleContinueToPayment() {
         if (!selectedSlotId) {
-            setBookingError('Please select a slot');
+            setBookingError("Please select a slot");
             return;
         }
 
         if (!email.trim()) {
-            setBookingError('Please enter your email');
+            setBookingError("Please enter your email");
             return;
         }
 
         if (selectedItems.length === 0) {
-            setBookingError('Please select at least one ticket');
+            setBookingError("Please select at least one ticket");
             return;
         }
 
         try {
             setIsSubmitting(true);
-            setBookingError('');
+            setBookingError("");
 
             const response = await createHold({
                 slotId: selectedSlotId,
                 email: email.trim(),
                 items: selectedItems,
-            })
+            });
 
             window.location.href = response.checkoutUrl;
         } catch (error) {
@@ -120,38 +120,45 @@ function BookingPage() {
                 return;
             }
 
-            setBookingError('Failed to continue to payment');
+            setBookingError("Failed to continue to payment");
         } finally {
             setIsSubmitting(false);
         }
     }
 
-    const selectedSlot = slotsData?.slots.find(slot => slot.id === selectedSlotId)
+    const selectedSlot = slotsData?.slots.find(
+        (slot) => slot.id === selectedSlotId
+    );
 
     return (
-        <section className="space-y-8">
+        <section className="space-y-6">
             <div>
-                <h1 className="text-2xl font-semibold">Booking Page</h1>
-                <p className="mt-2 text-sm text-slate-600">
-                    For now we are testing the booking flow UI and backend connection.
+                <h1 className="text-2xl font-semibold text-blue-900">
+                    Book Your Stamford Bridge Tour
+                </h1>
+                <p className="mt-1 text-sm text-slate-600">
+                    Choose your preferred date, time, and tickets.
                 </p>
             </div>
 
-            <div className="space-y-3">
-                <h2 className="text-lg font-semibold">Select Date</h2>
+            {/* Date */}
+            <div className="rounded-xl bg-white/90 p-5 shadow-sm space-y-3">
+                <h2 className="text-lg font-semibold text-blue-900">
+                    Select Date
+                </h2>
 
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                     <input
                         type="date"
                         value={date}
-                        onChange={(event) => setDate(event.target.value)}
+                        onChange={(e) => setDate(e.target.value)}
                         className="rounded border border-slate-300 bg-white px-3 py-2"
                     />
 
                     <button
                         type="button"
                         onClick={handleLoadSlots}
-                        className="rounded bg-blue-700 px-4 py-2 font-medium text-white transition hover:bg-blue-800"
+                        className="rounded-lg bg-blue-700 px-4 py-2 font-medium text-white transition hover:bg-blue-800"
                     >
                         Load Slots
                     </button>
@@ -166,8 +173,11 @@ function BookingPage() {
                 )}
             </div>
 
-            <div className="space-y-3">
-                <h2 className="text-lg font-semibold">Slots</h2>
+            {/* Slots */}
+            <div className="rounded-xl bg-white/90 p-5 shadow-sm space-y-3">
+                <h2 className="text-lg font-semibold text-blue-900">
+                    Available Slots
+                </h2>
 
                 {!slotsData && (
                     <p className="text-sm text-slate-600">
@@ -177,68 +187,57 @@ function BookingPage() {
 
                 {slotsData?.blocked && (
                     <p className="text-sm text-red-600">
-                        This date is blocked{slotsData.reason ? `: ${slotsData.reason}` : "."}
+                        This date is blocked
+                        {slotsData.reason ? `: ${slotsData.reason}` : "."}
                     </p>
                 )}
 
-                {slotsData && !slotsData.blocked && slotsData.slots.length === 0 && (
-                    <p className="text-sm text-slate-600">
-                        No slots available for this date.
-                    </p>
-                )}
+                {slotsData &&
+                    !slotsData.blocked &&
+                    slotsData.slots.length > 0 && (
+                        <ul className="space-y-2">
+                            {slotsData.slots.map((slot: Slot) => {
+                                const isSelected =
+                                    selectedSlotId === slot.id;
+                                const isFull =
+                                    slot.remainingSeats === 0;
 
-                {slotsData && !slotsData.blocked && slotsData.slots.length > 0 && (
-                    <ul className="space-y-2">
-                        {slotsData.slots.map((slot: Slot) => {
-                            const isSelected = selectedSlotId === slot.id;
-
-                            const isFull = slot.remainingSeats === 0;
-
-                            return (
-                                <li
-                                    key={slot.id}
-                                    onClick={() => {
-                                        if (!isFull) {
-                                            setSelectedSlotId(slot.id);
-                                        }
-                                    }}
-                                    className={`rounded border p-3 transition ${
-                                        isFull
-                                            ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400"
-                                            : isSelected
-                                            ? "cursor-pointer border-blue-700 bg-blue-50"
-                                            : "cursor-pointer border-slate-200 bg-white/90 hover:border-blue-400"
-                                    }`}
-                                >
-                                    <p className="font-medium">
-                                        {formatDateTime(slot.startAt)} - {formatDateTime(slot.endAt)}
-                                    </p>
-                                    <p className="text-sm text-slate-600">
-                                        Remaining: {slot.remainingSeats} / {slot.capacityTotal}
-                                    </p>
-                                </li>
-                            );
-                        })}
-                    </ul>
-                )}
+                                return (
+                                    <li
+                                        key={slot.id}
+                                        onClick={() => {
+                                            if (!isFull) {
+                                                setSelectedSlotId(slot.id);
+                                            }
+                                        }}
+                                        className={`rounded border p-3 transition ${
+                                            isFull
+                                                ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400"
+                                                : isSelected
+                                                ? "cursor-pointer border-blue-700 bg-blue-100"
+                                                : "cursor-pointer border-slate-200 bg-white/90 hover:border-blue-400"
+                                        }`}
+                                    >
+                                        <p className="font-medium">
+                                            {formatDateTime(slot.startAt)} -{" "}
+                                            {formatDateTime(slot.endAt)}
+                                        </p>
+                                        <p className="text-sm text-slate-600">
+                                            Remaining: {slot.remainingSeats} /{" "}
+                                            {slot.capacityTotal}
+                                        </p>
+                                    </li>
+                                );
+                            })}
+                        </ul>
+                    )}
             </div>
 
-            <div className="space-y-3">
-                <h2 className="text-lg font-semibold">Ticket Types</h2>
-
-                {isLoadingTickets && (
-                    <p className="text-sm text-slate-600">Loading ticket types...</p>
-                )}
-
-                {ticketsError && (
-                    <p className="text-sm text-red-600">{ticketsError}</p>
-                )}
-
-                {!isLoadingTickets && !ticketsError && ticketTypes.length === 0 && (
-                    <p className="text-sm text-slate-600">
-                        No ticket types found.
-                    </p>
-                )}
+            {/* Tickets */}
+            <div className="rounded-xl bg-white/90 p-5 shadow-sm space-y-3">
+                <h2 className="text-lg font-semibold text-blue-900">
+                    Ticket Types
+                </h2>
 
                 {ticketTypes.length > 0 && (
                     <ul className="space-y-3">
@@ -251,9 +250,13 @@ function BookingPage() {
                                     className="flex items-center justify-between rounded border border-slate-200 bg-white/90 p-3"
                                 >
                                     <div>
-                                        <p className="font-medium">{ticket.name}</p>
+                                        <p className="font-medium">
+                                            {ticket.name}
+                                        </p>
                                         <p className="text-sm text-slate-600">
-                                            {formatPrice(ticket.priceCents)}
+                                            {formatPrice(
+                                                ticket.priceCents
+                                            )}
                                         </p>
                                     </div>
 
@@ -263,10 +266,13 @@ function BookingPage() {
                                             onClick={() =>
                                                 setQuantities((prev) => ({
                                                     ...prev,
-                                                    [ticket.id]: Math.max(0, qty - 1),
+                                                    [ticket.id]: Math.max(
+                                                        0,
+                                                        qty - 1
+                                                    ),
                                                 }))
                                             }
-                                            className="rounded border border-slate-300 bg-white px-3 py-1"
+                                            className="rounded bg-slate-100 px-3 py-1 hover:bg-slate-200"
                                         >
                                             -
                                         </button>
@@ -283,7 +289,7 @@ function BookingPage() {
                                                     [ticket.id]: qty + 1,
                                                 }))
                                             }
-                                            className="rounded border border-slate-300 bg-white px-3 py-1"
+                                            className="rounded bg-slate-100 px-3 py-1 hover:bg-slate-200"
                                         >
                                             +
                                         </button>
@@ -295,33 +301,40 @@ function BookingPage() {
                 )}
             </div>
 
-            <div className="space-y-2">
-                <h2 className="text-lg font-semibold">Your Email</h2>
+            {/* Email */}
+            <div className="rounded-xl bg-white/90 p-5 shadow-sm space-y-2">
+                <h2 className="text-lg font-semibold text-blue-900">
+                    Your Email
+                </h2>
 
                 <input
                     type="email"
                     value={email}
-                    onChange={(event) => setEmail(event.target.value)}
+                    onChange={(e) => setEmail(e.target.value)}
                     placeholder="you@example.com"
                     className="w-full rounded border border-slate-300 bg-white px-3 py-2"
                 />
 
-                {email && !email.includes('@') && (
+                {email && !email.includes("@") && (
                     <p className="text-sm text-red-600">
                         Please enter a valid email address
                     </p>
                 )}
             </div>
 
-            <div className="space-y-3 rounded border border-slate-200 bg-white/90 p-4">
-                <h2 className="text-lg font-semibold">Booking Summary</h2>
+            {/* Summary */}
+            <div className="rounded-xl bg-white/95 p-5 shadow-md space-y-3">
+                <h2 className="text-lg font-semibold text-blue-900">
+                    Booking Summary
+                </h2>
 
                 <p className="text-sm text-slate-600">
-                    Selected slot: {' '}
+                    Selected slot:{" "}
                     {selectedSlot
-                        ? `${formatDateTime(selectedSlot.startAt)} - ${formatDateTime(selectedSlot.endAt)}`
-                        : 'Not selected'
-                    }
+                        ? `${formatDateTime(
+                              selectedSlot.startAt
+                          )} - ${formatDateTime(selectedSlot.endAt)}`
+                        : "Not selected"}
                 </p>
 
                 <p className="text-lg font-semibold">
@@ -329,16 +342,25 @@ function BookingPage() {
                 </p>
 
                 {bookingError && (
-                    <p className="text-sm text-red-600">{bookingError}</p>
+                    <p className="text-sm text-red-600">
+                        {bookingError}
+                    </p>
                 )}
 
                 <button
                     type="button"
                     onClick={handleContinueToPayment}
-                    disabled={!selectedSlotId || totalCents === 0 || !email || isSubmitting}
-                    className="w-full rounded bg-blue-700 px-4 py-3 font-medium text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50"
+                    disabled={
+                        !selectedSlotId ||
+                        totalCents === 0 ||
+                        !email ||
+                        isSubmitting
+                    }
+                    className="w-full rounded-lg bg-blue-700 px-4 py-3 font-semibold text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                    {isSubmitting ? "Redirecting..." : "Continue to Payment"}
+                    {isSubmitting
+                        ? "Redirecting..."
+                        : "Continue to Payment"}
                 </button>
             </div>
         </section>
