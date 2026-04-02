@@ -1,9 +1,11 @@
 import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router";
 import { loginAdmin } from "../api/adminAuth";
+import { useAdminAuth } from "../context/AdminAuthContext";
 
 function LoginPage() {
     const navigate = useNavigate();
+    const { login } = useAdminAuth()
 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -16,7 +18,7 @@ function LoginPage() {
         setIsSubmitting(true);
 
         try {
-            await loginAdmin({ email, password })
+            await login({ email, password })
 
             navigate('/admin')
         } catch (err) {
