@@ -161,7 +161,7 @@ function AdminPage() {
                                         {bookings.map((booking) => (
                                             <div
                                                 key={booking.id}
-                                                className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+                                                className="rounded-xl border border-slate-200 bg-white/90 p-4 shadow-sm"
                                             >
                                                 <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                                                     <div className="space-y-2">
