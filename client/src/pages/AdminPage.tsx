@@ -1,4 +1,10 @@
+import { useState } from "react";
+
+type AdminTab = 'bookings' | 'slots' | 'tickets' | 'operations';
+
 function AdminPage() {
+    const [activeTab, setActiveTab] = useState<AdminTab>('bookings')
+
     return (
         <section className="space-y-6">
             <div>
@@ -10,42 +16,98 @@ function AdminPage() {
                 </p>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                <div className="rounded-xl bg-white/90 p-5 shadow-sm">
-                    <h2 className="text-lg font-semibold text-blue-900">
+            <div className="rounded-xl bg-white/90 p-3 shadow-sm">
+                <div className="flex flex-wrap gap-2">
+                    <button
+                        onClick={() => setActiveTab("bookings")}
+                        className={`rounded px-4 py-2 text-sm font-medium ${
+                            activeTab === "bookings"
+                                ? "bg-blue-700 text-white"
+                                : "bg-slate-100 hover:bg-slate-200"
+                        }`}
+                    >
                         Bookings
-                    </h2>
-                    <p className="mt-2 text-sm text-slate-600">
-                        View and manage customer bookings.
-                    </p>
-                </div>
-
-                <div className="rounded-xl bg-white/90 p-5 shadow-sm">
-                    <h2 className="text-lg font-semibold text-blue-900">
+                    </button>
+            
+                    <button
+                        onClick={() => setActiveTab("slots")}
+                        className={`rounded px-4 py-2 text-sm font-medium ${
+                            activeTab === "slots"
+                                ? "bg-blue-700 text-white"
+                                : "bg-slate-100 hover:bg-slate-200"
+                        }`}
+                    >
                         Slots
-                    </h2>
-                    <p className="mt-2 text-sm text-slate-600">
-                        Review availability and scheduled tours.
-                    </p>
-                </div>
-
-                <div className="rounded-xl bg-white/90 p-5 shadow-sm">
-                    <h2 className="text-lg font-semibold text-blue-900">
+                    </button>
+            
+                    <button
+                        onClick={() => setActiveTab("tickets")}
+                        className={`rounded px-4 py-2 text-sm font-medium ${
+                            activeTab === "tickets"
+                                ? "bg-blue-700 text-white"
+                                : "bg-slate-100 hover:bg-slate-200"
+                        }`}
+                    >
                         Ticket Types
-                    </h2>
-                    <p className="mt-2 text-sm text-slate-600">
-                        Configure ticket options and pricing.
-                    </p>
-                </div>
-
-                <div className="rounded-xl bg-white/90 p-5 shadow-sm">
-                    <h2 className="text-lg font-semibold text-blue-900">
+                    </button>
+            
+                    <button
+                        onClick={() => setActiveTab("operations")}
+                        className={`rounded px-4 py-2 text-sm font-medium ${
+                            activeTab === "operations"
+                                ? "bg-blue-700 text-white"
+                                : "bg-slate-100 hover:bg-slate-200"
+                        }`}
+                    >
                         Operations
-                    </h2>
-                    <p className="mt-2 text-sm text-slate-600">
-                        Handle refunds and administrative actions.
-                    </p>
+                    </button>
                 </div>
+            </div>
+
+            <div className="rounded-xl bg-white/95 p-5 shadow-md">
+                {activeTab === "bookings" && (
+                    <div>
+                        <h2 className="text-lg font-semibold text-blue-900">
+                            Bookings
+                        </h2>
+                        <p className="mt-2 text-sm text-slate-600">
+                            Booking list will appear here.
+                        </p>
+                    </div>
+                )}
+            
+                {activeTab === "slots" && (
+                    <div>
+                        <h2 className="text-lg font-semibold text-blue-900">
+                            Slots
+                        </h2>
+                        <p className="mt-2 text-sm text-slate-600">
+                            Slot management will appear here.
+                        </p>
+                    </div>
+                )}
+            
+                {activeTab === "tickets" && (
+                    <div>
+                        <h2 className="text-lg font-semibold text-blue-900">
+                            Ticket Types
+                        </h2>
+                        <p className="mt-2 text-sm text-slate-600">
+                            Ticket configuration will appear here.
+                        </p>
+                    </div>
+                )}
+            
+                {activeTab === "operations" && (
+                    <div>
+                        <h2 className="text-lg font-semibold text-blue-900">
+                            Operations
+                        </h2>
+                        <p className="mt-2 text-sm text-slate-600">
+                            Refunds and admin actions will appear here.
+                        </p>
+                    </div>
+                )}
             </div>
 
             <div className="rounded-xl bg-white/95 p-5 shadow-md">
