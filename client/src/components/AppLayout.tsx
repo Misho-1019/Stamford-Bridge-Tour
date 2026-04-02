@@ -1,6 +1,15 @@
-import { Link, Outlet } from 'react-router';
+import { Link, Outlet, useNavigate } from 'react-router';
+import { useAdminAuth } from '../context/AdminAuthContext';
 
 function AppLayout() {
+    const { isAuthenticated, logout } = useAdminAuth();
+    const navigate = useNavigate();
+
+    async function handleLogout() {
+        await logout();
+        navigate('/login');
+    }
+
     return (
         <div className="relative min-h-screen text-slate-900">
             {/* Background image */}
@@ -32,9 +41,18 @@ function AppLayout() {
                             <Link to="/admin" className="hover:underline text-slate-800">
                                 Admin
                             </Link>
-                            <Link to="/login" className="hover:underline text-slate-800">
-                                Login
-                            </Link>
+                            {isAuthenticated ? (
+                                <button
+                                    onClick={handleLogout}
+                                    className="text-red-600 hover:underline"
+                                >
+                                    Logout
+                                </button>
+                            ) : (
+                                <Link to="/login" className="hover:underline text-slate-800">
+                                    Login
+                                </Link>
+                            )}
                         </nav>
                     </div>
                 </header>
