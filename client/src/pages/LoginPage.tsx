@@ -1,16 +1,18 @@
 import { useState, type FormEvent } from "react";
-import { useNavigate } from "react-router";
-import { loginAdmin } from "../api/adminAuth";
+import { useLocation, useNavigate } from "react-router";
 import { useAdminAuth } from "../context/AdminAuthContext";
 
 function LoginPage() {
     const navigate = useNavigate();
     const { login } = useAdminAuth()
+    const location = useLocation();
 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const from = location.state?.from?.pathname || '/admin';
 
     async function handleSubmit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
@@ -20,7 +22,7 @@ function LoginPage() {
         try {
             await login({ email, password })
 
-            navigate('/admin')
+            navigate(from, { replace: true });
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Admin login failed';
 

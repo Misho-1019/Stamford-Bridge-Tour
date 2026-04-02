@@ -6,6 +6,7 @@ import AppLayout from "./components/AppLayout";
 import BookingPage from "./pages/BookingPage";
 import CheckoutSuccessPage from "./pages/CheckoutSuccessPage";
 import CheckoutCancelPage from "./pages/CheckoutCancelPage";
+import ProtectedAdminRoute from "./components/ProtectedAdminRoute";
 
 export const router = createBrowserRouter([
     {
@@ -30,7 +31,11 @@ export const router = createBrowserRouter([
             },
             {
                 path: 'admin',
-                element: <AdminPage />,
+                element: (
+                    <ProtectedAdminRoute>
+                        <AdminPage />
+                    </ProtectedAdminRoute>
+                ),
             },
             {
                 path: 'login',

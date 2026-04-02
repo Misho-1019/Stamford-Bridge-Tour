@@ -41,6 +41,7 @@ export function AdminAuthProvider({ children }: AdminAuthProviderProps) {
     )
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAdminAuth() {
     const context = useContext(AdminAuthContext);
 
