@@ -30,3 +30,9 @@ export function logoutAdmin() {
         method: 'POST',
     })
 }
+
+export function refreshAdminSession() {
+    return apiFetch<{ admin: AdminUser }>('/auth/admin/refresh', {
+        method: 'POST',
+    })
+}

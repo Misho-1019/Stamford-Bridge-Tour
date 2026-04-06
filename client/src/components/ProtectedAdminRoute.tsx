@@ -9,8 +9,16 @@ type ProtectedAdminRouteProps = {
 export default function ProtectedAdminRoute({
     children,
 }: ProtectedAdminRouteProps) {
-    const { isAuthenticated } = useAdminAuth();
+    const { isAuthenticated, isInitializing } = useAdminAuth();
     const location = useLocation();
+
+    if (isInitializing) {
+        return (
+            <div className="p-6 text-sm text-slate-600">
+                Loading...
+            </div>
+        );
+    }
 
     if (!isAuthenticated) {
         return <Navigate to='/login' replace state={{ from: location }}/>
