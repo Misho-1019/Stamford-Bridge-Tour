@@ -5,8 +5,9 @@ import { formatDateTime, formatPrice } from "../lib/format";
 import { refundBooking } from "../api/adminRefunds";
 import { updateAdminBookingStatus } from "../api/adminBookingStatus";
 import { generateAdminSlots, syncAdminBlackouts } from "../api/adminOperations";
+import { getAdminBookingStats, type AdminBookingStats } from "../api/adminAnalytics";
 
-type AdminTab = 'bookings' | 'slots' | 'tickets' | 'operations';
+type AdminTab = 'bookings' | 'analytics' | 'slots' | 'tickets' | 'operations';
 
 function AdminPage() {
     const [activeTab, setActiveTab] = useState<AdminTab>('bookings')
@@ -31,6 +32,10 @@ function AdminPage() {
     const [isSyncingBlackouts, setIsSyncingBlackouts] = useState(false)
     const [operationsError, setOperationsError] = useState("");
     const [operationsSuccess, setOperationsSuccess] = useState("");
+
+    const [bookingStats, setBookingStats] = useState<AdminBookingStats | null>(null)
+    const [isLoadingStats, setIsLoadingStats] = useState(false)
+    const [statsError, setStatsError] = useState('')
 
 
     async function loadBookings(page: number) {
@@ -188,6 +193,34 @@ function AdminPage() {
         }
     }
 
+    async function loadBookingStats() {
+        try {
+            setIsLoadingStats(true)
+            setStatsError('');
+
+            const data = await getAdminBookingStats();
+            setBookingStats(data)
+        } catch (error) {
+            if (error instanceof Error) {
+                setStatsError(error.message)
+
+                return;
+            }
+
+            setStatsError('Failed to load analytics')
+        } finally {
+            setIsLoadingStats(false);
+        }
+    }
+
+    useEffect(() => {
+        if (activeTab !== 'analytics') {
+            return;
+        }
+
+        loadBookingStats();
+    }, [activeTab])
+
     return (
         <section className="space-y-6">
             <div>
@@ -211,6 +244,18 @@ function AdminPage() {
                         }`}
                     >
                         Bookings
+                    </button>
+
+                    <button
+                        type="button"
+                        onClick={() => setActiveTab("analytics")}
+                        className={`rounded px-4 py-2 text-sm font-medium ${
+                            activeTab === "analytics"
+                                ? "bg-blue-700 text-white"
+                                : "bg-slate-100 hover:bg-slate-200"
+                        }`}
+                    >
+                        Analytics
                     </button>
 
                     <button
@@ -483,6 +528,77 @@ function AdminPage() {
                                     </div>
                                 </>
                             )}
+                    </div>
+                )}
+
+                {activeTab === "analytics" && (
+                    <div className="space-y-6">
+                        <div>
+                            <h2 className="text-lg font-semibold text-blue-900">
+                                Analytics
+                            </h2>
+                            <p className="mt-2 text-sm text-slate-600">
+                                Overview of booking activity and revenue performance.
+                            </p>
+                        </div>
+                
+                        {isLoadingStats && (
+                            <p className="text-sm text-slate-600">
+                                Loading analytics...
+                            </p>
+                        )}
+                
+                        {statsError && (
+                            <p className="text-sm text-red-600">
+                                {statsError}
+                            </p>
+                        )}
+                
+                        {bookingStats && !isLoadingStats && !statsError && (
+                            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                                <div className="rounded-xl bg-white/90 p-5 shadow-sm">
+                                    <p className="text-sm text-slate-600">Total Bookings</p>
+                                    <p className="mt-2 text-2xl font-semibold text-blue-900">
+                                        {bookingStats.totalBookings}
+                                    </p>
+                                </div>
+                
+                                <div className="rounded-xl bg-white/90 p-5 shadow-sm">
+                                    <p className="text-sm text-slate-600">Confirmed Bookings</p>
+                                    <p className="mt-2 text-2xl font-semibold text-green-700">
+                                        {bookingStats.confirmedBookings}
+                                    </p>
+                                </div>
+                
+                                <div className="rounded-xl bg-white/90 p-5 shadow-sm">
+                                    <p className="text-sm text-slate-600">Cancelled Bookings</p>
+                                    <p className="mt-2 text-2xl font-semibold text-yellow-700">
+                                        {bookingStats.cancelledBookings}
+                                    </p>
+                                </div>
+                
+                                <div className="rounded-xl bg-white/90 p-5 shadow-sm">
+                                    <p className="text-sm text-slate-600">Refunded Bookings</p>
+                                    <p className="mt-2 text-2xl font-semibold text-slate-700">
+                                        {bookingStats.refundedBookings}
+                                    </p>
+                                </div>
+                
+                                <div className="rounded-xl bg-white/95 p-5 shadow-md">
+                                    <p className="text-sm text-slate-600">Confirmed Revenue</p>
+                                    <p className="mt-2 text-2xl font-semibold text-blue-900">
+                                        {formatPrice(bookingStats.confirmedRevenueCents)}
+                                    </p>
+                                </div>
+                
+                                <div className="rounded-xl bg-white/95 p-5 shadow-md">
+                                    <p className="text-sm text-slate-600">Refunded Revenue</p>
+                                    <p className="mt-2 text-2xl font-semibold text-slate-800">
+                                        {formatPrice(bookingStats.refundedRevenueCents)}
+                                    </p>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
 
