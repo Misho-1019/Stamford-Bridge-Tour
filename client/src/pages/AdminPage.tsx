@@ -300,6 +300,26 @@ function AdminPage() {
         revenue: item.revenueCents / 100,
         qty: item.qty,
     }))
+    
+    const slotChartData = [...slotStats].sort((a, b) => {
+            if (b.usagePercent !== a.usagePercent) {
+                return b.usagePercent - a.usagePercent
+            }
+
+            return b.revenueCents - a.revenueCents
+        }).slice(0, 8).map((slot) => ({
+            label: `${formatDateTime(slot.startAt)}`,
+            usagePercent: slot.usagePercent,
+            revenue: slot.revenueCents / 100,
+        }));
+    
+    const topSlotStats = [...slotStats].sort((a, b) => {
+        if (b.usagePercent !== a.usagePercent) {
+            return b.usagePercent - a.usagePercent
+        }
+
+        return b.revenueCents - a.revenueCents;
+    }).slice(0, 8)
 
     return (
         <section className="space-y-6">
@@ -854,13 +874,104 @@ function AdminPage() {
                 )}
 
                 {activeTab === "slots" && (
-                    <div>
-                        <h2 className="text-lg font-semibold text-blue-900">
-                            Slots
-                        </h2>
-                        <p className="mt-2 text-sm text-slate-600">
-                            Slot management will appear here.
-                        </p>
+                    <div className="space-y-6">
+                        <div>
+                            <h2 className="text-lg font-semibold text-blue-900">
+                                Slots
+                            </h2>
+                            <p className="mt-2 text-sm text-slate-600">
+                                Performance overview for the strongest tour slots.
+                            </p>
+                        </div>
+                
+                        <div className="rounded-xl bg-white/90 p-5 shadow-sm">
+                            <div>
+                                <h3 className="text-base font-semibold text-blue-900">
+                                    Slot Usage Chart
+                                </h3>
+                                <p className="mt-1 text-sm text-slate-600">
+                                    Top-performing slots ranked by usage percentage.
+                                </p>
+                            </div>
+                
+                            <div className="mt-4 h-80">
+                                {slotChartData.length === 0 ? (
+                                    <p className="text-sm text-slate-600">
+                                        No slot chart data available.
+                                    </p>
+                                ) : (
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <BarChart data={slotChartData} layout="vertical">
+                                            <CartesianGrid strokeDasharray="3 3" />
+                                            <XAxis
+                                                type="number"
+                                                tickFormatter={(value) => `${value}%`}
+                                            />
+                                            <YAxis
+                                                type="category"
+                                                dataKey="label"
+                                                width={180}
+                                            />
+                                            <Tooltip
+                                                formatter={(value) => {
+                                                    if (value === undefined) return "N/A";
+                                                    return [`${value}%`, "Usage"];
+                                                }}
+                                            />
+                                            <Bar
+                                                dataKey="usagePercent"
+                                                fill="#1d4ed8"
+                                                radius={[0, 6, 6, 0]}
+                                            />
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                )}
+                            </div>
+                        </div>
+                
+                        <div className="rounded-xl bg-white/90 p-5 shadow-sm">
+                            <div>
+                                <h3 className="text-base font-semibold text-blue-900">
+                                    Top Slot Performance
+                                </h3>
+                                <p className="mt-1 text-sm text-slate-600">
+                                    Detailed performance metrics for the highest-usage slots.
+                                </p>
+                            </div>
+                
+                            <div className="mt-4 space-y-3">
+                                {topSlotStats.length === 0 ? (
+                                    <p className="text-sm text-slate-600">
+                                        No slot performance data available.
+                                    </p>
+                                ) : (
+                                    topSlotStats.map((slot) => (
+                                        <div
+                                            key={slot.slotId}
+                                            className="rounded-lg border border-slate-200 bg-white/90 p-3"
+                                        >
+                                            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                                                <div>
+                                                    <p className="font-medium text-slate-900">
+                                                        {formatDateTime(slot.startAt)} - {formatDateTime(slot.endAt)}
+                                                    </p>
+                                                    <p className="text-sm text-slate-600">
+                                                        Bookings: {slot.bookingsCount} · Tickets sold: {slot.ticketsSold}
+                                                    </p>
+                                                    <p className="text-sm text-slate-600">
+                                                        Capacity: {slot.capacityTotal} · Usage: {slot.usagePercent}%
+                                                    </p>
+                                                </div>
+                
+                                                <p className="text-sm font-semibold text-blue-900">
+                                                    {formatPrice(slot.revenueCents)}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        </div>
                     </div>
                 )}
 
