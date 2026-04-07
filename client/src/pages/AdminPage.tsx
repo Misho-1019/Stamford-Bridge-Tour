@@ -6,6 +6,7 @@ import { refundBooking } from "../api/adminRefunds";
 import { updateAdminBookingStatus } from "../api/adminBookingStatus";
 import { generateAdminSlots, syncAdminBlackouts } from "../api/adminOperations";
 import { getAdminBookingStats, getAdminRevenueSeries, getAdminSlotStats, getAdminTicketTypeStats, type AdminBookingStats, type AdminRevenueSeriesItem, type AdminSlotStat, type AdminTicketTypeStat } from "../api/adminAnalytics";
+import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 type AdminTab = 'bookings' | 'analytics' | 'slots' | 'tickets' | 'operations';
 
@@ -281,6 +282,11 @@ function AdminPage() {
 
         loadAnalytics();
     }, [activeTab])
+
+    const revenueChartData = revenueSeries.map((item) => ({
+        date: item.date,
+        revenue: item.revenueCents / 100,
+    }))
 
     return (
         <section className="space-y-6">
@@ -664,6 +670,44 @@ function AdminPage() {
                         <div className="rounded-xl bg-white/90 p-5 shadow-sm">
                             <div>
                                 <h3 className="text-base font-semibold text-blue-900">
+                                    Revenue Trend
+                                </h3>
+                                <p className="mt-1 text-sm text-slate-600">
+                                    Daily revenue over time.
+                                </p>
+                            </div>
+                        
+                            <div className="mt-4 h-64">
+                                {revenueChartData.length === 0 ? (
+                                    <p className="text-sm text-slate-600">
+                                        No chart data available.
+                                    </p>
+                                ) : (
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <LineChart data={revenueChartData}>
+                                            <CartesianGrid strokeDasharray="3 3" />
+                        
+                                            <XAxis dataKey="date" />
+                        
+                                            <YAxis />
+                        
+                                            <Tooltip />
+                        
+                                            <Line
+                                                type="monotone"
+                                                dataKey="revenue"
+                                                stroke="#1d4ed8"
+                                                strokeWidth={2}
+                                            />
+                                        </LineChart>
+                                    </ResponsiveContainer>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="rounded-xl bg-white/90 p-5 shadow-sm">
+                            <div>
+                                <h3 className="text-base font-semibold text-blue-900">
                                     Revenue by Day
                                 </h3>
                                 <p className="mt-1 text-sm text-slate-600">
@@ -745,7 +789,7 @@ function AdminPage() {
                                     Slot Performance
                                 </h3>
                                 <p className="mt-1 text-sm text-slate-600">
-                                    Usage and revenue by tour slot.
+                                    Top-performing tour slots by usage and revenue.
                                 </p>
                             </div>
                         
