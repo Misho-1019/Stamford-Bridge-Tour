@@ -6,9 +6,15 @@ import { refundBooking } from "../api/adminRefunds";
 import { updateAdminBookingStatus } from "../api/adminBookingStatus";
 import { generateAdminSlots, syncAdminBlackouts } from "../api/adminOperations";
 import { getAdminBookingStats, getAdminRevenueSeries, getAdminSlotStats, getAdminTicketTypeStats, type AdminBookingStats, type AdminRevenueSeriesItem, type AdminSlotStat, type AdminTicketTypeStat } from "../api/adminAnalytics";
-import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 type AdminTab = 'bookings' | 'analytics' | 'slots' | 'tickets' | 'operations';
+
+const ticketTypeDescriptions: Record<string, string> = {
+    Adult: "Standard ticket for visitors aged 18 and above.",
+    Child: "Reduced ticket for children under 18.",
+    Student: "Discounted ticket for students with valid ID.",
+}
 
 function AdminPage() {
     const [activeTab, setActiveTab] = useState<AdminTab>('bookings')
@@ -287,6 +293,12 @@ function AdminPage() {
         date: item.date,
         label: formatDate(item.date),
         revenue: item.revenueCents / 100,
+    }))
+
+    const ticketTypeChartData = ticketTypeStats.map((item) => ({
+        name: item.ticketTypeName,
+        revenue: item.revenueCents / 100,
+        qty: item.qty,
     }))
 
     return (
@@ -690,15 +702,24 @@ function AdminPage() {
                         
                                             <XAxis dataKey="label" />
                         
-                                            <YAxis />
+                                            <YAxis
+                                                tickFormatter={(value) => `£${value}`}
+                                            />
                         
-                                            <Tooltip />
+                                            <Tooltip
+                                                formatter={(value) => {
+                                                    if (value === undefined) return "N/A";
+                                                    return [`£${value}`, "Revenue"];
+                                                }}
+                                                labelFormatter={(label) => `Date: ${label}`}
+                                            />
                         
                                             <Line
                                                 type="monotone"
                                                 dataKey="revenue"
                                                 stroke="#1d4ed8"
-                                                strokeWidth={2}
+                                                strokeWidth={3}
+                                                dot={false}
                                             />
                                         </LineChart>
                                     </ResponsiveContainer>
@@ -844,13 +865,99 @@ function AdminPage() {
                 )}
 
                 {activeTab === "tickets" && (
-                    <div>
-                        <h2 className="text-lg font-semibold text-blue-900">
-                            Ticket Types
-                        </h2>
-                        <p className="mt-2 text-sm text-slate-600">
-                            Ticket configuration will appear here.
-                        </p>
+                    <div className="space-y-6">
+                        <div>
+                            <h2 className="text-lg font-semibold text-blue-900">
+                                Ticket Types
+                            </h2>
+                            <p className="mt-2 text-sm text-slate-600">
+                                Performance overview by ticket type.
+                            </p>
+                        </div>
+
+                        <div className="rounded-xl bg-white/90 p-5 shadow-sm">
+                            <div>
+                                <h3 className="text-base font-semibold text-blue-900">
+                                    Ticket Type Revenue Chart
+                                </h3>
+                                <p className="mt-1 text-sm text-slate-600">
+                                    Revenue comparison across ticket types.
+                                </p>
+                            </div>
+                        
+                            <div className="mt-4 h-72">
+                                {ticketTypeChartData.length === 0 ? (
+                                    <p className="text-sm text-slate-600">
+                                        No chart data available.
+                                    </p>
+                                ) : (
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <BarChart data={ticketTypeChartData}>
+                                            <CartesianGrid strokeDasharray="3 3" />
+                                            <XAxis dataKey="name" />
+                                            <YAxis tickFormatter={(value) => `£${value}`} />
+                                            <Tooltip
+                                                formatter={(value) => {
+                                                    if (value === undefined) return "N/A";
+                                                    return [`£${value}`, "Revenue"];
+                                                }}
+                                            />
+                                            <Bar dataKey="revenue" fill="#1d4ed8" radius={[6, 6, 0, 0]} />
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                )}
+                            </div>
+                        </div>
+                
+                        {ticketTypeStats.length === 0 ? (
+                            <div className="rounded-xl bg-white/90 p-5 shadow-sm">
+                                <p className="text-sm text-slate-600">
+                                    No ticket type data available.
+                                </p>
+                            </div>
+                        ) : (
+                            <>
+                                <div className="rounded-xl bg-white/90 p-5 shadow-sm">
+                                    <div>
+                                        <h3 className="text-base font-semibold text-blue-900">
+                                            Ticket Type Revenue
+                                        </h3>
+                                        <p className="mt-1 text-sm text-slate-600">
+                                            Revenue generated by each ticket type.
+                                        </p>
+                                    </div>
+                
+                                    <div className="mt-4 space-y-3">
+                                        {ticketTypeStats.map((item) => (
+                                            <div
+                                                key={item.ticketTypeId}
+                                                className="flex flex-col gap-2 rounded-lg border border-slate-200 bg-white/90 p-3 sm:flex-row sm:items-center sm:justify-between"
+                                            >
+                                                <div>
+                                                    <p className="font-medium text-slate-900">
+                                                        {item.ticketTypeName}
+                                                    </p>
+
+                                                    {ticketTypeDescriptions[item.ticketTypeName] && (
+                                                        <p className="text-sm text-slate-500">
+                                                            {ticketTypeDescriptions[item.ticketTypeName]}
+                                                        </p>
+                                                    )}
+
+                                                    <p className="text-sm text-slate-600">
+                                                        Tickets sold: {item.qty}
+                                                    </p>
+                                                </div>
+                
+                                                <p className="text-sm font-semibold text-blue-900">
+                                                    {formatPrice(item.revenueCents)}
+                                                </p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </>
+                        )}
                     </div>
                 )}
 
