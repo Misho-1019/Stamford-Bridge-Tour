@@ -5,7 +5,7 @@ import { formatDateTime, formatPrice } from "../lib/format";
 import { refundBooking } from "../api/adminRefunds";
 import { updateAdminBookingStatus } from "../api/adminBookingStatus";
 import { generateAdminSlots, syncAdminBlackouts } from "../api/adminOperations";
-import { getAdminBookingStats, type AdminBookingStats } from "../api/adminAnalytics";
+import { getAdminBookingStats, getAdminRevenueSeries, getAdminSlotStats, getAdminTicketTypeStats, type AdminBookingStats, type AdminRevenueSeriesItem, type AdminSlotStat, type AdminTicketTypeStat } from "../api/adminAnalytics";
 
 type AdminTab = 'bookings' | 'analytics' | 'slots' | 'tickets' | 'operations';
 
@@ -37,6 +37,9 @@ function AdminPage() {
     const [isLoadingStats, setIsLoadingStats] = useState(false)
     const [statsError, setStatsError] = useState('')
 
+    const [revenueSeries, setRevenueSeries] = useState<AdminRevenueSeriesItem[]>([]);
+    const [ticketTypeStats, setTicketTypeStats] = useState<AdminTicketTypeStat[]>([]);
+    const [slotStats, setSlotStats] = useState<AdminSlotStat[]>([]);
 
     async function loadBookings(page: number) {
         try {
@@ -213,12 +216,70 @@ function AdminPage() {
         }
     }
 
+    async function loadRevenueSeries() {
+        try {
+            const data = await getAdminRevenueSeries();
+            setRevenueSeries(data.data)
+        } catch (error) {
+            if (error instanceof Error) {
+                setStatsError(error.message)
+
+                return;
+            }
+
+            setStatsError('Failed to load revenue series')
+        }
+    }
+
+    async function loadTicketTypeStats() {
+        try {
+            const data = await getAdminTicketTypeStats();
+
+            setTicketTypeStats(data.data)
+        } catch (error) {
+            if (error instanceof Error) {
+                setStatsError(error.message)
+
+                return;
+            }
+
+            setStatsError('Failed to load ticket type stats')
+        }
+    }
+
+    async function loadSlotStats() {
+        try {
+            const data = await getAdminSlotStats();
+
+            setSlotStats(data.data)
+        } catch (error) {
+            if (error instanceof Error) {
+                setStatsError(error.message)
+
+                return;
+            }
+
+            setStatsError('Failed to load slot stats')
+        }
+    }
+
     useEffect(() => {
         if (activeTab !== 'analytics') {
             return;
         }
 
-        loadBookingStats();
+        async function loadAnalytics() {
+            setStatsError('');
+
+            await Promise.all([
+                loadBookingStats(),
+                loadRevenueSeries(),
+                loadTicketTypeStats(),
+                loadSlotStats(),
+            ])
+        }
+
+        loadAnalytics();
     }, [activeTab])
 
     return (
@@ -599,6 +660,130 @@ function AdminPage() {
                                 </div>
                             </div>
                         )}
+
+                        <div className="rounded-xl bg-white/90 p-5 shadow-sm">
+                            <div>
+                                <h3 className="text-base font-semibold text-blue-900">
+                                    Revenue by Day
+                                </h3>
+                                <p className="mt-1 text-sm text-slate-600">
+                                    Daily confirmed revenue and booking count.
+                                </p>
+                            </div>
+                        
+                            <div className="mt-4 space-y-3">
+                                {revenueSeries.length === 0 ? (
+                                    <p className="text-sm text-slate-600">
+                                        No revenue data available.
+                                    </p>
+                                ) : (
+                                    revenueSeries.slice(-7).reverse().map((item) => (
+                                        <div
+                                            key={item.date}
+                                            className="flex flex-col gap-2 rounded-lg border border-slate-200 bg-white/90 p-3 sm:flex-row sm:items-center sm:justify-between"
+                                        >
+                                            <div>
+                                                <p className="font-medium text-slate-900">
+                                                    {item.date}
+                                                </p>
+                                                <p className="text-sm text-slate-600">
+                                                    Bookings: {item.bookings}
+                                                </p>
+                                            </div>
+                        
+                                            <p className="text-sm font-semibold text-blue-900">
+                                                {formatPrice(item.revenueCents)}
+                                            </p>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="rounded-xl bg-white/90 p-5 shadow-sm">
+                            <div>
+                                <h3 className="text-base font-semibold text-blue-900">
+                                    Ticket Type Performance
+                                </h3>
+                                <p className="mt-1 text-sm text-slate-600">
+                                    Revenue and quantity sold by ticket type.
+                                </p>
+                            </div>
+                        
+                            <div className="mt-4 space-y-3">
+                                {ticketTypeStats.length === 0 ? (
+                                    <p className="text-sm text-slate-600">
+                                        No ticket type data available.
+                                    </p>
+                                ) : (
+                                    ticketTypeStats.map((item) => (
+                                        <div
+                                            key={item.ticketTypeId}
+                                            className="flex flex-col gap-2 rounded-lg border border-slate-200 bg-white/90 p-3 sm:flex-row sm:items-center sm:justify-between"
+                                        >
+                                            <div>
+                                                <p className="font-medium text-slate-900">
+                                                    {item.ticketTypeName}
+                                                </p>
+                                                <p className="text-sm text-slate-600">
+                                                    Tickets sold: {item.qty}
+                                                </p>
+                                            </div>
+                        
+                                            <p className="text-sm font-semibold text-blue-900">
+                                                {formatPrice(item.revenueCents)}
+                                            </p>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="rounded-xl bg-white/90 p-5 shadow-sm">
+                            <div>
+                                <h3 className="text-base font-semibold text-blue-900">
+                                    Slot Performance
+                                </h3>
+                                <p className="mt-1 text-sm text-slate-600">
+                                    Usage and revenue by tour slot.
+                                </p>
+                            </div>
+                        
+                            <div className="mt-4 space-y-3">
+                                {slotStats.length === 0 ? (
+                                    <p className="text-sm text-slate-600">
+                                        No slot performance data available.
+                                    </p>
+                                ) : (
+                                    [...slotStats]
+                                        .sort((a, b) => b.usagePercent - a.usagePercent)
+                                        .slice(0, 10).map((slot) => (
+                                        <div
+                                            key={slot.slotId}
+                                            className="rounded-lg border border-slate-200 bg-white/90 p-3"
+                                        >
+                                            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                                                <div>
+                                                    <p className="font-medium text-slate-900">
+                                                        {formatDateTime(slot.startAt)} - {formatDateTime(slot.endAt)}
+                                                    </p>
+                                                    <p className="text-sm text-slate-600">
+                                                        Bookings: {slot.bookingsCount} · Tickets sold: {slot.ticketsSold}
+                                                    </p>
+                                                    <p className="text-sm text-slate-600">
+                                                        Capacity: {slot.capacityTotal} · Usage: {slot.usagePercent}%
+                                                    </p>
+                                                </div>
+                        
+                                                <p className="text-sm font-semibold text-blue-900">
+                                                    {formatPrice(slot.revenueCents)}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        </div>
                     </div>
                 )}
 
