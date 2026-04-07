@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import type { AdminBooking } from "../types/adminBooking";
 import { getAdminBookings } from "../api/adminBookings";
-import { formatDateTime, formatPrice } from "../lib/format";
+import { formatDate, formatDateTime, formatPrice } from "../lib/format";
 import { refundBooking } from "../api/adminRefunds";
 import { updateAdminBookingStatus } from "../api/adminBookingStatus";
 import { generateAdminSlots, syncAdminBlackouts } from "../api/adminOperations";
@@ -285,6 +285,7 @@ function AdminPage() {
 
     const revenueChartData = revenueSeries.map((item) => ({
         date: item.date,
+        label: formatDate(item.date),
         revenue: item.revenueCents / 100,
     }))
 
@@ -687,7 +688,7 @@ function AdminPage() {
                                         <LineChart data={revenueChartData}>
                                             <CartesianGrid strokeDasharray="3 3" />
                         
-                                            <XAxis dataKey="date" />
+                                            <XAxis dataKey="label" />
                         
                                             <YAxis />
                         
@@ -728,7 +729,7 @@ function AdminPage() {
                                         >
                                             <div>
                                                 <p className="font-medium text-slate-900">
-                                                    {item.date}
+                                                    {formatDate(item.date)}
                                                 </p>
                                                 <p className="text-sm text-slate-600">
                                                     Bookings: {item.bookings}
