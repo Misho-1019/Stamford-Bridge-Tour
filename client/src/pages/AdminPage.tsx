@@ -4,6 +4,7 @@ import { getAdminBookings } from "../api/adminBookings";
 import { formatDateTime, formatPrice } from "../lib/format";
 import { refundBooking } from "../api/adminRefunds";
 import { updateAdminBookingStatus } from "../api/adminBookingStatus";
+import { generateAdminSlots, syncAdminBlackouts } from "../api/adminOperations";
 
 type AdminTab = 'bookings' | 'slots' | 'tickets' | 'operations';
 
@@ -20,10 +21,17 @@ function AdminPage() {
     const [refundingBookingId, setRefundingBookingId] = useState<string | null>(null);
     const [refundFormBookingId, setRefundFormBookingId] = useState<string | null>(null);
     const [refundReason, setRefundReason] = useState('');
+    const [refundFieldError, setRefundFieldError] = useState('')
 
     const [cancellingBookingId, setCancellingBookingId] = useState<string | null>(null)
 
-    const [refundFieldError, setRefundFieldError] = useState('')
+    const [generateDays, setGenerateDays] = useState(30);
+    const [syncDaysAhead, setSyncDaysAhead] = useState(30);
+    const [isGeneratingSlots, setIsGeneratingSlots] = useState(false)
+    const [isSyncingBlackouts, setIsSyncingBlackouts] = useState(false)
+    const [operationsError, setOperationsError] = useState("");
+    const [operationsSuccess, setOperationsSuccess] = useState("");
+
 
     async function loadBookings(page: number) {
         try {
@@ -133,6 +141,50 @@ function AdminPage() {
             setBookingsError('Failed to refund booking')
         } finally {
             setRefundingBookingId(null);
+        }
+    }
+
+    async function handleGenerateSlots() {
+        try {
+            setIsGeneratingSlots(true);
+            setOperationsError('')
+            setOperationsSuccess('')
+
+            const data = await generateAdminSlots(generateDays);
+
+            setOperationsSuccess(data.message || `Slots generated successfully for the next ${generateDays} days.`)
+        } catch (error) {
+            if (error instanceof Error) {
+                setOperationsError(error.message)
+
+                return;
+            }
+
+            setOperationsError('Failed to generate slots')
+        } finally {
+            setIsGeneratingSlots(false);
+        }
+    }
+
+    async function handleSyncBlackouts() {
+        try {
+            setIsSyncingBlackouts(true);
+            setOperationsError('')
+            setOperationsSuccess('');
+
+            const data = await syncAdminBlackouts(syncDaysAhead);
+
+            setOperationsSuccess(`Blackouts synced successfully with ${data.provider}.`)
+        } catch (error) {
+            if (error instanceof Error) {
+                setOperationsError(error.message)
+
+                return;
+            }
+
+            setOperationsError('Failed to sync blackouts')
+        } finally {
+            setIsSyncingBlackouts(false);
         }
     }
 
@@ -457,13 +509,91 @@ function AdminPage() {
                 )}
 
                 {activeTab === "operations" && (
-                    <div>
-                        <h2 className="text-lg font-semibold text-blue-900">
-                            Operations
-                        </h2>
-                        <p className="mt-2 text-sm text-slate-600">
-                            Refunds and admin actions will appear here.
-                        </p>
+                    <div className="space-y-6">
+                        <div>
+                            <h2 className="text-lg font-semibold text-blue-900">
+                                Operations
+                            </h2>
+                            <p className="mt-2 text-sm text-slate-600">
+                                Run admin maintenance tasks for slots and blackouts.
+                            </p>
+                        </div>
+                
+                        {operationsError && (
+                            <p className="text-sm text-red-600">
+                                {operationsError}
+                            </p>
+                        )}
+                
+                        {operationsSuccess && (
+                            <p className="text-sm text-green-700">
+                                {operationsSuccess}
+                            </p>
+                        )}
+                
+                        <div className="rounded-xl bg-white/90 p-5 shadow-sm space-y-4">
+                            <div>
+                                <h3 className="text-base font-semibold text-blue-900">
+                                    Generate Slots
+                                </h3>
+                                <p className="mt-1 text-sm text-slate-600">
+                                    Generate tour slots for the upcoming number of days.
+                                </p>
+                            </div>
+                
+                            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                                <input
+                                    type="number"
+                                    min={1}
+                                    value={generateDays}
+                                    onChange={(event) =>
+                                        setGenerateDays(Number(event.target.value))
+                                    }
+                                    className="w-full rounded border border-slate-300 bg-white px-3 py-2 text-slate-900 outline-none focus:border-blue-700 sm:max-w-xs"
+                                />
+                
+                                <button
+                                    type="button"
+                                    onClick={handleGenerateSlots}
+                                    disabled={isGeneratingSlots}
+                                    className="rounded-lg bg-blue-700 px-4 py-2 font-medium text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                    {isGeneratingSlots ? "Generating..." : "Generate Slots"}
+                                </button>
+                            </div>
+                        </div>
+                
+                        <div className="rounded-xl bg-white/90 p-5 shadow-sm space-y-4">
+                            <div>
+                                <h3 className="text-base font-semibold text-blue-900">
+                                    Sync Blackouts
+                                </h3>
+                                <p className="mt-1 text-sm text-slate-600">
+                                    Sync blackout dates based on upcoming fixtures.
+                                </p>
+                            </div>
+                
+                            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                                <input
+                                    type="number"
+                                    min={1}
+                                    value={syncDaysAhead}
+                                    onChange={(event) =>
+                                        setSyncDaysAhead(Number(event.target.value))
+                                    }
+                                    className="w-full rounded border border-slate-300 bg-white px-3 py-2 text-slate-900 outline-none focus:border-blue-700 sm:max-w-xs"
+                                />
+                
+                                <button
+                                    type="button"
+                                    onClick={handleSyncBlackouts}
+                                    disabled={isSyncingBlackouts}
+                                    className="rounded-lg bg-blue-700 px-4 py-2 font-medium text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                    {isSyncingBlackouts ? "Syncing..." : "Sync Blackouts"}
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 )}
             </div>
