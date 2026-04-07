@@ -3,6 +3,7 @@ import type { AdminBooking } from "../types/adminBooking";
 import { getAdminBookings } from "../api/adminBookings";
 import { formatDateTime, formatPrice } from "../lib/format";
 import { refundBooking } from "../api/adminRefunds";
+import { updateAdminBookingStatus } from "../api/adminBookingStatus";
 
 type AdminTab = 'bookings' | 'slots' | 'tickets' | 'operations';
 
@@ -17,9 +18,12 @@ function AdminPage() {
     const [bookingsError, setBookingsError] = useState('')
 
     const [refundingBookingId, setRefundingBookingId] = useState<string | null>(null);
-
     const [refundFormBookingId, setRefundFormBookingId] = useState<string | null>(null);
     const [refundReason, setRefundReason] = useState('');
+
+    const [cancellingBookingId, setCancellingBookingId] = useState<string | null>(null)
+
+    const [refundFieldError, setRefundFieldError] = useState('')
 
     async function loadBookings(page: number) {
         try {
@@ -49,6 +53,13 @@ function AdminPage() {
         }
 
         loadBookings(bookingsPage);
+
+        // Refetch after 1s to catch any delayed state updates
+        const timer = setTimeout(() => {
+            loadBookings(bookingsPage);
+        }, 1000);
+
+        return () => clearTimeout(timer);
     }, [activeTab, bookingsPage])
 
     function getStatusClasses(status: AdminBooking['status']) {
@@ -63,9 +74,37 @@ function AdminPage() {
         return "bg-slate-200 text-slate-700";
     }
 
+    async function handleCancelBooking(bookingId: string) {
+        try {
+            setCancellingBookingId(bookingId)
+            setBookingsError('');
+
+            await updateAdminBookingStatus({
+                bookingId,
+                status: 'CANCELLED',
+            })
+
+            if (refundFormBookingId === bookingId) {
+                setRefundFormBookingId(null)
+                setRefundReason('');
+            }
+
+            await loadBookings(bookingsPage);
+        } catch (error) {
+            if (error instanceof Error) {
+                setBookingsError(error.message)
+                return;
+            }
+
+            setBookingsError('Failed to cancel booking')
+        } finally {
+            setCancellingBookingId(null);
+        }
+    }
+
     async function handleRefund(bookingId: string) {
         if (!refundReason.trim()) {
-            setBookingsError('Please enter a refund reason');
+            setRefundFieldError('Please enter a refund reason');
 
             return;
         }
@@ -81,6 +120,7 @@ function AdminPage() {
 
             setRefundFormBookingId(null);
             setRefundReason('');
+            setRefundFieldError('');
 
             await loadBookings(bookingsPage)
         } catch (error) {
@@ -251,18 +291,36 @@ function AdminPage() {
                                                         </span>
 
                                                         {booking.status === "CONFIRMED" ? (
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => {
-                                                                    setRefundFormBookingId(booking.id);
-                                                                    setRefundReason('');
-                                                                    setBookingsError('');
-                                                                }}
-                                                                disabled={refundingBookingId === booking.id}
-                                                                className="rounded-lg bg-slate-100 px-3 py-2 text-sm font-medium text-slate-800 hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-50"
-                                                            >
-                                                                {refundingBookingId === booking.id ? "Refund Form Open" : refundingBookingId === booking.id ? "Refunding..." : "Refund"}
-                                                            </button>
+                                                            <>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleCancelBooking(booking.id)}
+                                                                    disabled={
+                                                                        cancellingBookingId === booking.id ||
+                                                                        refundingBookingId === booking.id
+                                                                    }
+                                                                    className="rounded-lg bg-slate-100 px-3 py-2 text-sm font-medium text-slate-800 hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-50"
+                                                                >
+                                                                    {cancellingBookingId === booking.id ? 'Cancelling...' : 'Cancel'}
+                                                                </button>
+
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        setRefundFormBookingId(booking.id);
+                                                                        setRefundReason('');
+                                                                        setRefundFieldError('');
+                                                                        setBookingsError('');
+                                                                    }}
+                                                                    disabled={
+                                                                        cancellingBookingId === booking.id ||
+                                                                        refundingBookingId === booking.id
+                                                                    }
+                                                                    className="rounded-lg bg-slate-100 px-3 py-2 text-sm font-medium text-slate-800 hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-50"
+                                                                    >
+                                                                    {refundFormBookingId === booking.id ? "Refund Form Open" : refundingBookingId === booking.id ? "Refunding..." : "Refund"}
+                                                                </button>
+                                                            </>
                                                         ) : null}
 
                                                         {booking.refundReason && (
@@ -282,15 +340,26 @@ function AdminPage() {
                                                         >
                                                             Refund reason
                                                         </label>
-                                                
+
                                                         <input
                                                             id={`refund-reason-${booking.id}`}
                                                             type="text"
                                                             value={refundReason}
-                                                            onChange={(event) => setRefundReason(event.target.value)}
+                                                            onChange={(event) => {
+                                                                setRefundReason(event.target.value);
+                                                                setRefundFieldError('');
+                                                            }}
                                                             placeholder="Enter refund reason"
-                                                            className="w-full rounded border border-slate-300 bg-white px-3 py-2 text-slate-900 outline-none focus:border-blue-700"
+                                                            className={`w-full rounded border bg-white px-3 py-2 text-slate-900 outline-none focus:border-blue-700 ${
+                                                                refundFieldError ? 'border-red-400' : 'border-slate-300'
+                                                            }`}
                                                         />
+
+                                                        {refundFieldError && (
+                                                            <p className="mt-2 text-sm text-red-600">
+                                                                {refundFieldError}
+                                                            </p>
+                                                        )}
                                                 
                                                         <div className="mt-3 flex flex-wrap gap-2">
                                                             <button
@@ -309,6 +378,7 @@ function AdminPage() {
                                                                 onClick={() => {
                                                                     setRefundFormBookingId(null);
                                                                     setRefundReason("");
+                                                                    setRefundFieldError("");
                                                                     setBookingsError("");
                                                                 }}
                                                                 disabled={refundingBookingId === booking.id}
