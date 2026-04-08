@@ -24,7 +24,7 @@ async function readErrorMessage(response: Response): Promise<string> {
         const data = await response.json();
 
         return data.error || 'Request failed';
-    } catch (error) {
+    } catch {
         return 'Request failed';
     }
 }
