@@ -1,13 +1,14 @@
 import { createBrowserRouter } from "react-router";
 import HomePage from "./pages/HomePage";
 import AdminPage from "./pages/AdminPage";
-import LoginPage from "./pages/LoginPage";
+import LoginPage from "./pages/AdminLoginPage";
 import AppLayout from "./components/AppLayout";
 import BookingPage from "./pages/BookingPage";
 import CheckoutSuccessPage from "./pages/CheckoutSuccessPage";
 import CheckoutCancelPage from "./pages/CheckoutCancelPage";
 import ProtectedAdminRoute from "./components/ProtectedAdminRoute";
 import ProtectedClientRoute from "./components/ProtectedClientRoute";
+import ClientLoginPage from "./pages/ClientLoginPage";
 
 export const router = createBrowserRouter([
     {
@@ -48,6 +49,10 @@ export const router = createBrowserRouter([
             },
             {
                 path: 'login',
+                element: <ClientLoginPage />,
+            },
+            {
+                path: 'admin/login',
                 element: <LoginPage />,
             },
         ]
