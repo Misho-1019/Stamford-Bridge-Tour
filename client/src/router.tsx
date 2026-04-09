@@ -7,6 +7,7 @@ import BookingPage from "./pages/BookingPage";
 import CheckoutSuccessPage from "./pages/CheckoutSuccessPage";
 import CheckoutCancelPage from "./pages/CheckoutCancelPage";
 import ProtectedAdminRoute from "./components/ProtectedAdminRoute";
+import ProtectedClientRoute from "./components/ProtectedClientRoute";
 
 export const router = createBrowserRouter([
     {
@@ -36,6 +37,14 @@ export const router = createBrowserRouter([
                         <AdminPage />
                     </ProtectedAdminRoute>
                 ),
+            },
+            {
+                path: 'my-bookings',
+                element: (
+                    <ProtectedClientRoute>
+                        <div>My Bookings</div>
+                    </ProtectedClientRoute>
+                )
             },
             {
                 path: 'login',
