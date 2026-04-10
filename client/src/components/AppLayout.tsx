@@ -1,18 +1,31 @@
 import { Link, Outlet, useNavigate } from 'react-router';
 import { useAdminAuth } from '../context/AdminAuthContext';
+import { useClientAuth } from '../context/ClientAuthContext';
 
 function AppLayout() {
-    const { isAuthenticated, logout } = useAdminAuth();
     const navigate = useNavigate();
+    const { 
+        isAuthenticated: isAdminAuthenticated, 
+        logout : adminLogout,
+    } = useAdminAuth();
 
-    async function handleLogout() {
-        await logout();
+    const {
+        isAuthenticated: isClientAuthenticated,
+        logout: clientLogout,
+    } = useClientAuth();
+
+    async function handleAdminLogout() {
+        await adminLogout();
+        navigate('/admin/login');
+    }
+
+    async function handleClientLogout() {
+        await clientLogout();
         navigate('/login');
     }
 
     return (
         <div className="relative min-h-screen text-slate-900">
-            {/* Background image */}
             <div
                 className="fixed inset-0 bg-cover bg-center"
                 style={{
@@ -20,10 +33,8 @@ function AppLayout() {
                 }}
             />
 
-            {/* Subtle overlay */}
             <div className="fixed inset-0 bg-blue-900/20" />
 
-            {/* Content layer */}
             <div className="relative z-10">
                 <header className="border-b border-white/20 bg-white/70 backdrop-blur-sm">
                     <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4">
@@ -32,27 +43,58 @@ function AppLayout() {
                         </Link>
 
                         <nav className="flex items-center gap-4 text-sm">
-                            <Link to="/" className="hover:underline text-slate-800">
+                            <Link to="/" className="text-slate-800 hover:underline">
                                 Home
                             </Link>
-                            <Link to="/book" className="hover:underline text-slate-800">
+
+                            <Link to="/book" className="text-slate-800 hover:underline">
                                 Book
                             </Link>
-                            <Link to="/admin" className="hover:underline text-slate-800">
-                                Admin
-                            </Link>
-                            {isAuthenticated ? (
+
+                            {isClientAuthenticated ? (
+                                <Link to="/my-bookings" className="text-slate-800 hover:underline">
+                                    My Bookings
+                                </Link>
+                            ) : null}
+
+                            {isAdminAuthenticated ? (
+                                <Link to="/admin" className="text-slate-800 hover:underline">
+                                    Admin
+                                </Link>
+                            ) : (
+                                <Link to="/admin/login" className="text-slate-800 hover:underline">
+                                    Admin Login
+                                </Link>
+                            )}
+
+                            {!isAdminAuthenticated && !isClientAuthenticated ? (
+                                <>
+                                    <Link to="/login" className="text-slate-800 hover:underline">
+                                        Login
+                                    </Link>
+                                    <Link to="/register" className="text-slate-800 hover:underline">
+                                        Register
+                                    </Link>
+                                </>
+                            ) : null}
+
+                            {isClientAuthenticated ? (
                                 <button
-                                    onClick={handleLogout}
+                                    onClick={handleClientLogout}
                                     className="text-red-600 hover:underline"
                                 >
                                     Logout
                                 </button>
-                            ) : (
-                                <Link to="/login" className="hover:underline text-slate-800">
-                                    Login
-                                </Link>
-                            )}
+                            ) : null}
+
+                            {!isClientAuthenticated && isAdminAuthenticated ? (
+                                <button
+                                    onClick={handleAdminLogout}
+                                    className="text-red-600 hover:underline"
+                                >
+                                    Logout
+                                </button>
+                            ) : null}
                         </nav>
                     </div>
                 </header>
