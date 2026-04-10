@@ -5,8 +5,13 @@ import { formatDateTime, formatPrice } from "../lib/format";
 import type { Slot, SlotsResponse } from "../types/slot";
 import type { TicketType } from "../types/ticket";
 import { createHold } from "../api/holds";
+import { useClientAuth } from "../context/ClientAuthContext";
+import { useNavigate } from "react-router";
 
 function BookingPage() {
+    const { isAuthenticated } = useClientAuth();
+    const navigate = useNavigate();
+
     const [date, setDate] = useState("");
     const [slotsData, setSlotsData] = useState<SlotsResponse | null>(null);
     const [ticketTypes, setTicketTypes] = useState<TicketType[]>([]);
@@ -88,6 +93,14 @@ function BookingPage() {
         }));
 
     async function handleContinueToPayment() {
+        if (!isAuthenticated) {
+            navigate('/login', {
+                state: { from: { pathname: '/book' } },
+            })
+
+            return;
+        }
+
         if (!selectedSlotId) {
             setBookingError("Please select a slot");
             return;
@@ -351,6 +364,7 @@ function BookingPage() {
                     type="button"
                     onClick={handleContinueToPayment}
                     disabled={
+                        // !isAuthenticated ||
                         !selectedSlotId ||
                         totalCents === 0 ||
                         !email ||
@@ -362,6 +376,12 @@ function BookingPage() {
                         ? "Redirecting..."
                         : "Continue to Payment"}
                 </button>
+
+                {!isAuthenticated && (
+                    <p className="text-sm text-red-600 text-center">
+                        Please log in to complete your booking.
+                    </p>
+                )}
             </div>
         </section>
     );
