@@ -1,18 +1,15 @@
-import { Link, useLocation, useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { useClientAuth } from "../context/ClientAuthContext";
 import { useState, type FormEvent } from "react";
 
-export default function ClientLoginPage() {
+export default function RegisterPage() {
     const navigate = useNavigate();
-    const location = useLocation();
-    const { login } = useClientAuth();
+    const { register } = useClientAuth();
 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
-
-    const from = location.state?.from?.pathname || '/my-bookings';
 
     async function handleSubmit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
@@ -20,15 +17,14 @@ export default function ClientLoginPage() {
         setIsSubmitting(true);
 
         try {
-            await login({ email, password })
-
-            navigate(from, { replace: true });
+            await register({ email, password })
+            navigate('/my-bookings');
         } catch (err) {
-            const message = err instanceof Error ? err.message : 'Client login failed';
+            const message = err instanceof Error ? err.message : 'Registration failed';
 
-            setError(message);
+            setError(message)
         } finally {
-            setIsSubmitting(false);
+            setIsSubmitting(false)
         }
     }
 
@@ -47,10 +43,10 @@ export default function ClientLoginPage() {
                 <div className="w-full max-w-md rounded-xl bg-white/95 p-6 shadow-md">
                     <div className="space-y-2">
                         <h1 className="text-2xl font-semibold text-blue-900">
-                            Client Login
+                            Create Account
                         </h1>
                         <p className="text-sm text-slate-600">
-                            Sign in to view and manage your BridgeTour bookings.
+                            Register to manage your BridgeTour bookings.
                         </p>
                     </div>
 
@@ -67,7 +63,7 @@ export default function ClientLoginPage() {
                                 type="email"
                                 value={email}
                                 onChange={(event) => setEmail(event.target.value)}
-                                placeholder="client@test.com"
+                                placeholder="your@email.com"
                                 className="w-full rounded border border-slate-300 bg-white px-3 py-2 text-slate-900 outline-none focus:border-blue-700"
                                 required
                             />
@@ -85,7 +81,7 @@ export default function ClientLoginPage() {
                                 type="password"
                                 value={password}
                                 onChange={(event) => setPassword(event.target.value)}
-                                placeholder="Enter password"
+                                placeholder="Create a password"
                                 className="w-full rounded border border-slate-300 bg-white px-3 py-2 text-slate-900 outline-none focus:border-blue-700"
                                 required
                             />
@@ -102,14 +98,14 @@ export default function ClientLoginPage() {
                             disabled={isSubmitting}
                             className="w-full rounded-lg bg-blue-700 px-4 py-3 font-semibold text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50"
                         >
-                            {isSubmitting ? "Signing in..." : "Sign In"}
+                            {isSubmitting ? "Creating account..." : "Register"}
                         </button>
                     </form>
 
                     <p className="mt-4 text-sm text-slate-600">
-                        Don’t have an account?{" "}
-                        <Link to="/register" className="text-blue-700 hover:underline">
-                            Create one
+                        Already have an account?{" "}
+                        <Link to="/login" className="text-blue-700 hover:underline">
+                            Sign in
                         </Link>
                     </p>
                 </div>

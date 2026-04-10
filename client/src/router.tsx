@@ -9,6 +9,7 @@ import CheckoutCancelPage from "./pages/CheckoutCancelPage";
 import ProtectedAdminRoute from "./components/ProtectedAdminRoute";
 import ProtectedClientRoute from "./components/ProtectedClientRoute";
 import ClientLoginPage from "./pages/ClientLoginPage";
+import RegisterPage from "./pages/RegisterPage";
 
 export const router = createBrowserRouter([
     {
@@ -54,6 +55,10 @@ export const router = createBrowserRouter([
             {
                 path: 'admin/login',
                 element: <LoginPage />,
+            },
+            {
+                path: 'register',
+                element: <RegisterPage />
             },
         ]
     }
