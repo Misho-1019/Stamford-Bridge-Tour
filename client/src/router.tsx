@@ -9,6 +9,7 @@ import ProtectedAdminRoute from "./components/ProtectedAdminRoute";
 import ProtectedClientRoute from "./components/ProtectedClientRoute";
 import ClientLoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
+import MyBookingsPage from "./pages/MyBookingsPage";
 
 export const router = createBrowserRouter([
     {
@@ -43,7 +44,7 @@ export const router = createBrowserRouter([
                 path: 'my-bookings',
                 element: (
                     <ProtectedClientRoute>
-                        <div>My Bookings</div>
+                        <MyBookingsPage />
                     </ProtectedClientRoute>
                 )
             },
