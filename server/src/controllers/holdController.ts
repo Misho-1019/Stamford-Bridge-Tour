@@ -167,6 +167,12 @@ createHold.post('/', async (req, res) => {
 
         let session: Awaited<ReturnType<typeof stripe.checkout.sessions.create>>;
 
+        const frontendUrl = process.env.CLIENT_URL;
+
+        if (!frontendUrl) {
+            return res.status(500).json({ error: "FRONTEND_URL is not configured" });
+        }
+
         try {
             session = await stripe.checkout.sessions.create({
                 mode: "payment",
@@ -180,8 +186,8 @@ createHold.post('/', async (req, res) => {
                     clientEmail: clientEmail || '',
                 },
                 customer_email: normalizedEmail,
-                success_url: `${process.env.APP_BASE_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-                cancel_url: `${process.env.APP_BASE_URL}/checkout/cancelled`,
+                success_url: `${frontendUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+                cancel_url: `${frontendUrl}/checkout/cancel`,
             });
         } catch (stripeError) {
             await prisma.hold.update({
