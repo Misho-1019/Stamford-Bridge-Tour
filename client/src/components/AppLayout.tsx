@@ -14,14 +14,17 @@ function AppLayout() {
         logout: clientLogout,
     } = useClientAuth();
 
-    async function handleAdminLogout() {
-        await adminLogout();
-        navigate('/admin/login');
-    }
+    async function handleLogout() {
+        if (isAdminAuthenticated) {
+            await adminLogout();
+            navigate('/login');
+            return;
+        }
 
-    async function handleClientLogout() {
-        await clientLogout();
-        navigate('/login');
+        if (isClientAuthenticated) {
+            await clientLogout();
+            navigate('/login');
+        }
     }
 
     return (
@@ -51,21 +54,17 @@ function AppLayout() {
                                 Book
                             </Link>
 
-                            {isClientAuthenticated ? (
+                            {isClientAuthenticated && !isAdminAuthenticated ? (
                                 <Link to="/my-bookings" className="text-slate-800 hover:underline">
                                     My Bookings
                                 </Link>
                             ) : null}
 
-                            {isAdminAuthenticated ? (
+                            {isAdminAuthenticated && !isClientAuthenticated ? (
                                 <Link to="/admin" className="text-slate-800 hover:underline">
                                     Admin
                                 </Link>
-                            ) : (
-                                <Link to="/admin/login" className="text-slate-800 hover:underline">
-                                    Admin Login
-                                </Link>
-                            )}
+                            ) : null}
 
                             {!isAdminAuthenticated && !isClientAuthenticated ? (
                                 <>
@@ -78,18 +77,9 @@ function AppLayout() {
                                 </>
                             ) : null}
 
-                            {isClientAuthenticated ? (
+                            {(isAdminAuthenticated || isClientAuthenticated) ? (
                                 <button
-                                    onClick={handleClientLogout}
-                                    className="text-red-600 hover:underline"
-                                >
-                                    Logout
-                                </button>
-                            ) : null}
-
-                            {!isClientAuthenticated && isAdminAuthenticated ? (
-                                <button
-                                    onClick={handleAdminLogout}
+                                    onClick={handleLogout}
                                     className="text-red-600 hover:underline"
                                 >
                                     Logout
