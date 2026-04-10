@@ -1,32 +1,43 @@
-import { useState, type FormEvent } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { useAdminAuth } from "../context/AdminAuthContext";
+import { useClientAuth } from "../context/ClientAuthContext";
+import { useState, type FormEvent } from "react";
 
-function LoginPage() {
+type LoginRole = 'CLIENT' | 'ADMIN';
+
+export default function LoginPage() {
     const navigate = useNavigate();
     const location = useLocation();
-    const { login } = useAdminAuth();
 
+    const { login: adminLogin } = useAdminAuth();
+    const { login: clientLogin } = useClientAuth();
+
+    const [role, setRole] = useState<LoginRole>("CLIENT");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const from = location.state?.from?.pathname || "/admin";
+    const defaultRedirect = role === 'ADMIN' ? '/admin' : '/my-bookings';
+    const from = location.state?.from?.pathname || defaultRedirect;
 
     async function handleSubmit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
-        setError("");
+        setError('');
         setIsSubmitting(true);
 
         try {
-            await login({ email, password });
-            navigate(from, { replace: true });
-        } catch (err) {
-            const message =
-                err instanceof Error ? err.message : "Admin login failed";
+            if (role === 'ADMIN') {
+                await adminLogin({ email, password });
+            } else {
+                await clientLogin({ email, password })
+            }
 
-            setError(message);
+            navigate(from, { replace: true })
+        } catch (err) {
+            const message = err instanceof Error ? err.message : role === 'ADMIN' ? 'Admin login failed' : 'Client login failed';
+
+            setError(message)
         } finally {
             setIsSubmitting(false);
         }
@@ -47,11 +58,38 @@ function LoginPage() {
                 <div className="w-full max-w-md rounded-xl bg-white/95 p-6 shadow-md">
                     <div className="space-y-2">
                         <h1 className="text-2xl font-semibold text-blue-900">
-                            Admin Login
+                            Sign In
                         </h1>
                         <p className="text-sm text-slate-600">
-                            Sign in to access the BridgeTour admin dashboard.
+                            {role === "ADMIN"
+                                ? "Sign in to access the BridgeTour admin dashboard."
+                                : "Sign in to view and manage your BridgeTour bookings."}
                         </p>
+                    </div>
+
+                    <div className="mt-6 grid grid-cols-2 rounded-lg bg-slate-100 p-1">
+                        <button
+                            type="button"
+                            onClick={() => setRole("CLIENT")}
+                            className={`rounded-md px-4 py-2 text-sm font-medium transition ${
+                                role === "CLIENT"
+                                    ? "bg-white text-blue-900 shadow-sm"
+                                    : "text-slate-600 hover:text-slate-900"
+                            }`}
+                        >
+                            Client
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setRole("ADMIN")}
+                            className={`rounded-md px-4 py-2 text-sm font-medium transition ${
+                                role === "ADMIN"
+                                    ? "bg-white text-blue-900 shadow-sm"
+                                    : "text-slate-600 hover:text-slate-900"
+                            }`}
+                        >
+                            Admin
+                        </button>
                     </div>
 
                     <form onSubmit={handleSubmit} className="mt-6 space-y-4">
@@ -67,7 +105,9 @@ function LoginPage() {
                                 type="email"
                                 value={email}
                                 onChange={(event) => setEmail(event.target.value)}
-                                placeholder="admin@test.com"
+                                placeholder={
+                                    role === "ADMIN" ? "admin@test.com" : "client@test.com"
+                                }
                                 className="w-full rounded border border-slate-300 bg-white px-3 py-2 text-slate-900 outline-none focus:border-blue-700"
                                 required
                             />
@@ -110,5 +150,3 @@ function LoginPage() {
         </div>
     );
 }
-
-export default LoginPage;
