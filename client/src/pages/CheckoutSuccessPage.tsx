@@ -7,19 +7,26 @@ function CheckoutSuccessPage() {
     useEffect(() => {
         const timer = setTimeout(() => {
             navigate('/my-bookings');
-        }, 3000);
+        }, 10000);
 
         return () => clearTimeout(timer);
     }, [navigate])
 
     return (
-        <section>
-            <h1 className="text-2xl font-semibold">Checkout Success</h1>
-            <p className="mt-2 text-sm text-slate-600 text-center">
+        <div className="text-center space-y-4">
+            <h1 className="text-2xl font-semibold text-blue-900">
+                Payment Successful 🎉
+            </h1>
+        
+            <p className="text-slate-600">
+                Your booking has been confirmed.
+            </p>
+        
+            <p className="text-sm text-slate-500">
                 You will be redirected to your bookings shortly.
             </p>
-
-            <div className="mt-6 text-center">
+        
+            <div className="pt-4">
                 <Link
                     to="/my-bookings"
                     className="inline-block rounded-lg bg-blue-700 px-6 py-3 font-semibold text-white hover:bg-blue-800"
@@ -27,7 +34,7 @@ function CheckoutSuccessPage() {
                     View My Bookings
                 </Link>
             </div>
-        </section>
+        </div>
     );
 }
 
