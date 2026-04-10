@@ -26,6 +26,10 @@ export default function MyBookingsPage() {
     }, [])
 
     async function handleCancel(bookingId: string) {
+        const confirmed = window.confirm('Are you sure you want to cancel this booking?');
+
+        if (!confirmed) return;
+
         try {
             await cancelMyBooking(bookingId)
 
@@ -33,7 +37,7 @@ export default function MyBookingsPage() {
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Failed to cancel booking';
 
-            alert(message);
+            setError(message);
         }
     }
 

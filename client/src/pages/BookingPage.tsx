@@ -364,7 +364,6 @@ function BookingPage() {
                     type="button"
                     onClick={handleContinueToPayment}
                     disabled={
-                        // !isAuthenticated ||
                         !selectedSlotId ||
                         totalCents === 0 ||
                         !email ||
