@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { cancelMyBooking, type ClientBooking, getMyBookings } from "../api/clientBookings";
+import { Link } from "react-router";
 
 export default function MyBookingsPage() {
     const [bookings, setBookings] = useState<ClientBooking[]>([]);
@@ -50,8 +51,13 @@ export default function MyBookingsPage() {
 
     if (bookings.length === 0) {
         return (
-            <div className="text-slate-600">
-                You don’t have any bookings yet.
+            <div className="text-center text-slate-600">
+                <p>You don’t have any bookings yet.</p>
+                <p className="mt-2">
+                    <Link to="/book" className="text-blue-700 hover:underline">
+                        Book your first tour
+                    </Link>
+                </p>
             </div>
         );
     }
@@ -77,7 +83,15 @@ export default function MyBookingsPage() {
                             </div>
                         </div>
 
-                        <div className="text-sm font-medium text-blue-900">
+                        <div
+                            className={`text-xs font-semibold px-3 py-1 rounded-full ${
+                                booking.status === "CONFIRMED"
+                                    ? "bg-green-100 text-green-700"
+                                    : booking.status === "CANCELLED"
+                                    ? "bg-red-100 text-red-600"
+                                    : "bg-slate-100 text-slate-600"
+                            }`}
+                        >
                             {booking.status}
                         </div>
                     </div>
@@ -87,7 +101,10 @@ export default function MyBookingsPage() {
                             <span className="font-medium text-slate-800">
                                 Date:
                             </span>{" "}
-                            {new Date(booking.slot.startAt).toLocaleString()}
+                            {new Date(booking.slot.startAt).toLocaleString(undefined, {
+                                dateStyle: 'medium',
+                                timeStyle: 'short',
+                            })}
                         </div>
 
                         <div>
