@@ -45,7 +45,7 @@ export async function getMyBookings(): Promise<{ bookings: ClientBooking[] }> {
     return response.json();
 }
 
-export async function cancelMyBooking(bookingId: string): Promise<{ booking: ClientBooking }> {
+export async function cancelMyBooking(bookingId: string): Promise<{ message: string }> {
     const response = await fetch(
         `${API_BASE_URL}/bookings/my-bookings/${bookingId}/cancel`,
         {

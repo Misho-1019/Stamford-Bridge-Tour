@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { type ClientBooking, getMyBookings } from "../api/clientBookings";
+import { cancelMyBooking, type ClientBooking, getMyBookings } from "../api/clientBookings";
 
 export default function MyBookingsPage() {
     const [bookings, setBookings] = useState<ClientBooking[]>([]);
@@ -23,6 +23,18 @@ export default function MyBookingsPage() {
 
         loadBookings();
     }, [])
+
+    async function handleCancel(bookingId: string) {
+        try {
+            await cancelMyBooking(bookingId)
+
+            setBookings((prev) => prev.map(booking => booking.id === bookingId ? { ...booking, status: 'CANCELLED' } : booking))
+        } catch (err) {
+            const message = err instanceof Error ? err.message : 'Failed to cancel booking';
+
+            alert(message);
+        }
+    }
 
     if (isLoading) {
         return <div className="text-slate-600">Loading bookings...</div>;
@@ -50,7 +62,7 @@ export default function MyBookingsPage() {
                 My Bookings
             </h1>
 
-            {bookings.map((booking) => (
+            {bookings.filter(Boolean).map((booking) => (
                 <div
                     key={booking.id}
                     className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
@@ -106,6 +118,17 @@ export default function MyBookingsPage() {
                                 </div>
                             ))}
                         </div>
+                    </div>
+
+                    <div className="mt-4 flex justify-end">
+                        {booking.status === "CONFIRMED" && (
+                            <button
+                                onClick={() => handleCancel(booking.id)}
+                                className="rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-100"
+                            >
+                                Cancel booking
+                            </button>
+                        )}
                     </div>
                 </div>
             ))}
