@@ -10,6 +10,7 @@ import ProtectedClientRoute from "./components/ProtectedClientRoute";
 import ClientLoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import MyBookingsPage from "./pages/MyBookingsPage";
+import MyBookingDetailsPage from "./pages/MyBookingDetailsPage";
 
 export const router = createBrowserRouter([
     {
@@ -56,6 +57,14 @@ export const router = createBrowserRouter([
                 path: 'register',
                 element: <RegisterPage />
             },
+            {
+                path: 'my-bookings/:id',
+                element: (
+                    <ProtectedClientRoute>
+                        <MyBookingDetailsPage />
+                    </ProtectedClientRoute>
+                )
+            }
         ]
     }
 ])
