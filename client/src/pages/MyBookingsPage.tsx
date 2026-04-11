@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { cancelMyBooking, type ClientBooking, getMyBookings } from "../api/clientBookings";
 import { Link } from "react-router";
+import ConfirmModal from "../components/ConfirmModal";
 
 export default function MyBookingsPage() {
     const [bookings, setBookings] = useState<ClientBooking[]>([]);
@@ -8,7 +9,8 @@ export default function MyBookingsPage() {
     const [error, setError] = useState('');
     const [cancellingId, setCancellingId] = useState<string | null>(null);
     const [successMessage, setSuccessMessage] = useState('');
-
+    const [bookingToCancelId, setBookingToCancelId] = useState<string | null>(null);
+    
     useEffect(() => {
         async function loadBookings() {
             try {
@@ -28,10 +30,6 @@ export default function MyBookingsPage() {
     }, [])
 
     async function handleCancel(bookingId: string) {
-        const confirmed = window.confirm('Are you sure you want to cancel this booking?');
-
-        if (!confirmed) return;
-
         setSuccessMessage('');
         setError('')
 
@@ -39,6 +37,8 @@ export default function MyBookingsPage() {
             setCancellingId(bookingId);
 
             await cancelMyBooking(bookingId)
+
+            setBookingToCancelId(null);
 
             setBookings((prev) => prev.map(booking => booking.id === bookingId ? { ...booking, status: 'CANCELLED' } : booking))
 
@@ -165,7 +165,7 @@ export default function MyBookingsPage() {
                                 onClick={(e) => {
                                     e.preventDefault();
                                     e.stopPropagation();
-                                    handleCancel(booking.id);
+                                    setBookingToCancelId(booking.id);
                                 }}
                                 disabled={cancellingId === booking.id}
                                 className="rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
@@ -178,6 +178,21 @@ export default function MyBookingsPage() {
                     </div>
                 </Link>
             ))}
+
+            <ConfirmModal
+                isOpen={bookingToCancelId !== null}
+                title="Cancel booking"
+                message="Are you sure you want to cancel this booking?"
+                confirmText="Cancel booking"
+                cancelText="Keep booking"
+                isLoading={bookingToCancelId !== null && cancellingId === bookingToCancelId}
+                onCancel={() => setBookingToCancelId(null)}
+                onConfirm={() => {
+                    if (bookingToCancelId) {
+                        handleCancel(bookingToCancelId);
+                    }
+                }}
+            />
         </div>
     );
 }
