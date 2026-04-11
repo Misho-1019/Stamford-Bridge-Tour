@@ -90,9 +90,10 @@ export default function MyBookingsPage() {
             ) : null}
 
             {bookings.filter(Boolean).map((booking) => (
-                <div
+                <Link
                     key={booking.id}
-                    className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+                    to={`/my-bookings/${booking.id}`}
+                    className="block rounded-xl border border-slate-200 bg-white p-4 shadow-sm hover:shadow-md transition"
                 >
                     <div className="flex items-center justify-between">
                         <div>
@@ -161,7 +162,11 @@ export default function MyBookingsPage() {
                     <div className="mt-4 flex justify-end">
                         {booking.status === "CONFIRMED" && (
                             <button
-                                onClick={() => handleCancel(booking.id)}
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    handleCancel(booking.id);
+                                }}
                                 disabled={cancellingId === booking.id}
                                 className="rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
                             >
@@ -171,7 +176,7 @@ export default function MyBookingsPage() {
                             </button>
                         )}
                     </div>
-                </div>
+                </Link>
             ))}
         </div>
     );
