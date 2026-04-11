@@ -6,6 +6,7 @@ export default function MyBookingsPage() {
     const [bookings, setBookings] = useState<ClientBooking[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
+    const [cancellingId, setCancellingId] = useState<string | null>(null);
 
     useEffect(() => {
         async function loadBookings() {
@@ -31,6 +32,8 @@ export default function MyBookingsPage() {
         if (!confirmed) return;
 
         try {
+            setCancellingId(bookingId);
+
             await cancelMyBooking(bookingId)
 
             setBookings((prev) => prev.map(booking => booking.id === bookingId ? { ...booking, status: 'CANCELLED' } : booking))
@@ -38,6 +41,8 @@ export default function MyBookingsPage() {
             const message = err instanceof Error ? err.message : 'Failed to cancel booking';
 
             setError(message);
+        } finally {
+            setCancellingId(null);
         }
     }
 
@@ -145,9 +150,12 @@ export default function MyBookingsPage() {
                         {booking.status === "CONFIRMED" && (
                             <button
                                 onClick={() => handleCancel(booking.id)}
-                                className="rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-100"
+                                disabled={cancellingId === booking.id}
+                                className="rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
                             >
-                                Cancel booking
+                                {cancellingId === booking.id
+                                    ? "Cancelling..."
+                                    : "Cancel booking"}
                             </button>
                         )}
                     </div>
