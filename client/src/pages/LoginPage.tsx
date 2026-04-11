@@ -18,9 +18,24 @@ export default function LoginPage() {
     const [error, setError] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const defaultRedirect = role === 'ADMIN' ? '/admin' : '/my-bookings';
-    const from = location.state?.from?.pathname || defaultRedirect;
-    
+    function getRedirectPath() {
+        const requestedPath = location.state?.from?.pathname;
+
+        if (role === 'ADMIN') {
+            if (requestedPath && requestedPath.startsWith('/admin')) {
+                return requestedPath;
+            }
+
+            return '/admin';
+        }
+
+        if (requestedPath && !requestedPath.startsWith('/admin')) {
+            return requestedPath;
+        }
+
+        return '/my-bookings';
+    }
+
     async function handleSubmit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
         setError('');
@@ -34,7 +49,7 @@ export default function LoginPage() {
                 await clientLogin({ email, password })
             }
 
-            navigate(from, { replace: true })
+            navigate(getRedirectPath(), { replace: true })
         } catch (err) {
             const message = err instanceof Error ? err.message : role === 'ADMIN' ? 'Admin login failed' : 'Client login failed';
 
