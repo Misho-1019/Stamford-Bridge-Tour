@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router";
-import { getMyBookingById, type ClientBooking } from "../api/clientBookings";
+import { Link, useParams } from "react-router";
+import { cancelMyBooking, getMyBookingById, type ClientBooking } from "../api/clientBookings";
 
 export default function MyBookingDetailsPage() {
     const { id } = useParams();
@@ -8,6 +8,9 @@ export default function MyBookingDetailsPage() {
     const [booking, setBooking] = useState<ClientBooking | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
+
+    const [isCancelling, setIsCancelling] = useState(false);
+    const [successMessage, setSuccessMessage] = useState('');
 
     useEffect(() => {
         async function loadBooking() {
@@ -33,6 +36,32 @@ export default function MyBookingDetailsPage() {
         loadBooking();
     }, [id])
 
+    async function handleCancel() {
+        if (!booking) return;
+
+        const confirmed = window.confirm('Are you sure you want to cancel this booking?')
+
+        if (!confirmed) return;
+
+        setError('')
+        setSuccessMessage('');
+
+        try {
+            setIsCancelling(true);
+
+            await cancelMyBooking(booking.id);
+
+            setBooking(prev => prev ? { ...prev, status: 'CANCELLED' } : prev);
+
+            setSuccessMessage('Booking cancelled successfully');
+        } catch (err) {
+            const message = err instanceof Error ? err.message : 'Cancel failed';
+
+            setError(message);
+        } finally {
+            setIsCancelling(false);
+        }
+    }
 
     if (isLoading) {
         return <div className="text-slate-600">Loading booking...</div>;
@@ -56,9 +85,28 @@ export default function MyBookingDetailsPage() {
 
     return (
         <div className="space-y-6">
+            <Link
+                to="/my-bookings"
+                className="inline-flex text-sm font-medium text-blue-700 hover:underline"
+            >
+                ← Back to My Bookings
+            </Link>
+
             <h1 className="text-2xl font-semibold text-blue-900">
                 Booking Details
             </h1>
+
+            {successMessage ? (
+                <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+                    {successMessage}
+                </div>
+            ) : null}
+            
+            {error ? (
+                <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+                    {error}
+                </div>
+            ) : null}
 
             <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
                 <div className="flex justify-between items-center">
@@ -159,6 +207,18 @@ export default function MyBookingDetailsPage() {
                                 {booking.refundReason}
                             </div>
                         )}
+                    </div>
+                )}
+
+                {booking.status === "CONFIRMED" && (
+                    <div className="border-t pt-4 flex justify-end">
+                        <button
+                            onClick={handleCancel}
+                            disabled={isCancelling}
+                            className="rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                            {isCancelling ? "Cancelling..." : "Cancel booking"}
+                        </button>
                     </div>
                 )}
             </div>
