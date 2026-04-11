@@ -7,6 +7,7 @@ export default function MyBookingsPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
     const [cancellingId, setCancellingId] = useState<string | null>(null);
+    const [successMessage, setSuccessMessage] = useState('');
 
     useEffect(() => {
         async function loadBookings() {
@@ -31,12 +32,17 @@ export default function MyBookingsPage() {
 
         if (!confirmed) return;
 
+        setSuccessMessage('');
+        setError('')
+
         try {
             setCancellingId(bookingId);
 
             await cancelMyBooking(bookingId)
 
             setBookings((prev) => prev.map(booking => booking.id === bookingId ? { ...booking, status: 'CANCELLED' } : booking))
+
+            setSuccessMessage("Booking cancelled successfully.");
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Failed to cancel booking';
 
@@ -76,6 +82,12 @@ export default function MyBookingsPage() {
             <h1 className="text-2xl font-semibold text-blue-900">
                 My Bookings
             </h1>
+
+            {successMessage ? (
+                <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+                    {successMessage}
+                </div>
+            ) : null}
 
             {bookings.filter(Boolean).map((booking) => (
                 <div
