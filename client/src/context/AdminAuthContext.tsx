@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { loginAdmin, logoutAdmin, refreshAdminSession, type AdminLoginInput, type AdminUser } from "../api/adminAuth"
+import { useClientAuth } from "./ClientAuthContext";
 
 type AdminAuthContextValue = {
     admin: AdminUser | null;
@@ -16,10 +17,14 @@ type AdminAuthProviderProps = {
 }
 
 export function AdminAuthProvider({ children }: AdminAuthProviderProps) {
+    const { logout: clientLogout } = useClientAuth()
+    
     const [admin, setAdmin] = useState<AdminUser | null>(null);
     const [isInitializing, setIsInitializing] = useState(true);
 
     async function login(input: AdminLoginInput) {
+        await clientLogout();
+
         const data = await loginAdmin(input);
         setAdmin(data.admin);
     }
@@ -51,6 +56,7 @@ export function AdminAuthProvider({ children }: AdminAuthProviderProps) {
         isInitializing,
         login,
         logout,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }), [admin, isInitializing])
 
     return (

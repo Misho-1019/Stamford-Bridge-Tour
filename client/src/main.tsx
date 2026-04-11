@@ -9,10 +9,10 @@ import { ClientAuthProvider } from "./context/ClientAuthContext.tsx";
 
 createRoot(document.getElementById("root")!).render(
   // <StrictMode>
-  <AdminAuthProvider>
-    <ClientAuthProvider>
+  <ClientAuthProvider>
+    <AdminAuthProvider>
       <RouterProvider router={router} />
-    </ClientAuthProvider>
-  </AdminAuthProvider>,
+    </AdminAuthProvider>,
+  </ClientAuthProvider>,
   // </StrictMode>,
 );

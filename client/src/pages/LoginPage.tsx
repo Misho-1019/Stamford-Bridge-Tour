@@ -8,10 +8,10 @@ type LoginRole = 'CLIENT' | 'ADMIN';
 export default function LoginPage() {
     const navigate = useNavigate();
     const location = useLocation();
-
-    const { login: adminLogin } = useAdminAuth();
+    
+    const { login: adminLogin, logout: adminLogout } = useAdminAuth();
     const { login: clientLogin } = useClientAuth();
-
+    
     const [role, setRole] = useState<LoginRole>("CLIENT");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -20,7 +20,7 @@ export default function LoginPage() {
 
     const defaultRedirect = role === 'ADMIN' ? '/admin' : '/my-bookings';
     const from = location.state?.from?.pathname || defaultRedirect;
-
+    
     async function handleSubmit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
         setError('');
@@ -30,6 +30,7 @@ export default function LoginPage() {
             if (role === 'ADMIN') {
                 await adminLogin({ email, password });
             } else {
+                await adminLogout();
                 await clientLogin({ email, password })
             }
 
