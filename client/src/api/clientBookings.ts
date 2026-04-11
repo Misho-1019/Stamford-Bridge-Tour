@@ -14,6 +14,8 @@ export type ClientBooking = {
     qtyTotal: number;
     amountTotalCents: number;
     createdAt: string;
+    refundedAt?: string | null;
+    refundReason?: string | null;
     slot: {
         id: string;
         startAt: string;
@@ -56,6 +58,22 @@ export async function cancelMyBooking(bookingId: string): Promise<{ message: str
 
     if (!response.ok) {
         throw new Error(await readErrorMessage(response))
+    }
+
+    return response.json();
+}
+
+export async function getMyBookingById(bookingId: string): Promise<{ booking: ClientBooking }> {
+    const response = await fetch(
+        `${API_BASE_URL}/bookings/my-bookings/${bookingId}`,
+        {
+            method: "GET",
+            credentials: "include",
+        }
+    );
+
+    if (!response.ok) {
+        throw new Error(await readErrorMessage(response));
     }
 
     return response.json();
