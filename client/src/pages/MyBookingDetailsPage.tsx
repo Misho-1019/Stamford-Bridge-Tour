@@ -2,22 +2,23 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router";
 import { cancelMyBooking, getMyBookingById, type ClientBooking } from "../api/clientBookings";
 import ConfirmModal from "../components/ConfirmModal";
+import Toast from "../components/Toast";
 
 export default function MyBookingDetailsPage() {
     const { id } = useParams();
 
     const [booking, setBooking] = useState<ClientBooking | null>(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState('');
 
     const [isCancelling, setIsCancelling] = useState(false);
-    const [successMessage, setSuccessMessage] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
+
+    const [toast, setToast] =useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
     useEffect(() => {
         async function loadBooking() {
             if (!id) {
-                setError('Invalid booking ID');
+                setToast({ message: 'Invalid booking ID', type: 'error' });
                 setIsLoading(false);
                 return;
             }
@@ -29,7 +30,7 @@ export default function MyBookingDetailsPage() {
             } catch (error) {
                 const message = error instanceof Error ? error.message : 'Failed to load booking';
 
-                setError(message);
+                setToast({ message, type: 'error' });
             } finally {
                 setIsLoading(false);
             }
@@ -41,9 +42,6 @@ export default function MyBookingDetailsPage() {
     async function handleCancel() {
         if (!booking) return;
 
-        setError('')
-        setSuccessMessage('');
-
         try {
             setIsCancelling(true);
 
@@ -51,27 +49,29 @@ export default function MyBookingDetailsPage() {
 
             setBooking(prev => prev ? { ...prev, status: 'CANCELLED' } : prev);
 
-            setSuccessMessage('Booking cancelled successfully');
+            setToast({ message: 'Booking cancelled successfully', type: 'success' });
             setIsModalOpen(false);
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Cancel failed';
 
-            setError(message);
+            setToast({ message, type: 'error' });
         } finally {
             setIsCancelling(false);
         }
     }
 
+    useEffect(() => {
+        if (!toast) return;
+
+        const timer = setTimeout(() => {
+            setToast(null);
+        }, 3000)
+
+        return () => clearTimeout(timer);
+    }, [toast])
+
     if (isLoading) {
         return <div className="text-slate-600">Loading booking...</div>;
-    }
-
-    if (error) {
-        return (
-            <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
-                {error}
-            </div>
-        );
     }
 
     if (!booking) {
@@ -94,18 +94,6 @@ export default function MyBookingDetailsPage() {
             <h1 className="text-2xl font-semibold text-blue-900">
                 Booking Details
             </h1>
-
-            {successMessage ? (
-                <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
-                    {successMessage}
-                </div>
-            ) : null}
-            
-            {error ? (
-                <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
-                    {error}
-                </div>
-            ) : null}
 
             <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
                 <div className="flex justify-between items-center">
@@ -232,6 +220,14 @@ export default function MyBookingDetailsPage() {
                 onCancel={() => setIsModalOpen(false)}
                 onConfirm={handleCancel}
             />
+
+            {toast && (
+                <Toast
+                    message={toast.message}
+                    type={toast.type}
+                    onClose={() => setToast(null)}
+                />
+            )}
         </div>
     );
 }

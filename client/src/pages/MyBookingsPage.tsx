@@ -2,14 +2,15 @@ import { useEffect, useState } from "react";
 import { cancelMyBooking, type ClientBooking, getMyBookings } from "../api/clientBookings";
 import { Link } from "react-router";
 import ConfirmModal from "../components/ConfirmModal";
+import Toast from "../components/Toast";
 
 export default function MyBookingsPage() {
     const [bookings, setBookings] = useState<ClientBooking[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState('');
     const [cancellingId, setCancellingId] = useState<string | null>(null);
-    const [successMessage, setSuccessMessage] = useState('');
     const [bookingToCancelId, setBookingToCancelId] = useState<string | null>(null);
+
+    const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
     
     useEffect(() => {
         async function loadBookings() {
@@ -20,7 +21,7 @@ export default function MyBookingsPage() {
             } catch (err) {
                 const message = err instanceof Error ? err.message : 'Failed to load bookings';
 
-                setError(message)
+                setToast({ message, type: 'error' });
             } finally {
                 setIsLoading(false);
             }
@@ -30,8 +31,6 @@ export default function MyBookingsPage() {
     }, [])
 
     async function handleCancel(bookingId: string) {
-        setSuccessMessage('');
-        setError('')
 
         try {
             setCancellingId(bookingId);
@@ -42,26 +41,28 @@ export default function MyBookingsPage() {
 
             setBookings((prev) => prev.map(booking => booking.id === bookingId ? { ...booking, status: 'CANCELLED' } : booking))
 
-            setSuccessMessage("Booking cancelled successfully.");
+            setToast({ message: 'Booking cancelled successfully.', type: 'success' })
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Failed to cancel booking';
 
-            setError(message);
+            setToast({ message, type: 'error' });
         } finally {
             setCancellingId(null);
         }
     }
 
+    useEffect(() => {
+        if (!toast) return;
+
+        const timer = setTimeout(() => {
+            setToast(null);
+        }, 3000)
+
+        return () => clearTimeout(timer);
+    }, [toast])
+
     if (isLoading) {
         return <div className="text-slate-600">Loading bookings...</div>;
-    }
-
-    if (error) {
-        return (
-            <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
-                {error}
-            </div>
-        );
     }
 
     if (bookings.length === 0) {
@@ -82,12 +83,6 @@ export default function MyBookingsPage() {
             <h1 className="text-2xl font-semibold text-blue-900">
                 My Bookings
             </h1>
-
-            {successMessage ? (
-                <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
-                    {successMessage}
-                </div>
-            ) : null}
 
             {bookings.filter(Boolean).map((booking) => (
                 <Link
@@ -193,6 +188,14 @@ export default function MyBookingsPage() {
                     }
                 }}
             />
+
+            {toast && (
+                <Toast
+                    message={toast.message}
+                    type={toast.type}
+                    onClose={() => setToast(null)}
+                />
+            )}
         </div>
     );
 }
