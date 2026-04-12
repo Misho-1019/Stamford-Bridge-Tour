@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router";
 import { cancelMyBooking, getMyBookingById, type ClientBooking } from "../api/clientBookings";
+import ConfirmModal from "../components/ConfirmModal";
 
 export default function MyBookingDetailsPage() {
     const { id } = useParams();
@@ -11,6 +12,7 @@ export default function MyBookingDetailsPage() {
 
     const [isCancelling, setIsCancelling] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
     useEffect(() => {
         async function loadBooking() {
@@ -39,10 +41,6 @@ export default function MyBookingDetailsPage() {
     async function handleCancel() {
         if (!booking) return;
 
-        const confirmed = window.confirm('Are you sure you want to cancel this booking?')
-
-        if (!confirmed) return;
-
         setError('')
         setSuccessMessage('');
 
@@ -54,6 +52,7 @@ export default function MyBookingDetailsPage() {
             setBooking(prev => prev ? { ...prev, status: 'CANCELLED' } : prev);
 
             setSuccessMessage('Booking cancelled successfully');
+            setIsModalOpen(false);
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Cancel failed';
 
@@ -213,7 +212,7 @@ export default function MyBookingDetailsPage() {
                 {booking.status === "CONFIRMED" && (
                     <div className="border-t pt-4 flex justify-end">
                         <button
-                            onClick={handleCancel}
+                            onClick={() => setIsModalOpen(true)}
                             disabled={isCancelling}
                             className="rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
                         >
@@ -222,6 +221,17 @@ export default function MyBookingDetailsPage() {
                     </div>
                 )}
             </div>
+
+            <ConfirmModal
+                isOpen={isModalOpen}
+                title="Cancel booking"
+                message="Are you sure you want to cancel this booking?"
+                confirmText="Cancel booking"
+                cancelText="Keep booking"
+                isLoading={isCancelling}
+                onCancel={() => setIsModalOpen(false)}
+                onConfirm={handleCancel}
+            />
         </div>
     );
 }
