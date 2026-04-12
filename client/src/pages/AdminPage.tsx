@@ -48,6 +48,8 @@ function AdminPage() {
     const [ticketTypeStats, setTicketTypeStats] = useState<AdminTicketTypeStat[]>([]);
     const [slotStats, setSlotStats] = useState<AdminSlotStat[]>([]);
 
+    const [statusFilter, setStatusFilter] = useState('ALL');
+
     async function loadBookings(page: number) {
         try {
             setIsLoadingBookings(true);
@@ -321,6 +323,12 @@ function AdminPage() {
         return b.revenueCents - a.revenueCents;
     }).slice(0, 8)
 
+    const filteredBookings = bookings.filter(booking => {
+        if (statusFilter === 'ALL') return true;
+
+        return booking.status === statusFilter;
+    })
+
     return (
         <section className="space-y-6">
             <div>
@@ -426,14 +434,36 @@ function AdminPage() {
                                 <p className="text-sm text-slate-600">
                                     No bookings found.
                                 </p>
-                            )}
+                            )
+                        }
+
+                        <div className="mb-4 flex items-center gap-3">
+                            <label
+                                htmlFor="statusFilter"
+                                className="text-sm font-medium text-slate-700"
+                            >
+                                Status
+                            </label>
+                        
+                            <select
+                                id="statusFilter"
+                                value={statusFilter}
+                                onChange={(event) => setStatusFilter(event.target.value)}
+                                className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-700"
+                            >
+                                <option value="ALL">All</option>
+                                <option value="CONFIRMED">Confirmed</option>
+                                <option value="CANCELLED">Cancelled</option>
+                                <option value="REFUNDED">Refunded</option>
+                            </select>
+                        </div>
 
                         {!isLoadingBookings &&
                             !bookingsError &&
                             bookings.length > 0 && (
                                 <>
                                     <div className="space-y-3">
-                                        {bookings.map((booking) => (
+                                        {filteredBookings.map((booking) => (
                                             <div
                                                 key={booking.id}
                                                 className="rounded-xl border border-slate-200 bg-white/90 p-4 shadow-sm"
