@@ -16,6 +16,22 @@ const ticketTypeDescriptions: Record<string, string> = {
     Student: "Discounted ticket for students with valid ID.",
 }
 
+function toStartOfDayIso(dateValue: string): string | undefined {
+    if (!dateValue) {
+        return undefined;
+    }
+
+    return new Date(`${dateValue}T00:00:00.000Z`).toISOString();
+}
+
+function toEndOfDayIso(dateValue: string): string | undefined {
+    if (!dateValue) {
+        return undefined;
+    }
+
+    return new Date(`${dateValue}T23:59:59.999Z`).toISOString();
+}
+
 function AdminPage() {
     const [activeTab, setActiveTab] = useState<AdminTab>('bookings')
 
@@ -50,13 +66,15 @@ function AdminPage() {
 
     const [statusFilter, setStatusFilter] = useState('ALL');
     const [emailQuery, setEmailQuery] = useState('');
+    const [fromDate, setFromDate] = useState("");
+    const [toDate, setToDate] = useState("");
 
     async function loadBookings(page: number) {
         try {
             setIsLoadingBookings(true);
             setBookingsError('');
 
-            const data = await getAdminBookings(page, 10);
+            const data = await getAdminBookings(page, 10, { status: statusFilter, email: emailQuery, from: toStartOfDayIso(fromDate), to: toEndOfDayIso(toDate), });
 
             setBookings(data.bookings);
             setBookingsPage(data.page);
@@ -86,7 +104,7 @@ function AdminPage() {
         }, 1000);
 
         return () => clearTimeout(timer);
-    }, [activeTab, bookingsPage])
+    }, [activeTab, bookingsPage, statusFilter, emailQuery, fromDate, toDate])
 
     function getStatusClasses(status: AdminBooking['status']) {
         if (status === "CONFIRMED") {
@@ -333,9 +351,15 @@ function AdminPage() {
     })
 
     function handleResetFilters() {
-        setStatusFilter('ALL');
-        setEmailQuery('');
+        setStatusFilter("ALL");
+        setEmailQuery("");
+        setFromDate("");
+        setToDate("");
     }
+
+    useEffect(() => {
+        setBookingsPage(1);
+    }, [statusFilter, emailQuery, fromDate, toDate]);
 
     return (
         <section className="space-y-6">
@@ -482,6 +506,32 @@ function AdminPage() {
                                     onChange={(event) => setEmailQuery(event.target.value)}
                                     placeholder="Search by email"
                                     className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-700"
+                                />
+                            </div>
+
+                            <div className="flex items-center gap-3">
+                                <label className="text-sm font-medium text-slate-700">
+                                    From
+                                </label>
+                            
+                                <input
+                                    type="date"
+                                    value={fromDate}
+                                    onChange={(e) => setFromDate(e.target.value)}
+                                    className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                                />
+                            </div>
+                            
+                            <div className="flex items-center gap-3">
+                                <label className="text-sm font-medium text-slate-700">
+                                    To
+                                </label>
+                            
+                                <input
+                                    type="date"
+                                    value={toDate}
+                                    onChange={(e) => setToDate(e.target.value)}
+                                    className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
                                 />
                             </div>
 
