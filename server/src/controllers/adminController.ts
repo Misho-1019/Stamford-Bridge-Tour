@@ -604,8 +604,52 @@ adminController.get('/bookings/:id', async (req, res) => {
             return res.status(404).json({ error: 'Booking not found' })
         }
 
+        const rawItems = Array.isArray(booking.items) ? booking.items : [];
+
+        const ticketTypeIds = rawItems.map((rawItem) => {
+            if (!rawItem || typeof rawItem !== 'object' || Array.isArray(rawItem)) return null;
+
+            const item = rawItem as { ticketTypeId: unknown };
+
+            return typeof item.ticketTypeId === 'string' ? item.ticketTypeId : null;
+        }).filter((ticketTypeId): ticketTypeId is string => Boolean(ticketTypeId))
+
+        const ticketTypes = await prisma.ticketType.findMany({
+            where: {
+                id: {
+                    in: ticketTypeIds,
+                },
+            },
+            select: {
+                id: true,
+                name: true,
+            }
+        })
+
+        const ticketTypeNameMap = new Map(ticketTypes.map(ticketType => [ticketType.id, ticketType.name]))
+
+        const itemsWithNames = rawItems.map(rawItem => {
+            if (!rawItem || typeof rawItem !== 'object' || Array.isArray(rawItem)) return rawItem;
+
+            const item = rawItem as {
+                ticketTypeId?: unknown;
+                qty?: unknown;
+                unitPriceCents?: unknown;
+            }
+
+            if (typeof item.ticketTypeId !== 'string') return rawItem;
+
+            return {
+                ...item,
+                ticketName: ticketTypeNameMap.get(item.ticketTypeId) ?? 'Unknown ticket type',
+            }
+        })
+
         return res.json({
-            booking,
+            booking: {
+                ...booking,
+                items: itemsWithNames,
+            }
         })
     } catch (error) {
         console.error('Failed to fetch booking:', error);

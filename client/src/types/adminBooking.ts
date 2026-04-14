@@ -4,6 +4,7 @@ export type AdminBookingItem = {
     qty: number;
     ticketTypeId: string;
     unitPriceCents: number;
+    ticketName?: string;
 }
 
 export type AdminBookingSlot = {

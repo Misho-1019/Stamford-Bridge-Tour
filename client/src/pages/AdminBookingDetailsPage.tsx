@@ -450,7 +450,7 @@ function AdminBookingDetailsPage() {
                                     {booking.items.map((item, index) => (
                                         <tr key={`${item.ticketTypeId}-${index}`}>
                                             <td className="px-4 py-3 text-slate-700">
-                                                {item.ticketTypeId}
+                                                {item.ticketName || item.ticketTypeId}
                                             </td>
                                             <td className="px-4 py-3 text-slate-700">
                                                 {item.qty}
