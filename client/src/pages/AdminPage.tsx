@@ -49,6 +49,7 @@ function AdminPage() {
     const [slotStats, setSlotStats] = useState<AdminSlotStat[]>([]);
 
     const [statusFilter, setStatusFilter] = useState('ALL');
+    const [emailQuery, setEmailQuery] = useState('');
 
     async function loadBookings(page: number) {
         try {
@@ -324,9 +325,11 @@ function AdminPage() {
     }).slice(0, 8)
 
     const filteredBookings = bookings.filter(booking => {
-        if (statusFilter === 'ALL') return true;
+        const matchesStatus = statusFilter === 'ALL' || booking.status === statusFilter;
 
-        return booking.status === statusFilter;
+        const emailMatches = booking.email.toLowerCase().includes(emailQuery.trim().toLowerCase());
+
+        return matchesStatus && emailMatches;
     })
 
     return (
@@ -437,25 +440,45 @@ function AdminPage() {
                             )
                         }
 
-                        <div className="mb-4 flex items-center gap-3">
-                            <label
-                                htmlFor="statusFilter"
-                                className="text-sm font-medium text-slate-700"
-                            >
-                                Status
-                            </label>
+                        <div className="mb-4 flex flex-wrap items-center gap-3">
+                            <div className="flex items-center gap-3">
+                                <label
+                                    htmlFor="statusFilter"
+                                    className="text-sm font-medium text-slate-700"
+                                >
+                                    Status
+                                </label>
                         
-                            <select
-                                id="statusFilter"
-                                value={statusFilter}
-                                onChange={(event) => setStatusFilter(event.target.value)}
-                                className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-700"
-                            >
-                                <option value="ALL">All</option>
-                                <option value="CONFIRMED">Confirmed</option>
-                                <option value="CANCELLED">Cancelled</option>
-                                <option value="REFUNDED">Refunded</option>
-                            </select>
+                                <select
+                                    id="statusFilter"
+                                    value={statusFilter}
+                                    onChange={(event) => setStatusFilter(event.target.value)}
+                                    className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-700"
+                                >
+                                    <option value="ALL">All</option>
+                                    <option value="CONFIRMED">Confirmed</option>
+                                    <option value="CANCELLED">Cancelled</option>
+                                    <option value="REFUNDED">Refunded</option>
+                                </select>
+                            </div>
+                        
+                            <div className="flex items-center gap-3">
+                                <label
+                                    htmlFor="emailQuery"
+                                    className="text-sm font-medium text-slate-700"
+                                >
+                                    Email
+                                </label>
+                        
+                                <input
+                                    id="emailQuery"
+                                    type="text"
+                                    value={emailQuery}
+                                    onChange={(event) => setEmailQuery(event.target.value)}
+                                    placeholder="Search by email"
+                                    className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-700"
+                                />
+                            </div>
                         </div>
 
                         {!isLoadingBookings &&
@@ -463,161 +486,167 @@ function AdminPage() {
                             bookings.length > 0 && (
                                 <>
                                     <div className="space-y-3">
-                                        {filteredBookings.map((booking) => (
-                                            <div
-                                                key={booking.id}
-                                                className="rounded-xl border border-slate-200 bg-white/90 p-4 shadow-sm"
-                                            >
-                                                <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                                                    <div className="space-y-2">
-                                                        <p className="font-semibold text-slate-900">
-                                                            {booking.email}
-                                                        </p>
-
-                                                        <p className="text-sm text-slate-600">
-                                                            Booking ID: {booking.id}
-                                                        </p>
-
-                                                        <p className="text-sm text-slate-600">
-                                                            Slot:{" "}
-                                                            {formatDateTime(
-                                                                booking.slot.startAt
-                                                            )}{" "}
-                                                            -{" "}
-                                                            {formatDateTime(
-                                                                booking.slot.endAt
+                                        {filteredBookings.length === 0 ? (
+                                            <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-6 text-sm text-slate-600">
+                                                No bookings match the current filters.
+                                            </div>
+                                        ) : (
+                                            filteredBookings.map((booking) => (
+                                                <div
+                                                    key={booking.id}
+                                                    className="rounded-xl border border-slate-200 bg-white/90 p-4 shadow-sm"
+                                                >
+                                                    <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                                                        <div className="space-y-2">
+                                                            <p className="font-semibold text-slate-900">
+                                                                {booking.email}
+                                                            </p>
+    
+                                                            <p className="text-sm text-slate-600">
+                                                                Booking ID: {booking.id}
+                                                            </p>
+    
+                                                            <p className="text-sm text-slate-600">
+                                                                Slot:{" "}
+                                                                {formatDateTime(
+                                                                    booking.slot.startAt
+                                                                )}{" "}
+                                                                -{" "}
+                                                                {formatDateTime(
+                                                                    booking.slot.endAt
+                                                                )}
+                                                            </p>
+    
+                                                            <p className="text-sm text-slate-600">
+                                                                Created:{" "}
+                                                                {formatDateTime(
+                                                                    booking.createdAt
+                                                                )}
+                                                            </p>
+    
+                                                            <p className="text-sm text-slate-600">
+                                                                Tickets: {booking.qtyTotal}
+                                                            </p>
+    
+                                                            <p className="text-sm font-medium text-slate-800">
+                                                                Total:{" "}
+                                                                {formatPrice(
+                                                                    booking.amountTotalCents
+                                                                )}
+                                                            </p>
+                                                        </div>
+    
+                                                        <div className="flex flex-col items-start gap-2 md:items-end">
+                                                            <span
+                                                                className={`rounded-full px-3 py-1 text-xs font-semibold ${getStatusClasses(
+                                                                    booking.status
+                                                                )}`}
+                                                            >
+                                                                {booking.status}
+                                                            </span>
+    
+                                                            {booking.status === "CONFIRMED" ? (
+                                                                <>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => handleCancelBooking(booking.id)}
+                                                                        disabled={
+                                                                            cancellingBookingId === booking.id ||
+                                                                            refundingBookingId === booking.id
+                                                                        }
+                                                                        className="rounded-lg bg-slate-100 px-3 py-2 text-sm font-medium text-slate-800 hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-50"
+                                                                    >
+                                                                        {cancellingBookingId === booking.id ? 'Cancelling...' : 'Cancel'}
+                                                                    </button>
+    
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => {
+                                                                            setRefundFormBookingId(booking.id);
+                                                                            setRefundReason('');
+                                                                            setRefundFieldError('');
+                                                                            setBookingsError('');
+                                                                        }}
+                                                                        disabled={
+                                                                            cancellingBookingId === booking.id ||
+                                                                            refundingBookingId === booking.id
+                                                                        }
+                                                                        className="rounded-lg bg-slate-100 px-3 py-2 text-sm font-medium text-slate-800 hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-50"
+                                                                        >
+                                                                        {refundFormBookingId === booking.id ? "Refund Form Open" : refundingBookingId === booking.id ? "Refunding..." : "Refund"}
+                                                                    </button>
+                                                                </>
+                                                            ) : null}
+    
+                                                            {booking.refundReason && (
+                                                                <p className="max-w-xs text-sm text-slate-600">
+                                                                    Refund reason:{" "}
+                                                                    {booking.refundReason}
+                                                                </p>
                                                             )}
-                                                        </p>
-
-                                                        <p className="text-sm text-slate-600">
-                                                            Created:{" "}
-                                                            {formatDateTime(
-                                                                booking.createdAt
-                                                            )}
-                                                        </p>
-
-                                                        <p className="text-sm text-slate-600">
-                                                            Tickets: {booking.qtyTotal}
-                                                        </p>
-
-                                                        <p className="text-sm font-medium text-slate-800">
-                                                            Total:{" "}
-                                                            {formatPrice(
-                                                                booking.amountTotalCents
-                                                            )}
-                                                        </p>
+                                                        </div>
                                                     </div>
-
-                                                    <div className="flex flex-col items-start gap-2 md:items-end">
-                                                        <span
-                                                            className={`rounded-full px-3 py-1 text-xs font-semibold ${getStatusClasses(
-                                                                booking.status
-                                                            )}`}
-                                                        >
-                                                            {booking.status}
-                                                        </span>
-
-                                                        {booking.status === "CONFIRMED" ? (
-                                                            <>
+    
+                                                    {refundFormBookingId === booking.id ? (
+                                                        <div className="mt-4 rounded-xl border border-slate-200 bg-white/90 p-4">
+                                                            <label
+                                                                htmlFor={`refund-reason-${booking.id}`}
+                                                                className="mb-2 block text-sm font-medium text-slate-700"
+                                                            >
+                                                                Refund reason
+                                                            </label>
+    
+                                                            <input
+                                                                id={`refund-reason-${booking.id}`}
+                                                                type="text"
+                                                                value={refundReason}
+                                                                onChange={(event) => {
+                                                                    setRefundReason(event.target.value);
+                                                                    setRefundFieldError('');
+                                                                }}
+                                                                placeholder="Enter refund reason"
+                                                                className={`w-full rounded border bg-white px-3 py-2 text-slate-900 outline-none focus:border-blue-700 ${
+                                                                    refundFieldError ? 'border-red-400' : 'border-slate-300'
+                                                                }`}
+                                                            />
+    
+                                                            {refundFieldError && (
+                                                                <p className="mt-2 text-sm text-red-600">
+                                                                    {refundFieldError}
+                                                                </p>
+                                                            )}
+                                                    
+                                                            <div className="mt-3 flex flex-wrap gap-2">
                                                                 <button
                                                                     type="button"
-                                                                    onClick={() => handleCancelBooking(booking.id)}
-                                                                    disabled={
-                                                                        cancellingBookingId === booking.id ||
-                                                                        refundingBookingId === booking.id
-                                                                    }
-                                                                    className="rounded-lg bg-slate-100 px-3 py-2 text-sm font-medium text-slate-800 hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-50"
+                                                                    onClick={() => handleRefund(booking.id)}
+                                                                    disabled={refundingBookingId === booking.id}
+                                                                    className="rounded-lg bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50"
                                                                 >
-                                                                    {cancellingBookingId === booking.id ? 'Cancelling...' : 'Cancel'}
+                                                                    {refundingBookingId === booking.id
+                                                                        ? "Refunding..."
+                                                                        : "Confirm Refund"}
                                                                 </button>
-
+                                                    
                                                                 <button
                                                                     type="button"
                                                                     onClick={() => {
-                                                                        setRefundFormBookingId(booking.id);
-                                                                        setRefundReason('');
-                                                                        setRefundFieldError('');
-                                                                        setBookingsError('');
+                                                                        setRefundFormBookingId(null);
+                                                                        setRefundReason("");
+                                                                        setRefundFieldError("");
+                                                                        setBookingsError("");
                                                                     }}
-                                                                    disabled={
-                                                                        cancellingBookingId === booking.id ||
-                                                                        refundingBookingId === booking.id
-                                                                    }
-                                                                    className="rounded-lg bg-slate-100 px-3 py-2 text-sm font-medium text-slate-800 hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-50"
-                                                                    >
-                                                                    {refundFormBookingId === booking.id ? "Refund Form Open" : refundingBookingId === booking.id ? "Refunding..." : "Refund"}
+                                                                    disabled={refundingBookingId === booking.id}
+                                                                    className="rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium text-slate-800 hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-50"
+                                                                >
+                                                                    Cancel
                                                                 </button>
-                                                            </>
-                                                        ) : null}
-
-                                                        {booking.refundReason && (
-                                                            <p className="max-w-xs text-sm text-slate-600">
-                                                                Refund reason:{" "}
-                                                                {booking.refundReason}
-                                                            </p>
-                                                        )}
-                                                    </div>
-                                                </div>
-
-                                                {refundFormBookingId === booking.id ? (
-                                                    <div className="mt-4 rounded-xl border border-slate-200 bg-white/90 p-4">
-                                                        <label
-                                                            htmlFor={`refund-reason-${booking.id}`}
-                                                            className="mb-2 block text-sm font-medium text-slate-700"
-                                                        >
-                                                            Refund reason
-                                                        </label>
-
-                                                        <input
-                                                            id={`refund-reason-${booking.id}`}
-                                                            type="text"
-                                                            value={refundReason}
-                                                            onChange={(event) => {
-                                                                setRefundReason(event.target.value);
-                                                                setRefundFieldError('');
-                                                            }}
-                                                            placeholder="Enter refund reason"
-                                                            className={`w-full rounded border bg-white px-3 py-2 text-slate-900 outline-none focus:border-blue-700 ${
-                                                                refundFieldError ? 'border-red-400' : 'border-slate-300'
-                                                            }`}
-                                                        />
-
-                                                        {refundFieldError && (
-                                                            <p className="mt-2 text-sm text-red-600">
-                                                                {refundFieldError}
-                                                            </p>
-                                                        )}
-                                                
-                                                        <div className="mt-3 flex flex-wrap gap-2">
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => handleRefund(booking.id)}
-                                                                disabled={refundingBookingId === booking.id}
-                                                                className="rounded-lg bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50"
-                                                            >
-                                                                {refundingBookingId === booking.id
-                                                                    ? "Refunding..."
-                                                                    : "Confirm Refund"}
-                                                            </button>
-                                                
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => {
-                                                                    setRefundFormBookingId(null);
-                                                                    setRefundReason("");
-                                                                    setRefundFieldError("");
-                                                                    setBookingsError("");
-                                                                }}
-                                                                disabled={refundingBookingId === booking.id}
-                                                                className="rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium text-slate-800 hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-50"
-                                                            >
-                                                                Cancel
-                                                            </button>
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                ) : null}
-                                            </div>
-                                        ))}
+                                                    ) : null}
+                                                </div>
+                                            ))
+                                        )}
                                     </div>
 
                                     <div className="flex items-center justify-between pt-2">
