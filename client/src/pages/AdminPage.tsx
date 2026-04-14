@@ -332,6 +332,11 @@ function AdminPage() {
         return matchesStatus && emailMatches;
     })
 
+    function handleResetFilters() {
+        setStatusFilter('ALL');
+        setEmailQuery('');
+    }
+
     return (
         <section className="space-y-6">
             <div>
@@ -479,6 +484,14 @@ function AdminPage() {
                                     className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-700"
                                 />
                             </div>
+
+                            <button
+                                type="button"
+                                onClick={handleResetFilters}
+                                className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
+                            >
+                                Reset
+                            </button>
                         </div>
 
                         {!isLoadingBookings &&
