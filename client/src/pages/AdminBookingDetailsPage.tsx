@@ -3,6 +3,8 @@ import { Link, useParams } from "react-router";
 import { getAdminBookingById } from "../api/adminBookingDetails";
 import type { AdminBooking } from "../types/adminBooking";
 import { formatDateTime, formatPrice } from "../lib/format";
+import { updateAdminBookingStatus } from "../api/adminBookingStatus";
+import { refundBooking } from "../api/adminRefunds";
 
 function getStatusClasses(status: AdminBooking["status"]) {
     if (status === "CONFIRMED") {
@@ -23,33 +25,101 @@ function AdminBookingDetailsPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState("");
 
+    const [isCancelling, setIsCancelling] = useState(false);
+    const [isRefunding, setIsRefunding] = useState(false);
+    const [isRefundFormOpen, setIsRefundFormOpen] = useState(false);
+    const [refundReason, setRefundReason] = useState("");
+    const [refundFieldError, setRefundFieldError] = useState("");
+
+    async function loadBooking() {
+        if (!bookingId) {
+            setError("Missing booking ID");
+            setIsLoading(false);
+            return;
+        }
+        try {
+            setIsLoading(true);
+            setError("");
+            const data = await getAdminBookingById(bookingId);
+            setBooking(data.booking);
+        } catch (error) {
+            if (error instanceof Error) {
+                setError(error.message);
+            } else {
+                setError("Failed to load booking details");
+            }
+        } finally {
+            setIsLoading(false);
+        }
+    }
+
     useEffect(() => {
-        async function loadBooking() {
-            if (!bookingId) {
-                setError("Missing booking ID");
-                setIsLoading(false);
+        loadBooking();
+    }, [bookingId]);
+
+    async function handleCancelBooking() {
+        if (!booking) return;
+
+        try {
+            setIsCancelling(true);
+            setError('');
+
+            await updateAdminBookingStatus({
+                bookingId: booking.id,
+                status: 'CANCELLED',
+            })
+
+            setIsRefundFormOpen(false);
+            setRefundReason('');
+            setRefundFieldError('');
+
+            await loadBooking();
+        } catch (error) {
+            if (error instanceof Error) {
+                setError(error.message);
+
                 return;
             }
 
-            try {
-                setIsLoading(true);
-                setError("");
-
-                const data = await getAdminBookingById(bookingId);
-                setBooking(data.booking);
-            } catch (error) {
-                if (error instanceof Error) {
-                    setError(error.message);
-                } else {
-                    setError("Failed to load booking details");
-                }
-            } finally {
-                setIsLoading(false);
-            }
+            setError("Failed to cancel booking");
+        } finally {
+            setIsCancelling(false);
         }
+    }
 
-        loadBooking();
-    }, [bookingId]);
+    async function handleRefund() {
+        if (!booking) return;
+
+        if (!refundReason.trim()) {
+            setRefundFieldError('Please enter a refund reason');
+            return;
+        }
+        
+        try {
+            setIsRefunding(true);
+            setError('');
+
+            await refundBooking({
+                bookingId: booking.id,
+                reason: refundReason.trim(),
+            })
+
+            setIsRefundFormOpen(false);
+            setRefundReason('');
+            setRefundFieldError('');
+
+            await loadBooking();
+        } catch (error) {
+            if (error instanceof Error) {
+                setError(error.message)
+                return
+            }
+
+            setError('Failed to refund booking');
+        } finally {
+            setIsRefunding(false)
+        }
+    }
 
     if (isLoading) {
         return (
@@ -104,32 +174,128 @@ function AdminBookingDetailsPage() {
 
     return (
         <section className="space-y-6">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                    <Link
-                        to="/admin"
-                        className="inline-flex rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200"
-                    >
-                        Back to Admin
-                    </Link>
-
-                    <h1 className="mt-4 text-2xl font-semibold text-blue-900">
-                        Booking Details
-                    </h1>
-
-                    <p className="mt-1 text-sm text-slate-600 break-all">
-                        Booking ID: {booking.id}
-                    </p>
+            <div className="rounded-xl bg-white/95 p-5 shadow-md">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                    <div>
+                        <Link
+                            to="/admin"
+                            className="inline-flex rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-200"
+                        >
+                            Back to Admin
+                        </Link>
+            
+                        <h1 className="mt-4 text-2xl font-semibold text-blue-900">
+                            Booking Details
+                        </h1>
+            
+                        <p className="mt-1 break-all text-sm text-slate-600">
+                            Booking ID: {booking.id}
+                        </p>
+                    </div>
+            
+                    <div className="flex flex-col items-start gap-3 lg:items-end">
+                        <span
+                            className={`rounded-full px-3 py-1 text-xs font-semibold ${getStatusClasses(
+                                booking.status
+                            )}`}
+                        >
+                            {booking.status}
+                        </span>
+            
+                        {booking.status === "CONFIRMED" && (
+                            <div className="flex flex-wrap gap-2 lg:justify-end">
+                                <button
+                                    type="button"
+                                    onClick={handleCancelBooking}
+                                    disabled={isCancelling || isRefunding}
+                                    className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                    {isCancelling ? "Cancelling..." : "Cancel Booking"}
+                                </button>
+            
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setIsRefundFormOpen(true);
+                                        setRefundFieldError("");
+                                        setError("");
+                                    }}
+                                    disabled={isCancelling || isRefunding}
+                                    className="rounded-lg bg-blue-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                    {isRefundFormOpen ? "Refund Form Open" : "Refund Booking"}
+                                </button>
+                            </div>
+                        )}
+                    </div>
                 </div>
-
-                <span
-                    className={`rounded-full px-3 py-1 text-xs font-semibold ${getStatusClasses(
-                        booking.status
-                    )}`}
-                >
-                    {booking.status}
-                </span>
             </div>
+
+            {isRefundFormOpen && booking.status === "CONFIRMED" && (
+                <div className="rounded-xl bg-white/95 p-5 shadow-md">
+                    <h2 className="text-base font-semibold text-blue-900">
+                        Refund Booking
+                    </h2>
+            
+                    <p className="mt-1 text-sm text-slate-600">
+                        Enter a reason for the refund.
+                    </p>
+            
+                    <div className="mt-4">
+                        <label
+                            htmlFor="refundReason"
+                            className="mb-2 block text-sm font-medium text-slate-700"
+                        >
+                            Refund reason
+                        </label>
+            
+                        <input
+                            id="refundReason"
+                            type="text"
+                            value={refundReason}
+                            onChange={(event) => {
+                                setRefundReason(event.target.value);
+                                setRefundFieldError("");
+                            }}
+                            placeholder="Enter refund reason"
+                            className={`w-full rounded-lg border bg-white px-3 py-2 text-slate-900 outline-none focus:border-blue-700 ${
+                                refundFieldError ? "border-red-400" : "border-slate-300"
+                            }`}
+                        />
+            
+                        {refundFieldError && (
+                            <p className="mt-2 text-sm text-red-600">
+                                {refundFieldError}
+                            </p>
+                        )}
+                    </div>
+            
+                    <div className="mt-4 flex flex-wrap gap-2">
+                        <button
+                            type="button"
+                            onClick={handleRefund}
+                            disabled={isRefunding}
+                            className="rounded-lg bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                            {isRefunding ? "Refunding..." : "Confirm Refund"}
+                        </button>
+            
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setIsRefundFormOpen(false);
+                                setRefundReason("");
+                                setRefundFieldError("");
+                                setError("");
+                            }}
+                            disabled={isRefunding}
+                            className="rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium text-slate-800 hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                            Close
+                        </button>
+                    </div>
+                </div>
+            )}
 
             <div className="rounded-xl bg-white/95 p-5 shadow-md">
                 <div className="space-y-6">
