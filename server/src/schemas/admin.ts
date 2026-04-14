@@ -15,6 +15,8 @@ export const getAdminBookingsQuerySchema = z.object({
     status: z.nativeEnum(BookingStatus).optional(),
     email: z.string().trim().min(1).optional(),
     slotId: z.string().uuid().optional(),
+    from: z.string().datetime().optional(),
+    to: z.string().datetime().optional(),
 });
 
 export const adminDateRangeQuerySchema = z.object({

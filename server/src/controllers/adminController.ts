@@ -78,7 +78,7 @@ adminController.get('/bookings', async (req, res) => {
             return res.status(400).json(getZodErrorResponse(parsedQuery.error))
         }
 
-        const { page, limit, status, email, slotId } = parsedQuery.data;
+        const { page, limit, status, email, slotId, from, to } = parsedQuery.data;
         const skip = (page - 1) * limit;
 
         const where: Prisma.BookingWhereInput = {};
@@ -96,6 +96,18 @@ adminController.get('/bookings', async (req, res) => {
 
         if (slotId) {
             where.slotId = slotId;
+        }
+
+        if (from || to) {
+            where.createdAt = {};
+        
+            if (from) {
+                where.createdAt.gte = new Date(from);
+            }
+        
+            if (to) {
+                where.createdAt.lte = new Date(to);
+            }
         }
 
         const [bookings, total] = await Promise.all([
