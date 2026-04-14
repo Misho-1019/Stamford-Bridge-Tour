@@ -7,6 +7,7 @@ import { updateAdminBookingStatus } from "../api/adminBookingStatus";
 import { generateAdminSlots, syncAdminBlackouts } from "../api/adminOperations";
 import { getAdminBookingStats, getAdminRevenueSeries, getAdminSlotStats, getAdminTicketTypeStats, type AdminBookingStats, type AdminRevenueSeriesItem, type AdminSlotStat, type AdminTicketTypeStat } from "../api/adminAnalytics";
 import { Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { useNavigate } from "react-router";
 
 type AdminTab = 'bookings' | 'analytics' | 'slots' | 'tickets' | 'operations';
 
@@ -33,6 +34,8 @@ function toEndOfDayIso(dateValue: string): string | undefined {
 }
 
 function AdminPage() {
+    const navigate = useNavigate();
+
     const [activeTab, setActiveTab] = useState<AdminTab>('bookings')
 
     const [bookings, setBookings] = useState<AdminBooking[]>([])
@@ -557,7 +560,8 @@ function AdminPage() {
                                             filteredBookings.map((booking) => (
                                                 <div
                                                     key={booking.id}
-                                                    className="rounded-xl border border-slate-200 bg-white/90 p-4 shadow-sm"
+                                                    onClick={() => navigate(`/admin/bookings/${booking.id}`)}
+                                                    className="cursor-pointer rounded-xl border border-slate-200 bg-white/90 p-4 shadow-sm transition hover:bg-slate-50 hover:shadow-md"
                                                 >
                                                     <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                                                         <div className="space-y-2">
@@ -612,7 +616,10 @@ function AdminPage() {
                                                                 <>
                                                                     <button
                                                                         type="button"
-                                                                        onClick={() => handleCancelBooking(booking.id)}
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            handleCancelBooking(booking.id)
+                                                                        }}
                                                                         disabled={
                                                                             cancellingBookingId === booking.id ||
                                                                             refundingBookingId === booking.id
@@ -624,7 +631,8 @@ function AdminPage() {
     
                                                                     <button
                                                                         type="button"
-                                                                        onClick={() => {
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
                                                                             setRefundFormBookingId(booking.id);
                                                                             setRefundReason('');
                                                                             setRefundFieldError('');
@@ -682,7 +690,10 @@ function AdminPage() {
                                                             <div className="mt-3 flex flex-wrap gap-2">
                                                                 <button
                                                                     type="button"
-                                                                    onClick={() => handleRefund(booking.id)}
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        handleRefund(booking.id);
+                                                                    }}
                                                                     disabled={refundingBookingId === booking.id}
                                                                     className="rounded-lg bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50"
                                                                 >
@@ -693,7 +704,8 @@ function AdminPage() {
                                                     
                                                                 <button
                                                                     type="button"
-                                                                    onClick={() => {
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
                                                                         setRefundFormBookingId(null);
                                                                         setRefundReason("");
                                                                         setRefundFieldError("");

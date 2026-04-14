@@ -11,6 +11,7 @@ import ClientLoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import MyBookingsPage from "./pages/MyBookingsPage";
 import MyBookingDetailsPage from "./pages/MyBookingDetailsPage";
+import AdminBookingDetailsPage from "./pages/AdminBookingDetailsPage";
 
 export const router = createBrowserRouter([
     {
@@ -64,7 +65,15 @@ export const router = createBrowserRouter([
                         <MyBookingDetailsPage />
                     </ProtectedClientRoute>
                 )
-            }
+            },
+            {
+                path: 'admin/bookings/:bookingId',
+                element: (
+                    <ProtectedAdminRoute>
+                        <AdminBookingDetailsPage />
+                    </ProtectedAdminRoute>
+                )
+            },
         ]
     }
 ])
