@@ -449,16 +449,16 @@ function AdminBookingDetailsPage() {
                                 <tbody className="divide-y divide-slate-200 bg-white">
                                     {booking.items.map((item, index) => (
                                         <tr key={`${item.ticketTypeId}-${index}`}>
-                                            <td className="px-4 py-3 text-slate-700">
+                                            <td className="px-4 py-3 font-medium text-slate-900">
                                                 {item.ticketName || item.ticketTypeId}
                                             </td>
-                                            <td className="px-4 py-3 text-slate-700">
+                                            <td className="px-4 py-3 text-slate-600">
                                                 {item.qty}
                                             </td>
-                                            <td className="px-4 py-3 text-slate-700">
+                                            <td className="px-4 py-3 text-slate-600">
                                                 {formatPrice(item.unitPriceCents)}
                                             </td>
-                                            <td className="px-4 py-3 text-slate-700">
+                                            <td className="px-4 py-3 font-semibold text-slate-900">
                                                 {formatPrice(item.qty * item.unitPriceCents)}
                                             </td>
                                         </tr>

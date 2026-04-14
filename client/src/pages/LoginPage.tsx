@@ -1,4 +1,4 @@
-import { useLocation, useNavigate } from "react-router";
+import { Link, useLocation, useNavigate } from "react-router";
 import { useAdminAuth } from "../context/AdminAuthContext";
 import { useClientAuth } from "../context/ClientAuthContext";
 import { useState, type FormEvent } from "react";
@@ -60,109 +60,104 @@ export default function LoginPage() {
     }
 
     return (
-        <div className="relative min-h-screen text-slate-900">
-            <div
-                className="fixed inset-0 bg-cover bg-center"
-                style={{
-                    backgroundImage: "url('/stamford-bridge-image.jpg')",
-                }}
-            />
-
-            <div className="fixed inset-0 bg-blue-900/20" />
-
-            <div className="relative z-10 flex min-h-screen items-center justify-center px-4">
-                <div className="w-full max-w-md rounded-xl bg-white/95 p-6 shadow-md">
-                    <div className="space-y-2">
-                        <h1 className="text-2xl font-semibold text-blue-900">
-                            Sign In
-                        </h1>
-                        <p className="text-sm text-slate-600">
-                            {role === "ADMIN"
-                                ? "Sign in to access the BridgeTour admin dashboard."
-                                : "Sign in to view and manage your BridgeTour bookings."}
-                        </p>
-                    </div>
-
-                    <div className="mt-6 grid grid-cols-2 rounded-lg bg-slate-100 p-1">
-                        <button
-                            type="button"
-                            onClick={() => setRole("CLIENT")}
-                            className={`rounded-md px-4 py-2 text-sm font-medium transition ${
-                                role === "CLIENT"
-                                    ? "bg-white text-blue-900 shadow-sm"
-                                    : "text-slate-600 hover:text-slate-900"
-                            }`}
-                        >
-                            Client
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => setRole("ADMIN")}
-                            className={`rounded-md px-4 py-2 text-sm font-medium transition ${
-                                role === "ADMIN"
-                                    ? "bg-white text-blue-900 shadow-sm"
-                                    : "text-slate-600 hover:text-slate-900"
-                            }`}
-                        >
-                            Admin
-                        </button>
-                    </div>
-
-                    <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-                        <div>
-                            <label
-                                htmlFor="email"
-                                className="mb-2 block text-sm font-medium text-slate-700"
-                            >
-                                Email
-                            </label>
-                            <input
-                                id="email"
-                                type="email"
-                                value={email}
-                                onChange={(event) => setEmail(event.target.value)}
-                                placeholder={
-                                    role === "ADMIN" ? "admin@test.com" : "client@test.com"
-                                }
-                                className="w-full rounded border border-slate-300 bg-white px-3 py-2 text-slate-900 outline-none focus:border-blue-700"
-                                required
-                            />
-                        </div>
-
-                        <div>
-                            <label
-                                htmlFor="password"
-                                className="mb-2 block text-sm font-medium text-slate-700"
-                            >
-                                Password
-                            </label>
-                            <input
-                                id="password"
-                                type="password"
-                                value={password}
-                                onChange={(event) => setPassword(event.target.value)}
-                                placeholder="Enter password"
-                                className="w-full rounded border border-slate-300 bg-white px-3 py-2 text-slate-900 outline-none focus:border-blue-700"
-                                required
-                            />
-                        </div>
-
-                        {error ? (
-                            <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
-                                {error}
-                            </div>
-                        ) : null}
-
-                        <button
-                            type="submit"
-                            disabled={isSubmitting}
-                            className="w-full rounded-lg bg-blue-700 px-4 py-3 font-semibold text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                            {isSubmitting ? "Signing in..." : "Sign In"}
-                        </button>
-                    </form>
-                </div>
+        <div className="w-full">
+            <div className="space-y-2">
+                <h1 className="text-2xl font-semibold text-blue-900">
+                    Sign In
+                </h1>
+                <p className="text-sm text-slate-600">
+                    {role === "ADMIN"
+                        ? "Sign in to access the BridgeTour admin dashboard."
+                        : "Sign in to view and manage your BridgeTour bookings."}
+                </p>
             </div>
+    
+            <div className="mt-6 grid grid-cols-2 rounded-lg bg-slate-100 p-1">
+                <button
+                    type="button"
+                    onClick={() => setRole("CLIENT")}
+                    className={`rounded-md px-4 py-2 text-sm font-medium transition ${
+                        role === "CLIENT"
+                            ? "bg-white text-blue-900 shadow-sm"
+                            : "text-slate-600 hover:text-slate-900"
+                    }`}
+                >
+                    Client
+                </button>
+    
+                <button
+                    type="button"
+                    onClick={() => setRole("ADMIN")}
+                    className={`rounded-md px-4 py-2 text-sm font-medium transition ${
+                        role === "ADMIN"
+                            ? "bg-white text-blue-900 shadow-sm"
+                            : "text-slate-600 hover:text-slate-900"
+                    }`}
+                >
+                    Admin
+                </button>
+            </div>
+    
+            <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+                <div>
+                    <label
+                        htmlFor="email"
+                        className="mb-2 block text-sm font-medium text-slate-700"
+                    >
+                        Email
+                    </label>
+                    <input
+                        id="email"
+                        type="email"
+                        value={email}
+                        onChange={(event) => setEmail(event.target.value)}
+                        placeholder={
+                            role === "ADMIN" ? "admin@test.com" : "client@test.com"
+                        }
+                        className="w-full rounded border border-slate-300 bg-white px-3 py-2 text-slate-900 outline-none focus:border-blue-700"
+                        required
+                    />
+                </div>
+    
+                <div>
+                    <label
+                        htmlFor="password"
+                        className="mb-2 block text-sm font-medium text-slate-700"
+                    >
+                        Password
+                    </label>
+                    <input
+                        id="password"
+                        type="password"
+                        value={password}
+                        onChange={(event) => setPassword(event.target.value)}
+                        placeholder="Enter password"
+                        className="w-full rounded border border-slate-300 bg-white px-3 py-2 text-slate-900 outline-none focus:border-blue-700"
+                        required
+                    />
+                </div>
+    
+                {error ? (
+                    <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+                        {error}
+                    </div>
+                ) : null}
+    
+                <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="w-full rounded-lg bg-blue-700 px-4 py-3 font-semibold text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                    {isSubmitting ? "Signing in..." : "Sign In"}
+                </button>
+            </form>
+
+            <p className="mt-4 text-sm text-slate-600 text-center">
+                Don’t have an account?{" "}
+                <Link to="/register" className="text-blue-700 hover:underline font-medium">
+                    Sign up
+                </Link>
+            </p>
         </div>
     );
 }

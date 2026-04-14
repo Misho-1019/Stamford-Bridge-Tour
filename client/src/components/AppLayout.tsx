@@ -1,9 +1,11 @@
-import { Link, Outlet, useNavigate } from 'react-router';
+import { Link, Outlet, useLocation, useNavigate } from 'react-router';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { useClientAuth } from '../context/ClientAuthContext';
 
 function AppLayout() {
     const navigate = useNavigate();
+    const location = useLocation();
+    const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
     const { 
         isAuthenticated: isAdminAuthenticated, 
         logout : adminLogout,
@@ -89,8 +91,16 @@ function AppLayout() {
                     </div>
                 </header>
 
-                <main className="mx-auto max-w-5xl px-4 py-6">
-                    <div className="rounded-xl bg-white/85 p-6 shadow-lg">
+                <main
+                    className={`mx-auto px-4 py-6 ${
+                        isAuthPage ? "flex min-h-[calc(100vh-88px)] max-w-5xl items-center justify-center" : "max-w-5xl"
+                    }`}
+                >
+                    <div
+                        className={`w-full rounded-xl bg-white/85 p-6 shadow-lg ${
+                            isAuthPage ? "max-w-md bg-white/90" : ""
+                        }`}
+                    >
                         <Outlet />
                     </div>
                 </main>
