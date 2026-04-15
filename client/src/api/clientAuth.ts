@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:8080';
+import { apiFetch } from "./client";
 
 export type Client = {
     id: string;
@@ -19,72 +19,28 @@ export type ClientRegisterInput = {
     password: string;
 }
 
-async function readErrorMessage(response: Response): Promise<string> {
-    try {
-        const data = await response.json();
-
-        return data.error || 'Request failed';
-    } catch {
-        return 'Request failed';
-    }
-}
-
 export async function clientRegister(input: ClientRegisterInput): Promise<ClientAuthResponse> {
-    const response = await fetch(`${API_BASE_URL}/auth/client/register`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        credentials: 'include',
+    return apiFetch<ClientAuthResponse>("/auth/client/register", {
+        method: "POST",
         body: JSON.stringify(input),
     })
-
-    if (!response.ok) {
-        throw new Error(await readErrorMessage(response))
-    }
-
-    return response.json();
 }
 
 export async function clientLogin(input: ClientLoginInput): Promise<ClientAuthResponse> {
-    const response = await fetch(`${API_BASE_URL}/auth/client/login`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        credentials: 'include',
+    return apiFetch<ClientAuthResponse>("/auth/client/login", {
+        method: "POST",
         body: JSON.stringify(input),
     })
-
-    if (!response.ok) {
-        throw new Error(await readErrorMessage(response))
-    }
-
-    return response.json();
 }
 
 export async function clientRefresh(): Promise<ClientAuthResponse> {
-    const response = await fetch(`${API_BASE_URL}/auth/client/refresh`, {
-        method: 'POST',
-        credentials: 'include',
+    return apiFetch<ClientAuthResponse>("/auth/client/refresh", {
+        method: "POST",
     })
-
-    if (!response.ok) {
-        throw new Error(await readErrorMessage(response))
-    }
-
-    return response.json();
 }
 
 export async function clientLogout(): Promise<{ message: string }> {
-    const response = await fetch(`${API_BASE_URL}/auth/client/logout`, {
-        method: 'POST',
-        credentials: 'include',
+    return apiFetch<{ message: string }>("/auth/client/logout", {
+        method: "POST",
     })
-
-    if (!response.ok) {
-        throw new Error(await readErrorMessage(response))
-    }
-
-    return response.json();
 }

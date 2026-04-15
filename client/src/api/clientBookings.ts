@@ -1,10 +1,10 @@
-
-const API_BASE_URL = 'http://localhost:8080';
+import { apiFetch } from "./client";
 
 export type ClientBookingItem = {
     qty: number;
-    ticketName: string;
+    ticketName?: string;
     unitPriceCents: number;
+    
 }
 
 export type ClientBooking = {
@@ -24,57 +24,16 @@ export type ClientBooking = {
     items: ClientBookingItem[];
 }
 
-async function readErrorMessage(response: Response): Promise<string> {
-    try {
-        const data = await response.json();
-
-        return data.message || 'Request failed';
-    } catch {
-        return 'Request failed';
-    }
-}
-
 export async function getMyBookings(): Promise<{ bookings: ClientBooking[] }> {
-    const response = await fetch(`${API_BASE_URL}/bookings/my-bookings`, {
-        method: 'GET',
-        credentials: 'include',
-    })
-
-    if (!response.ok) {
-        throw new Error(await readErrorMessage(response))
-    }
-
-    return response.json();
+    return apiFetch<{ bookings: ClientBooking[] }>("/bookings/my-bookings");
 }
 
 export async function cancelMyBooking(bookingId: string): Promise<{ message: string }> {
-    const response = await fetch(
-        `${API_BASE_URL}/bookings/my-bookings/${bookingId}/cancel`,
-        {
-            method: 'POST',
-            credentials: 'include',
-        }
-    );
-
-    if (!response.ok) {
-        throw new Error(await readErrorMessage(response))
-    }
-
-    return response.json();
+    return apiFetch<{ message: string }>(`/bookings/my-bookings/${bookingId}/cancel`, {
+        method: "POST",
+    });
 }
 
 export async function getMyBookingById(bookingId: string): Promise<{ booking: ClientBooking }> {
-    const response = await fetch(
-        `${API_BASE_URL}/bookings/my-bookings/${bookingId}`,
-        {
-            method: "GET",
-            credentials: "include",
-        }
-    );
-
-    if (!response.ok) {
-        throw new Error(await readErrorMessage(response));
-    }
-
-    return response.json();
+    return apiFetch<{ booking: ClientBooking }>(`/bookings/my-bookings/${bookingId}`);
 }
