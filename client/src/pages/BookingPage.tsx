@@ -9,7 +9,7 @@ import { useClientAuth } from "../context/ClientAuthContext";
 import { useNavigate } from "react-router";
 
 function BookingPage() {
-    const { isAuthenticated } = useClientAuth();
+    const { isAuthenticated, client } = useClientAuth();
     const navigate = useNavigate();
 
     const [date, setDate] = useState("");
@@ -49,6 +49,13 @@ function BookingPage() {
 
         loadTicketTypes();
     }, []);
+
+    useEffect(() => {
+        if (client?.email) {
+            setEmail(client.email)
+        }
+
+    }, [client])
 
     async function handleLoadSlots() {
         if (!date) {
@@ -101,12 +108,14 @@ function BookingPage() {
             return;
         }
 
+        const bookingEmail = isAuthenticated && client?.email ? client.email : email.trim();
+
         if (!selectedSlotId) {
             setBookingError("Please select a slot");
             return;
         }
 
-        if (!email.trim()) {
+        if (!bookingEmail) {
             setBookingError("Please enter your email");
             return;
         }
@@ -122,7 +131,7 @@ function BookingPage() {
 
             const response = await createHold({
                 slotId: selectedSlotId,
-                email: email.trim(),
+                email: bookingEmail,
                 items: selectedItems,
             });
 
@@ -325,8 +334,19 @@ function BookingPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="you@example.com"
-                    className="w-full rounded border border-slate-300 bg-white px-3 py-2"
+                    readOnly={isAuthenticated}
+                    className={`w-full rounded border px-3 py-2 ${
+                        isAuthenticated
+                            ? "border-slate-200 bg-slate-100 text-slate-600"
+                            : "border-slate-300 bg-white text-slate-900"
+                    }`}
                 />
+
+                {isAuthenticated && client?.email && (
+                    <p className="text-sm text-slate-600">
+                        This email is linked to your account and will be used for the booking.
+                    </p>
+                )}
 
                 {email && !email.includes("@") && (
                     <p className="text-sm text-red-600">

@@ -55,6 +55,18 @@ function HomePage() {
                 </div>
             </div>
 
+            {/* Flex: The Only Club to Win It All */}
+            <div className="rounded-xl bg-linear-to-r from-blue-900 to-blue-700 p-6 text-white">
+                <h2 className="text-xl font-bold">
+                    🏆 The Only Club in History to Win Every Trophy
+                </h2>
+                <p className="mt-2 text-blue-100">
+                    From the Premier League to the Champions League, the FA Cup to the Club World Cup —
+                    Chelsea is the first and only club in world football to have won every single trophy
+                    available. This is history. This is Stamford Bridge.
+                </p>
+            </div>
+
             {/* CTA */}
             <div className="rounded-xl bg-blue-50 p-6 text-center">
                 <h2 className="text-xl font-semibold text-blue-900">
