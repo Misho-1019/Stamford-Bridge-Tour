@@ -12,6 +12,8 @@ import { errorHandler } from "./middleware/errorHandler";
 
 const app = express();
 
+app.set('trust proxy', true);
+
 const allowedOrigins = ['http://localhost:5173', process.env.CLIENT_URL].filter(Boolean);
 
 app.use(cors({ 
