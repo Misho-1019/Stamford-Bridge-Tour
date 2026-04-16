@@ -9,5 +9,5 @@ export const env = {
     STRIPE_SECRET_KEY: getEnv('STRIPE_SECRET_KEY'),
     STRIPE_WEBHOOK_SECRET: getEnv('STRIPE_WEBHOOK_SECRET'),
 
-    APP_BASE_URL: getEnv('APP_BASE_URL'),
+    CLIENT_URL: getEnv('CLIENT_URL'),
 }
