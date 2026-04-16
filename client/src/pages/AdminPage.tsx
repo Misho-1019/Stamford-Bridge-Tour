@@ -561,7 +561,7 @@ function AdminPage() {
                                                 <div
                                                     key={booking.id}
                                                     onClick={() => navigate(`/admin/bookings/${booking.id}`)}
-                                                    className="cursor-pointer rounded-xl border border-slate-200 bg-white/90 p-4 shadow-sm transition hover:bg-slate-50 hover:shadow-md"
+                                                    className="group cursor-pointer rounded-xl border border-slate-200 bg-white/90 p-4 shadow-sm transition hover:border-blue-400 hover:bg-blue-50 hover:shadow-md"
                                                 >
                                                     <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                                                         <div className="space-y-2">
@@ -604,6 +604,10 @@ function AdminPage() {
                                                         </div>
     
                                                         <div className="flex flex-col items-start gap-2 md:items-end">
+                                                            <p className="text-xs text-slate-400 group-hover:text-blue-700">
+                                                                View details →
+                                                            </p>
+
                                                             <span
                                                                 className={`rounded-full px-3 py-1 text-xs font-semibold ${getStatusClasses(
                                                                     booking.status
