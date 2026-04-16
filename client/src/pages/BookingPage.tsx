@@ -98,6 +98,10 @@ function BookingPage() {
             ticketTypeId,
             qty,
         }));
+    
+    const totalTickets = selectedItems.reduce((sum, item) => sum + item.qty, 0);
+
+    const bookingEmail = isAuthenticated && client?.email ? client.email : email.trim();
 
     async function handleContinueToPayment() {
         if (!isAuthenticated) {
@@ -107,8 +111,6 @@ function BookingPage() {
 
             return;
         }
-
-        const bookingEmail = isAuthenticated && client?.email ? client.email : email.trim();
 
         if (!selectedSlotId) {
             setBookingError("Please select a slot");
@@ -252,7 +254,14 @@ function BookingPage() {
                                 );
                             })}
                         </ul>
-                    )}
+                    )
+                }
+                
+                {slotsData && !slotsData.blocked && slotsData.slots.length > 0 && !selectedSlotId && (
+                    <p className="text-sm text-amber-700">
+                        Please select one available slot to continue.
+                    </p>
+                )}
             </div>
 
             {/* Tickets */}
@@ -321,6 +330,12 @@ function BookingPage() {
                         })}
                     </ul>
                 )}
+
+                {ticketTypes.length > 0 && totalTickets === 0 && (
+                    <p className="text-sm text-amber-700">
+                        Please choose at least one ticket.
+                    </p>
+                )}
             </div>
 
             {/* Email */}
@@ -361,14 +376,30 @@ function BookingPage() {
                     Booking Summary
                 </h2>
 
-                <p className="text-sm text-slate-600">
-                    Selected slot:{" "}
-                    {selectedSlot
-                        ? `${formatDateTime(
-                              selectedSlot.startAt
-                          )} - ${formatDateTime(selectedSlot.endAt)}`
-                        : "Not selected"}
-                </p>
+                <div className="space-y-2 text-sm text-slate-600">
+                    <p>
+                        Selected slot:{" "}
+                        <span className="font-medium text-slate-900">
+                            {selectedSlot
+                                ? `${formatDateTime(selectedSlot.startAt)} - ${formatDateTime(selectedSlot.endAt)}`
+                                : "Not selected"}
+                        </span>
+                    </p>
+                
+                    <p>
+                        Tickets selected:{" "}
+                        <span className="font-medium text-slate-900">
+                            {totalTickets}
+                        </span>
+                    </p>
+                
+                    <p>
+                        Booking email:{" "}
+                        <span className="font-medium text-slate-900">
+                            {bookingEmail || "Not provided"}
+                        </span>
+                    </p>
+                </div>
 
                 <p className="text-lg font-semibold">
                     Total: {formatPrice(totalCents)}
@@ -385,8 +416,8 @@ function BookingPage() {
                     onClick={handleContinueToPayment}
                     disabled={
                         !selectedSlotId ||
-                        totalCents === 0 ||
-                        !email ||
+                        totalTickets === 0 ||
+                        !bookingEmail ||
                         isSubmitting
                     }
                     className="w-full rounded-lg bg-blue-700 px-4 py-3 font-semibold text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50"
@@ -395,6 +426,12 @@ function BookingPage() {
                         ? "Redirecting..."
                         : "Continue to Payment"}
                 </button>
+
+                {!selectedSlotId || totalTickets === 0 || !bookingEmail ? (
+                    <p className="text-center text-sm text-slate-500">
+                        Complete all booking details to continue to payment.
+                    </p>
+                ) : null}
 
                 {!isAuthenticated && (
                     <p className="text-sm text-red-600 text-center">
