@@ -13,6 +13,12 @@ import { authRateLimit } from "../middleware/rateLimit";
 const adminAuthController = Router();
 
 adminAuthController.post('/register', async (req, res) => {
+    if (process.env.NODE_ENV === 'production') {
+        return res.status(403).json({
+            error: 'Admin registration is disabled in production',
+        })
+    }
+    
     try {
         const { email, password } = req.body as {
             email?: string;
