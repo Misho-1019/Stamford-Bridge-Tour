@@ -8,4 +8,7 @@ export const authRateLimit = rateLimit({
     message: {
         error: "Too many authentication attempts, please try again later.",
     },
+    validate: {
+        trustProxy: false,
+    }
 })
