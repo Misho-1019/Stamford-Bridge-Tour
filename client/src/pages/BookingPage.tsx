@@ -270,6 +270,18 @@ function BookingPage() {
                     Ticket Types
                 </h2>
 
+                {isLoadingTickets && (
+                    <p className="text-sm text-slate-600">Loading ticket types...</p>
+                )}
+            
+                {ticketsError && (
+                    <p className="text-sm text-red-600">{ticketsError}</p>
+                )}
+
+                {!isLoadingTickets && !ticketsError && ticketTypes.length === 0 && (
+                    <p className="text-sm text-slate-600">No ticket types available.</p>
+                )}
+
                 {ticketTypes.length > 0 && (
                     <ul className="space-y-3">
                         {ticketTypes.map((ticket) => {
