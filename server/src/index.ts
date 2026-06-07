@@ -16,6 +16,13 @@ const app = express();
 
 app.set('trust proxy', true);
 
+app.use((req, res, next) => {
+    if (req.method === 'POST' && req.originalUrl === '/webhooks/stripe') {
+        return express.raw({ type: 'application/json' })(req, res, next);
+    }
+    next();
+})
+
 const allowedOrigins = ['http://localhost:5173', process.env.CLIENT_URL].filter(Boolean) as string[];
 
 app.use(cors({ 
@@ -37,20 +44,9 @@ app.use(cors({
     credentials: true,
 }))
 
-app.post(
-    '/webhooks/stripe',
-    express.raw({ type: 'application/json' }),
-    (req, res, next) => {
-        next();
-    }
-)
-
 app.use(requestLogger);
 
-app.use((req, res, next) => {
-    if (req.originalUrl === '/webhooks/stripe') return next();
-    express.json()(req, res, next);
-})
+app.use(express.json())
 
 app.use(cookieParser())
 
