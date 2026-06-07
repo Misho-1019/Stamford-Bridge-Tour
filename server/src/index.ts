@@ -47,7 +47,10 @@ app.post(
 
 app.use(requestLogger);
 
-app.use(express.json())
+app.use((req, res, next) => {
+    if (req.originalUrl === '/webhooks/stripe') return next();
+    express.json()(req, res, next);
+})
 
 app.use(cookieParser())
 
