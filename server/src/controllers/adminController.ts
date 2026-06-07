@@ -175,60 +175,25 @@ adminController.get('/bookings/stats', async (req, res) => {
             }
         }
 
-        const [
-            totalBookings,
-            confirmedBookings,
-            cancelledBookings,
-            refundedBookings,
-            confirmedRevenueAgg,
-            refundedRevenueAgg,
-        ] = await Promise.all([
-            prisma.booking.count({ where }),
-            prisma.booking.count({
-                where: {
-                    ...where,
-                    status: BookingStatus.CONFIRMED
-                }
-            }),
-            prisma.booking.count({
-                where: {
-                    ...where,
-                    status: BookingStatus.CANCELLED,
-                }
-            }),
-            prisma.booking.count({
-                where: {
-                    ...where,
-                    status: BookingStatus.REFUNDED,
-                }
-            }),
-            prisma.booking.aggregate({
-                where: {
-                    ...where,
-                    status: BookingStatus.CONFIRMED,
-                },
-                _sum: {
-                    amountTotalCents: true,
-                }
-            }),
-            prisma.booking.aggregate({
-                where: {
-                    ...where,
-                    status: BookingStatus.REFUNDED,
-                },
-                _sum: {
-                    amountTotalCents: true,
-                }
-            })
-        ])
+        const stats = await prisma.booking.groupBy({
+            by: ['status'],
+            where,
+            _count: { id: true },
+            _sum: { amountTotalCents: true },
+        })
+
+        const statsMap = new Map(stats.map(s => [s.status, s]))
+        const confirmed = statsMap.get(BookingStatus.CONFIRMED)
+        const cancelled = statsMap.get(BookingStatus.CANCELLED)
+        const refunded = statsMap.get(BookingStatus.REFUNDED)
 
         return res.json({
-            totalBookings,
-            confirmedBookings,
-            cancelledBookings,
-            refundedBookings,
-            confirmedRevenueCents: confirmedRevenueAgg._sum.amountTotalCents ?? 0,
-            refundedRevenueCents: refundedRevenueAgg._sum.amountTotalCents ?? 0,
+            totalBookings: stats.reduce((sum, s) => sum + s._count.id, 0),
+            confirmedBookings: confirmed?._count.id ?? 0,
+            cancelledBookings: cancelled?._count.id ?? 0,
+            refundedBookings: refunded?._count.id ?? 0,
+            confirmedRevenueCents: confirmed?._sum.amountTotalCents ?? 0,
+            refundedRevenueCents: refunded?._sum.amountTotalCents ?? 0,
         })
     } catch (error) {
         console.error('Failed to fetch admin booking stats:', error);
