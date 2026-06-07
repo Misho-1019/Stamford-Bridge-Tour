@@ -7,7 +7,8 @@
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
     "build": "prisma generate && tsc",
     "start": "node dist/index.js",
-    "seed": "prisma db seed"
+    "seed": "prisma db seed",
+    "reset-admin": "ts-node prisma/reset-admin.ts"
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"
