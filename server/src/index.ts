@@ -16,12 +16,8 @@ const app = express();
 
 app.set('trust proxy', true);
 
-app.use((req, res, next) => {
-    if (req.method === 'POST' && req.originalUrl === '/webhooks/stripe') {
-        return express.raw({ type: 'application/json' })(req, res, next);
-    }
-    next();
-})
+app.post('/webhooks/stripe', express.raw({ type: 'application/json' }));
+app.use('/webhooks', webhookController);
 
 const allowedOrigins = ['http://localhost:5173', process.env.CLIENT_URL].filter(Boolean) as string[];
 
@@ -54,7 +50,6 @@ app.get('/health', (req, res) => {
     res.json({ ok: true, services: 'bridge-tour-api' })
 })
 
-app.use('/webhooks', webhookController)
 app.use(routes)
 
 app.use(errorHandler);
