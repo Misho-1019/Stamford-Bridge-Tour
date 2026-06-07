@@ -44,8 +44,9 @@ model TourSlot {
   capacityTotal Int
   isActive      Boolean  @default(true)
 
-  holds         Hold[]
-  bookings      Booking[]
+  holds          Hold[]
+  bookings       Booking[]
+  waitlistEntries WaitlistEntry[]
 
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
