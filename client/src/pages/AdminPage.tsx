@@ -8,6 +8,8 @@ import { generateAdminSlots, syncAdminBlackouts } from "../api/adminOperations";
 import { getAdminBookingStats, getAdminRevenueSeries, getAdminSlotStats, getAdminTicketTypeStats, type AdminBookingStats, type AdminRevenueSeriesItem, type AdminSlotStat, type AdminTicketTypeStat } from "../api/adminAnalytics";
 import { Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { useNavigate } from "react-router";
+import { SkeletonCard, SkeletonChart } from "../components/Skeleton";
+import EmptyState from "../components/EmptyState";
 
 type AdminTab = 'bookings' | 'analytics' | 'slots' | 'tickets' | 'operations';
 
@@ -454,9 +456,11 @@ function AdminPage() {
                         </div>
 
                         {isLoadingBookings && (
-                            <p className="text-sm text-slate-600">
-                                Loading bookings...
-                            </p>
+                            <div className="space-y-3">
+                                <SkeletonCard />
+                                <SkeletonCard />
+                                <SkeletonCard />
+                            </div>
                         )}
 
                         {bookingsError && (
@@ -468,9 +472,10 @@ function AdminPage() {
                         {!isLoadingBookings &&
                             !bookingsError &&
                             bookings.length === 0 && (
-                                <p className="text-sm text-slate-600">
-                                    No bookings found.
-                                </p>
+                                <EmptyState
+                                    title="No bookings found"
+                                    message="There are no bookings matching your criteria."
+                                />
                             )
                         }
 
@@ -787,9 +792,15 @@ function AdminPage() {
                         </div>
                 
                         {isLoadingStats && (
-                            <p className="text-sm text-slate-600">
-                                Loading analytics...
-                            </p>
+                            <div className="space-y-4">
+                                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                                    <SkeletonCard />
+                                    <SkeletonCard />
+                                    <SkeletonCard />
+                                </div>
+                                <SkeletonChart />
+                                <SkeletonChart />
+                            </div>
                         )}
                 
                         {statsError && (

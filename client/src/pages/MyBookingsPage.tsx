@@ -3,6 +3,8 @@ import { cancelMyBooking, type ClientBooking, getMyBookings } from "../api/clien
 import { Link } from "react-router";
 import ConfirmModal from "../components/ConfirmModal";
 import Toast from "../components/Toast";
+import { SkeletonCard } from "../components/Skeleton";
+import EmptyState from "../components/EmptyState";
 
 export default function MyBookingsPage() {
     const [bookings, setBookings] = useState<ClientBooking[]>([]);
@@ -62,7 +64,30 @@ export default function MyBookingsPage() {
     }, [toast])
 
     if (isLoading) {
-        return <div className="text-slate-600">Loading bookings...</div>;
+        return (
+            <div className="space-y-4">
+                <h1 className="text-2xl font-semibold text-blue-900">My Bookings</h1>
+                <div className="space-y-3">
+                    <SkeletonCard />
+                    <SkeletonCard />
+                    <SkeletonCard />
+                </div>
+            </div>
+        );
+    }
+
+    if (bookings.length === 0) {
+        return (
+            <div className="space-y-4">
+                <h1 className="text-2xl font-semibold text-blue-900">My Bookings</h1>
+                <EmptyState
+                    title="No bookings yet"
+                    message="You haven't booked any tours yet. Start exploring available slots and book your Stamford Bridge experience."
+                    actionLabel="Book a Tour"
+                    actionTo="/book"
+                />
+            </div>
+        );
     }
 
     if (bookings.length === 0) {

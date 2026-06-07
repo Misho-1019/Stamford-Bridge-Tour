@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { getSlots } from "../api/slots";
 import { getTicketTypes } from "../api/ticketTypes";
 import { formatDateTime, formatPrice } from "../lib/format";
@@ -7,6 +7,7 @@ import type { TicketType } from "../types/ticket";
 import { createHold } from "../api/holds";
 import { useClientAuth } from "../context/ClientAuthContext";
 import { useNavigate } from "react-router";
+import { SkeletonCard } from "../components/Skeleton";
 
 function BookingPage() {
     const { isAuthenticated, client } = useClientAuth();
@@ -150,6 +151,17 @@ function BookingPage() {
         }
     }
 
+    const steps = useMemo(() => {
+        const stepMap = {
+            date: 1,
+            slot: selectedSlotId ? 2 : null,
+            tickets: totalTickets > 0 ? 3 : null,
+            email: bookingEmail ? 4 : null,
+        };
+        const completed = Object.values(stepMap).filter(Boolean).length;
+        return { current: completed + 1, total: 4 };
+    }, [selectedSlotId, totalTickets, bookingEmail]);
+
     const selectedSlot = slotsData?.slots.find(
         (slot) => slot.id === selectedSlotId
     );
@@ -163,6 +175,37 @@ function BookingPage() {
                 <p className="mt-1 text-sm text-slate-600">
                     Choose your preferred date, time, and tickets.
                 </p>
+            </div>
+
+            <div className="flex items-center gap-2 text-sm">
+                {["Select Date", "Choose Slot", "Pick Tickets", "Confirm"].map((label, i) => {
+                    const stepNum = i + 1;
+                    const isActive = stepNum === steps.current;
+                    const isDone = stepNum < steps.current;
+                    return (
+                        <div key={label} className="flex items-center gap-2">
+                            <div
+                                className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${
+                                    isDone
+                                        ? "bg-green-600 text-white"
+                                        : isActive
+                                        ? "bg-blue-700 text-white"
+                                        : "bg-slate-200 text-slate-500"
+                                }`}
+                            >
+                                {isDone ? "✓" : stepNum}
+                            </div>
+                            <span
+                                className={`hidden sm:inline ${
+                                    isActive ? "font-semibold text-blue-900" : "text-slate-500"
+                                }`}
+                            >
+                                {label}
+                            </span>
+                            {i < 3 && <span className="text-slate-300">→</span>}
+                        </div>
+                    );
+                })}
             </div>
 
             {/* Date */}
@@ -189,7 +232,10 @@ function BookingPage() {
                 </div>
 
                 {isLoadingSlots && (
-                    <p className="text-sm text-slate-600">Loading slots...</p>
+                    <div className="space-y-3">
+                        <SkeletonCard />
+                        <SkeletonCard />
+                    </div>
                 )}
 
                 {slotsError && (
@@ -271,7 +317,11 @@ function BookingPage() {
                 </h2>
 
                 {isLoadingTickets && (
-                    <p className="text-sm text-slate-600">Loading ticket types...</p>
+                    <div className="space-y-3">
+                        <SkeletonCard />
+                        <SkeletonCard />
+                        <SkeletonCard />
+                    </div>
                 )}
             
                 {ticketsError && (
