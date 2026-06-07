@@ -9,6 +9,7 @@ import webhookController from "./controllers/webhookController";
 import { requestLogger } from "./middleware/requestLogger";
 import { env } from "./lib/env";
 import { errorHandler } from "./middleware/errorHandler";
+import { startHoldSweep } from "./lib/holdSweep";
 
 const app = express();
 
@@ -56,4 +57,7 @@ app.use(errorHandler);
 
 const PORT = env.PORT;
 
-app.listen(PORT, () => console.log(`Server is listening on: http://localhost:${PORT}`))
+app.listen(PORT, () => {
+    console.log(`Server is listening on: http://localhost:${PORT}`)
+    startHoldSweep()
+})

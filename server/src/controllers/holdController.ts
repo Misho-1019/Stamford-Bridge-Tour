@@ -8,6 +8,7 @@ import { verifyAccessToken } from "../lib/auth";
 
 const createHold = Router();
 
+const INITIAL_HOLD_MINUTES = 2;
 const HOLD_DURATION_MINUTES = 10;
 
 createHold.post('/', async (req, res) => {
@@ -96,7 +97,7 @@ createHold.post('/', async (req, res) => {
             }
         })
 
-        const expiresAt = new Date(Date.now() + HOLD_DURATION_MINUTES * 60 * 1000);
+        const expiresAt = new Date(Date.now() + INITIAL_HOLD_MINUTES * 60 * 1000);
 
         const hold = await prisma.$transaction(async (tx) => {
             const now = new Date();
@@ -200,13 +201,6 @@ createHold.post('/', async (req, res) => {
             throw stripeError;
         }
 
-        await prisma.hold.update({
-            where: { id: hold.id },
-            data: {
-                stripeSessionId: session.id,
-            }
-        })
-
         if (!session.url) {
             await prisma.hold.update({
                 where: { id: hold.id },
@@ -215,6 +209,14 @@ createHold.post('/', async (req, res) => {
 
             return res.status(500).json({ error: "Stripe checkout URL was not created" })
         }
+
+        await prisma.hold.update({
+            where: { id: hold.id },
+            data: {
+                stripeSessionId: session.id,
+                expiresAt: new Date(Date.now() + HOLD_DURATION_MINUTES * 60 * 1000),
+            }
+        })
 
         return res.status(201).json({
             holdId: hold.id,

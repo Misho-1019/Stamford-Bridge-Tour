@@ -163,6 +163,15 @@ model RefreshToken {
   @@index([expiresAt])
 }
 
+model WebhookEvent {
+  id         String   @id @default(uuid())
+  stripeId   String   @unique
+  type       String
+  processedAt DateTime @default(now())
+
+  @@index([stripeId])
+}
+
 enum UserType {
   ADMIN
   CLIENT

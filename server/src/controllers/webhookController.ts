@@ -32,6 +32,14 @@ webhookController.post('/stripe', async (req, res) => {
         return res.status(400).json({ error: "Invalid webhook signature" });
     }
 
+    const existingEvent = await prisma.webhookEvent.findUnique({
+        where: { stripeId: event.id },
+    })
+
+    if (existingEvent) {
+        return res.status(200).json({ received: true, duplicate: true })
+    }
+
     try {
         if (event.type === 'checkout.session.completed') {
             const session = event.data.object as Stripe.Checkout.Session;
@@ -47,6 +55,9 @@ webhookController.post('/stripe', async (req, res) => {
             })
 
             if (existingBooking) {
+                await prisma.webhookEvent.create({
+                    data: { stripeId: event.id, type: event.type }
+                })
                 return res.status(200).json({ received: true, duplicate: true })
             }
 
@@ -57,10 +68,16 @@ webhookController.post('/stripe', async (req, res) => {
             })
 
             if (!hold) {
+                await prisma.webhookEvent.create({
+                    data: { stripeId: event.id, type: event.type }
+                })
                 return res.status(200).json({ received: true, skipped: 'hold_not_found' })
             }
 
             if (hold.status !== 'HELD') {
+                await prisma.webhookEvent.create({
+                    data: { stripeId: event.id, type: event.type }
+                })
                 return res.status(200).json({
                     received: true,
                     skipped: 'hold_not_held',
@@ -68,20 +85,8 @@ webhookController.post('/stripe', async (req, res) => {
             }
 
             await prisma.$transaction(async (tx) => {
-                const bookingAlreadyExists = await tx.booking.findUnique({
-                    where: {
-                        stripeSessionId: session.id,
-                    },
-                })
-
-                if (bookingAlreadyExists) {
-                    return;
-                }
-
                 const currentHold = await tx.hold.findUnique({
-                    where: {
-                        id: hold.id,
-                    }
+                    where: { id: hold.id }
                 })
 
                 if (!currentHold || currentHold.status !== 'HELD') {
@@ -90,36 +95,30 @@ webhookController.post('/stripe', async (req, res) => {
 
                 const clientUserId = session.metadata?.clientUserId && session.metadata.clientUserId.trim() !== '' ? session.metadata.clientUserId : null;
 
-                try {
-                    await tx.booking.create({
-                        data: {
-                            slotId: currentHold.slotId,
-                            email: currentHold.email,
-                            clientUserId,
-                            items: currentHold.items as Prisma.InputJsonValue,
-                            qtyTotal: currentHold.qtyTotal,
-                            amountTotalCents: currentHold.amountTotalCents,
-                            status: 'CONFIRMED',
-                            stripeSessionId: session.id,
-                            stripePaymentIntentId:
-                                typeof session.payment_intent === 'string'
-                                    ? session.payment_intent
-                                    : session.payment_intent?.id ?? null,
-                        },
-                });
-                } catch (error: any) {
-                    if (error.code === 'P2002') {
-                        return;
-                    }
-
-                    throw error;
-                }
+                await tx.booking.create({
+                    data: {
+                        slotId: currentHold.slotId,
+                        email: currentHold.email,
+                        clientUserId,
+                        items: currentHold.items as Prisma.InputJsonValue,
+                        qtyTotal: currentHold.qtyTotal,
+                        amountTotalCents: currentHold.amountTotalCents,
+                        status: 'CONFIRMED',
+                        stripeSessionId: session.id,
+                        stripePaymentIntentId:
+                            typeof session.payment_intent === 'string'
+                                ? session.payment_intent
+                                : session.payment_intent?.id ?? null,
+                    },
+                })
 
                 await tx.hold.update({
                     where: { id: currentHold.id },
-                    data: {
-                        status: 'CONVERTED',
-                    }
+                    data: { status: 'CONVERTED' }
+                })
+
+                await tx.webhookEvent.create({
+                    data: { stripeId: event.id, type: event.type }
                 })
             })
 
@@ -140,22 +139,31 @@ webhookController.post('/stripe', async (req, res) => {
             })
 
             if (!hold) {
+                await prisma.webhookEvent.create({
+                    data: { stripeId: event.id, type: event.type }
+                })
                 return res.status(200).json({ received: true, skipped: "hold_not_found" });
             }
 
             if (hold.status !== 'HELD') {
+                await prisma.webhookEvent.create({
+                    data: { stripeId: event.id, type: event.type }
+                })
                 return res.status(200).json({
                     received: true,
                     skipped: 'hold_not_held',
                 })
             }
 
-            await prisma.hold.update({
-                where: { id: hold.id },
-                data: {
-                    status: 'EXPIRED',
-                },
-            })
+            await prisma.$transaction([
+                prisma.hold.update({
+                    where: { id: hold.id },
+                    data: { status: 'EXPIRED' }
+                }),
+                prisma.webhookEvent.create({
+                    data: { stripeId: event.id, type: event.type }
+                })
+            ])
 
             return res.status(200).json({ received: true })
         }
@@ -169,6 +177,9 @@ webhookController.post('/stripe', async (req, res) => {
                     : charge.payment_intent?.id;
         
             if (!paymentIntentId) {
+                await prisma.webhookEvent.create({
+                    data: { stripeId: event.id, type: event.type }
+                })
                 return res.status(200).json({
                     received: true,
                     skipped: 'payment_intent_not_found',
@@ -184,6 +195,9 @@ webhookController.post('/stripe', async (req, res) => {
             });
         
             if (!booking) {
+                await prisma.webhookEvent.create({
+                    data: { stripeId: event.id, type: event.type }
+                })
                 return res.status(200).json({
                     received: true,
                     skipped: 'booking_not_found',
@@ -191,24 +205,38 @@ webhookController.post('/stripe', async (req, res) => {
             }
         
             if (booking.status === 'REFUNDED') {
+                await prisma.webhookEvent.create({
+                    data: { stripeId: event.id, type: event.type }
+                })
                 return res.status(200).json({
                     received: true,
                     duplicate: true,
                 });
             }
+
+            const now = new Date();
         
-            await prisma.booking.update({
-                where: { id: booking.id },
-                data: {
-                    status: 'REFUNDED',
-                    stripeRefundId: refundId ?? booking.stripeRefundId,
-                    refundedAt: booking.refundedAt ?? new Date(),
-                    refundReason: booking.refundReason,
-                },
-            });
+            await prisma.$transaction([
+                prisma.booking.update({
+                    where: { id: booking.id },
+                    data: {
+                        status: 'REFUNDED',
+                        stripeRefundId: refundId ?? booking.stripeRefundId,
+                        refundedAt: booking.refundedAt ?? now,
+                        refundReason: booking.refundReason,
+                    },
+                }),
+                prisma.webhookEvent.create({
+                    data: { stripeId: event.id, type: event.type }
+                })
+            ])
         
             return res.status(200).json({ received: true });
         }
+
+        await prisma.webhookEvent.create({
+            data: { stripeId: event.id, type: event.type }
+        })
 
         return res.status(200).json({ received: true, ignored: event.type });
     } catch (error) {

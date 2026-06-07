@@ -5,7 +5,7 @@ import { syncBlackouts } from "../lib/syncBlackouts";
 import { RealFixtureProvider } from "../providers/realFixtureProvider";
 import { prisma } from "../db";
 import { BookingStatus, Prisma } from "@prisma/client";
-import { BookingRefundError, refundBookingById } from "../services/bookingRefundService";
+import { refundBookingById } from "../services/bookingRefundService";
 import { DateTime } from "luxon";
 import { adminDateRangeQuerySchema, bookingIdParamsSchema, generateSlotsQuerySchema, getAdminBookingsQuerySchema, refundBookingSchema, syncBlackoutsQuerySchema, updateBookingStatusSchema } from "../schemas/admin";
 import { getZodErrorResponse } from "../lib/zod";
@@ -716,9 +716,6 @@ adminController.patch('/bookings/:id/status', async (req, res) => {
             booking,
         })
     } catch (error) {
-        if (error instanceof BookingRefundError) {
-            return res.status(error.statusCode).json({ error: error.message })
-        }
         console.error('Failed to update booking status:', error);
         return res.status(500).json({ error: 'Failed to update booking status' });
     }
