@@ -173,6 +173,36 @@ This mirrors real-world systems where payment confirmation is asynchronous and m
 
 ## ▶️ Running Locally
 
+### 0️⃣ Docker (Recommended)
+
+```bash
+docker compose up
+```
+
+This starts PostgreSQL, the API server on port 8080, and automatically runs migrations + seeds the database.
+
+To also forward Stripe webhooks locally:
+
+```bash
+docker compose --profile stripe up
+```
+
+> Make sure to set `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET` in your environment or in a `.env` file at the project root.
+
+Then in a separate terminal:
+
+### 1️⃣ Frontend
+
+```bash
+cd client
+npm install
+npm run dev
+```
+
+---
+
+### Without Docker
+
 ### 1️⃣ Backend
 
 ```bash
