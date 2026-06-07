@@ -163,6 +163,17 @@ model RefreshToken {
   @@index([expiresAt])
 }
 
+model WaitlistEntry {
+  id        String   @id @default(uuid())
+  slotId    String
+  slot      TourSlot @relation(fields: [slotId], references: [id], onDelete: Cascade)
+  email     String
+  createdAt DateTime @default(now())
+
+  @@unique([slotId, email])
+  @@index([slotId])
+}
+
 model WebhookEvent {
   id         String   @id @default(uuid())
   stripeId   String   @unique

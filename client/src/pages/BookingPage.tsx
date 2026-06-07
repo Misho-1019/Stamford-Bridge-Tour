@@ -5,6 +5,7 @@ import { formatDateTime, formatPrice } from "../lib/format";
 import type { Slot, SlotsResponse } from "../types/slot";
 import type { TicketType } from "../types/ticket";
 import { createHold } from "../api/holds";
+import { joinWaitlist } from "../api/waitlist";
 import { useClientAuth } from "../context/ClientAuthContext";
 import { useNavigate } from "react-router";
 import { SkeletonCard } from "../components/Skeleton";
@@ -27,6 +28,12 @@ function BookingPage() {
 
     const [bookingError, setBookingError] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const [waitlistSlotId, setWaitlistSlotId] = useState<string | null>(null);
+    const [waitlistEmail, setWaitlistEmail] = useState("");
+    const [waitlistMessage, setWaitlistMessage] = useState("");
+    const [waitlistError, setWaitlistError] = useState("");
+    const [isJoiningWaitlist, setIsJoiningWaitlist] = useState(false);
 
     useEffect(() => {
         async function loadTicketTypes() {
@@ -148,6 +155,33 @@ function BookingPage() {
             setBookingError("Failed to continue to payment");
         } finally {
             setIsSubmitting(false);
+        }
+    }
+
+    async function handleJoinWaitlist(slotId: string) {
+        const emailToUse = isAuthenticated && client?.email ? client.email : waitlistEmail.trim();
+
+        if (!emailToUse) {
+            setWaitlistError("Please enter your email to join the waitlist");
+            return;
+        }
+
+        try {
+            setIsJoiningWaitlist(true);
+            setWaitlistError("");
+            setWaitlistMessage("");
+
+            const response = await joinWaitlist(slotId, emailToUse);
+            setWaitlistMessage(response.message);
+            setWaitlistSlotId(null);
+        } catch (error) {
+            if (error instanceof Error) {
+                setWaitlistError(error.message);
+            } else {
+                setWaitlistError("Failed to join waitlist");
+            }
+        } finally {
+            setIsJoiningWaitlist(false);
         }
     }
 
@@ -282,20 +316,37 @@ function BookingPage() {
                                         }}
                                         className={`rounded border p-3 transition ${
                                             isFull
-                                                ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400"
+                                                ? "border-slate-200 bg-slate-100 text-slate-400"
                                                 : isSelected
                                                 ? "cursor-pointer border-blue-700 bg-blue-100"
                                                 : "cursor-pointer border-slate-200 bg-white/90 hover:border-blue-400"
                                         }`}
                                     >
-                                        <p className="font-medium">
-                                            {formatDateTime(slot.startAt)} -{" "}
-                                            {formatDateTime(slot.endAt)}
-                                        </p>
-                                        <p className="text-sm text-slate-600">
-                                            Remaining: {slot.remainingSeats} /{" "}
-                                            {slot.capacityTotal}
-                                        </p>
+                                        <div className="flex items-center justify-between">
+                                            <div>
+                                                <p className="font-medium">
+                                                    {formatDateTime(slot.startAt)} -{" "}
+                                                    {formatDateTime(slot.endAt)}
+                                                </p>
+                                                <p className="text-sm text-slate-600">
+                                                    Remaining: {slot.remainingSeats} /{" "}
+                                                    {slot.capacityTotal}
+                                                </p>
+                                            </div>
+                                            {isFull && (
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setWaitlistSlotId(slot.id);
+                                                        setWaitlistEmail(client?.email || "");
+                                                    }}
+                                                    className="rounded-lg border border-blue-300 bg-white px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-50"
+                                                >
+                                                    Join Waitlist
+                                                </button>
+                                            )}
+                                        </div>
                                     </li>
                                 );
                             })}
@@ -501,6 +552,72 @@ function BookingPage() {
                     </p>
                 )}
             </div>
+
+            {/* Waitlist Modal */}
+            {waitlistSlotId && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 px-4">
+                    <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
+                        <div className="space-y-2">
+                            <h2 className="text-xl font-semibold text-blue-900">
+                                Join Waitlist
+                            </h2>
+                            <p className="text-sm text-slate-600">
+                                This slot is currently full. Join the waitlist and we'll notify you if a spot opens up.
+                            </p>
+                        </div>
+
+                        <div className="mt-4 space-y-3">
+                            {!isAuthenticated && (
+                                <div>
+                                    <label className="text-sm font-medium text-slate-700">
+                                        Your Email
+                                    </label>
+                                    <input
+                                        type="email"
+                                        value={waitlistEmail}
+                                        onChange={(e) => setWaitlistEmail(e.target.value)}
+                                        placeholder="you@example.com"
+                                        className="mt-1 w-full rounded border border-slate-300 px-3 py-2 text-sm"
+                                    />
+                                </div>
+                            )}
+
+                            {waitlistMessage && (
+                                <p className="text-sm text-green-700">{waitlistMessage}</p>
+                            )}
+
+                            {waitlistError && (
+                                <p className="text-sm text-red-600">{waitlistError}</p>
+                            )}
+
+                            <div className="flex justify-end gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setWaitlistSlotId(null);
+                                        setWaitlistMessage("");
+                                        setWaitlistError("");
+                                    }}
+                                    className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                                >
+                                    Close
+                                </button>
+
+                                {!waitlistMessage && (
+                                    <button
+                                        type="button"
+                                        onClick={() => handleJoinWaitlist(waitlistSlotId)}
+                                        disabled={isJoiningWaitlist}
+                                        className="rounded-lg bg-blue-700 px-4 py-2 text-sm font-medium text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50"
+                                    >
+                                        {isJoiningWaitlist ? "Joining..." : "Join Waitlist"}
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </section>
     );
 }

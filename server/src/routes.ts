@@ -4,6 +4,7 @@ import adminController from "./controllers/adminController";
 import slotController from "./controllers/slotController";
 import createHold from "./controllers/holdController";
 import bookingController from "./controllers/bookingController";
+import waitlistController from "./controllers/waitlistController";
 import blackoutRoutes from "./controllers/blackoutController";
 import adminAuthController from "./controllers/adminAuthController";
 import clientAuthController from "./controllers/clientAuthController";
@@ -15,6 +16,7 @@ routes.use('/admin', adminController)
 routes.use('/slots', slotController)
 routes.use('/holds', createHold)
 routes.use('/bookings', bookingController)
+routes.use('/waitlist', waitlistController)
 routes.use('/admin/blackouts', blackoutRoutes)
 routes.use('/auth/admin', adminAuthController)
 routes.use('/auth/client', clientAuthController)
