@@ -16,7 +16,7 @@ const app = express();
 
 app.set('trust proxy', true);
 
-const allowedOrigins = ['http://localhost:5173', process.env.CLIENT_URL].filter(Boolean);
+const allowedOrigins = ['http://localhost:5173', process.env.CLIENT_URL].filter(Boolean) as string[];
 
 app.use(cors({ 
     origin: (origin, callback) => {
@@ -25,6 +25,10 @@ app.use(cors({
         }
 
         if (allowedOrigins.includes(origin)) {
+            return callback(null, true)
+        }
+
+        if (origin.endsWith('.vercel.app')) {
             return callback(null, true)
         }
 
