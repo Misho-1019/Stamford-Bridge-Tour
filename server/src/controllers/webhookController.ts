@@ -61,32 +61,32 @@ webhookController.post('/stripe', async (req, res) => {
                 return res.status(200).json({ received: true, duplicate: true })
             }
 
-            const hold = await prisma.hold.findUnique({
+            let hold = await prisma.hold.findUnique({
                 where: {
                     stripeSessionId: session.id,
                 }
             })
 
             if (!hold) {
-                await prisma.webhookEvent.create({
-                    data: { stripeId: event.id, type: event.type }
-                })
-                return res.status(200).json({ received: true, skipped: 'hold_not_found' })
+                const holdIdFromMetadata = session.metadata?.holdId;
+                if (holdIdFromMetadata) {
+                    hold = await prisma.hold.findUnique({
+                        where: { id: holdIdFromMetadata },
+                    });
+                }
+            }
+
+            if (!hold) {
+                return res.status(409).json({ error: 'hold_not_found' })
             }
 
             if (hold.status !== 'HELD') {
-                await prisma.webhookEvent.create({
-                    data: { stripeId: event.id, type: event.type }
-                })
-                return res.status(200).json({
-                    received: true,
-                    skipped: 'hold_not_held',
-                })
+                return res.status(409).json({ error: 'hold_not_held' })
             }
 
             await prisma.$transaction(async (tx) => {
                 const currentHold = await tx.hold.findUnique({
-                    where: { id: hold.id }
+                    where: { id: hold!.id }
                 })
 
                 if (!currentHold || currentHold.status !== 'HELD') {
@@ -95,31 +95,45 @@ webhookController.post('/stripe', async (req, res) => {
 
                 const clientUserId = session.metadata?.clientUserId && session.metadata.clientUserId.trim() !== '' ? session.metadata.clientUserId : null;
 
-                await tx.booking.create({
-                    data: {
-                        slotId: currentHold.slotId,
-                        email: currentHold.email,
-                        clientUserId,
-                        items: currentHold.items as Prisma.InputJsonValue,
-                        qtyTotal: currentHold.qtyTotal,
-                        amountTotalCents: currentHold.amountTotalCents,
-                        status: 'CONFIRMED',
-                        stripeSessionId: session.id,
-                        stripePaymentIntentId:
-                            typeof session.payment_intent === 'string'
-                                ? session.payment_intent
-                                : session.payment_intent?.id ?? null,
-                    },
-                })
+                const updates: any[] = [
+                    tx.booking.create({
+                        data: {
+                            slotId: currentHold.slotId,
+                            email: currentHold.email,
+                            clientUserId,
+                            items: currentHold.items as Prisma.InputJsonValue,
+                            qtyTotal: currentHold.qtyTotal,
+                            amountTotalCents: currentHold.amountTotalCents,
+                            status: 'CONFIRMED',
+                            stripeSessionId: session.id,
+                            stripePaymentIntentId:
+                                typeof session.payment_intent === 'string'
+                                    ? session.payment_intent
+                                    : session.payment_intent?.id ?? null,
+                        },
+                    }),
+                    tx.hold.update({
+                        where: { id: currentHold.id },
+                        data: { status: 'CONVERTED' }
+                    }),
+                ];
 
-                await tx.hold.update({
-                    where: { id: currentHold.id },
-                    data: { status: 'CONVERTED' }
-                })
+                if (!currentHold.stripeSessionId) {
+                    updates.push(
+                        tx.hold.update({
+                            where: { id: currentHold.id },
+                            data: { stripeSessionId: session.id },
+                        })
+                    );
+                }
 
-                await tx.webhookEvent.create({
-                    data: { stripeId: event.id, type: event.type }
-                })
+                updates.push(
+                    tx.webhookEvent.create({
+                        data: { stripeId: event.id, type: event.type }
+                    })
+                );
+
+                await Promise.all(updates);
             })
 
             return res.status(200).json({ received: true })
@@ -139,20 +153,11 @@ webhookController.post('/stripe', async (req, res) => {
             })
 
             if (!hold) {
-                await prisma.webhookEvent.create({
-                    data: { stripeId: event.id, type: event.type }
-                })
-                return res.status(200).json({ received: true, skipped: "hold_not_found" });
+                return res.status(409).json({ error: 'hold_not_found' })
             }
 
             if (hold.status !== 'HELD') {
-                await prisma.webhookEvent.create({
-                    data: { stripeId: event.id, type: event.type }
-                })
-                return res.status(200).json({
-                    received: true,
-                    skipped: 'hold_not_held',
-                })
+                return res.status(409).json({ error: 'hold_not_held' })
             }
 
             await prisma.$transaction([
