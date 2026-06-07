@@ -37,3 +37,7 @@ export async function cancelMyBooking(bookingId: string): Promise<{ message: str
 export async function getMyBookingById(bookingId: string): Promise<{ booking: ClientBooking }> {
     return apiFetch<{ booking: ClientBooking }>(`/bookings/my-bookings/${bookingId}`);
 }
+
+export async function getBookingBySession(sessionId: string): Promise<{ status: string; booking?: ClientBooking }> {
+    return apiFetch<{ status: string; booking?: ClientBooking }>(`/bookings/by-session/${sessionId}`);
+}
