@@ -32,9 +32,13 @@ webhookController.post('/stripe', async (req, res) => {
         return res.status(400).json({ error: "Invalid webhook signature" });
     }
 
-    const existingEvent = await prisma.webhookEvent.findUnique({
-        where: { stripeId: event.id },
-    })
+    let existingEvent = null;
+    try {
+        existingEvent = await prisma.webhookEvent.findUnique({
+            where: { stripeId: event.id },
+        })
+    } catch {
+    }
 
     if (existingEvent) {
         return res.status(200).json({ received: true, duplicate: true })
