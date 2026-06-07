@@ -6,6 +6,8 @@ A production-oriented full-stack web application designed to manage **tour booki
 
 This project focuses on **real-world booking workflows, payment processing with Stripe, authentication security, and scalable backend architecture** — not just UI demonstration.
 
+[![CI](https://github.com/misho074/Stamford-Bridge-Tour/actions/workflows/ci.yml/badge.svg)](https://github.com/misho074/Stamford-Bridge-Tour/actions/workflows/ci.yml)
+
 ---
 
 ## 🎯 Project Purpose
