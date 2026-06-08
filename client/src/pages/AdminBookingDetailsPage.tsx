@@ -207,6 +207,15 @@ function AdminBookingDetailsPage() {
                             <div className="flex flex-wrap gap-2 lg:justify-end">
                                 <button
                                     type="button"
+                                    onClick={() => window.open(
+                                        `${import.meta.env.VITE_API_BASE_URL}/bookings/my-bookings/${booking.id}/pdf`
+                                    )}
+                                    className="rounded-lg border border-blue-300 bg-white px-4 py-2 text-sm font-medium text-blue-700 transition hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                    Download PDF
+                                </button>
+                                <button
+                                    type="button"
                                     onClick={handleCancelBooking}
                                     disabled={isCancelling || isRefunding}
                                     className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"

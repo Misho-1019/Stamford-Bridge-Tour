@@ -206,7 +206,16 @@ export default function MyBookingDetailsPage() {
                 )}
 
                 {booking.status === "CONFIRMED" && (
-                    <div className="border-t pt-4 flex justify-end">
+                    <div className="border-t pt-4 flex flex-wrap justify-end gap-2">
+                        <button
+                            type="button"
+                            onClick={() => window.open(
+                                `${import.meta.env.VITE_API_BASE_URL}/bookings/my-bookings/${booking.id}/pdf`
+                            )}
+                            className="rounded-lg border border-blue-300 bg-white px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-50"
+                        >
+                            Download PDF
+                        </button>
                         <button
                             onClick={() => setIsModalOpen(true)}
                             disabled={isCancelling}
