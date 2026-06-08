@@ -98,3 +98,67 @@ ${itemsHtml}
         console.log(`Email sent to ${params.email} for booking ${params.bookingId}`);
     }
 }
+
+export async function sendBookingCancellation(params: {
+    email: string;
+    bookingId: string;
+    slotStartAt: Date;
+    slotEndAt: Date;
+    qtyTotal: number;
+    amountTotalCents: number;
+}) {
+    if (!resendApiKey) {
+        console.log("Email skipping: RESEND_API_KEY not configured");
+        return;
+    }
+
+    const resend = new Resend(resendApiKey);
+
+    const { error } = await resend.emails.send({
+        from: "Stamford Bridge Tours <onboarding@resend.dev>",
+        to: params.email,
+        subject: "Booking Cancelled — Stamford Bridge Tour",
+        html: `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="margin:0;padding:0;background:#f8fafc;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
+<table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:40px 16px">
+<table width="480" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.1)">
+<tr><td style="background:#991b1b;padding:24px;text-align:center">
+<h1 style="margin:0;color:#ffffff;font-size:20px">Booking Cancelled ✕</h1>
+<p style="margin:8px 0 0;color:#fca5a5;font-size:14px">Stamford Bridge Stadium Tour</p>
+</td></tr>
+<tr><td style="padding:24px">
+<p style="margin:0 0 16px;color:#475569;font-size:14px">Your tour booking has been cancelled.</p>
+<table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e2e8f0;border-radius:8px">
+<tr><td style="padding:12px;background:#f8fafc">
+<table width="100%" cellpadding="0" cellspacing="0">
+<tr><td style="color:#64748b;font-size:12px;padding:4px 0">Booking ID</td></tr>
+<tr><td style="color:#0f172a;font-size:14px;font-weight:600;padding:0 0 8px;word-break:break-all">${params.bookingId}</td></tr>
+<tr><td style="color:#64748b;font-size:12px;padding:4px 0">Date &amp; Time</td></tr>
+<tr><td style="color:#0f172a;font-size:14px;font-weight:600;padding:0 0 8px">${formatDate(params.slotStartAt)} — ${formatDate(params.slotEndAt)}</td></tr>
+<tr><td style="color:#64748b;font-size:12px;padding:4px 0">Tickets</td></tr>
+<tr><td style="color:#0f172a;font-size:14px;font-weight:600;padding:0 0 8px">${params.qtyTotal} ticket(s)</td></tr>
+<tr><td style="padding:8px 0 0;border-top:2px solid #e2e8f0;text-align:right;font-size:15px;font-weight:700;color:#0f172a">Total: ${formatPriceCents(params.amountTotalCents)}</td></tr>
+</table>
+</td></tr>
+</table>
+<div style="margin-top:8px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:12px;text-align:center">
+<p style="margin:0;color:#991b1b;font-size:13px">Refund (if applicable) will be handled separately.</p>
+</div>
+</td></tr>
+<tr><td style="background:#f8fafc;padding:16px;text-align:center">
+<p style="margin:0;color:#94a3b8;font-size:12px">Stamford Bridge, Fulham Rd., London SW6 1HS</p>
+</td></tr>
+</table>
+</td></tr></table>
+</body>
+</html>`,
+    });
+
+    if (error) {
+        console.error("Cancellation email failed:", error);
+    } else {
+        console.log(`Cancellation email sent to ${params.email} for booking ${params.bookingId}`);
+    }
+}

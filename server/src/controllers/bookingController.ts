@@ -4,6 +4,7 @@ import { bookingSessionParamsSchema, clientBookingsQuerySchema } from "../schema
 import { getZodErrorResponse } from "../lib/zod";
 import { requireClientAuth } from "../middleware/requireClientAuth";
 import { bookingIdParamsSchema } from "../schemas/admin";
+import { sendBookingCancellation } from "../lib/email";
 
 const bookingController = Router();
 
@@ -298,6 +299,15 @@ bookingController.post('/my-bookings/:id/cancel', requireClientAuth, async (req,
             data: {
                 status: 'CANCELLED',
             }
+        })
+
+        sendBookingCancellation({
+            email: booking.email,
+            bookingId: booking.id,
+            slotStartAt: booking.slot.startAt,
+            slotEndAt: booking.slot.endAt,
+            qtyTotal: booking.qtyTotal,
+            amountTotalCents: booking.amountTotalCents,
         })
 
         return res.status(200).json({ message: 'Booking cancelled successfully. Refund (if applicable) will be handled separately.' });
