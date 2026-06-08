@@ -1,3 +1,4 @@
+import { generateTicketPdf } from "./pdf";
 import { Resend } from "resend";
 
 const resendApiKey = process.env.RESEND_API_KEY;
@@ -42,10 +43,20 @@ export async function sendBookingConfirmation(params: {
         )
         .join("");
 
+    let attachments: { filename: string; content: string }[] = [];
+
+    try {
+        const pdfBuffer = await generateTicketPdf(params);
+        attachments = [{ filename: `ticket-${params.bookingId}.pdf`, content: pdfBuffer.toString("base64") }];
+    } catch (error) {
+        console.error("PDF generation failed:", error);
+    }
+
     const { error } = await resend.emails.send({
         from: "Stamford Bridge Tours <onboarding@resend.dev>",
         to: params.email,
         subject: "Booking Confirmed — Stamford Bridge Tour",
+        attachments,
         html: `<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"></head>

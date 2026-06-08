@@ -5,6 +5,7 @@ import { getZodErrorResponse } from "../lib/zod";
 import { requireClientAuth } from "../middleware/requireClientAuth";
 import { bookingIdParamsSchema } from "../schemas/admin";
 import { sendBookingCancellation } from "../lib/email";
+import { generateTicketPdf } from "../lib/pdf";
 
 const bookingController = Router();
 
@@ -253,6 +254,77 @@ bookingController.get("/my-bookings/:id", requireClientAuth, async (req, res) =>
     } catch (error) {
         console.error("Get client booking details error:", error);
         return res.status(500).json({ error: "Failed to fetch booking" });
+    }
+});
+
+bookingController.get('/my-bookings/:id/pdf', requireClientAuth, async (req, res) => {
+    try {
+        const clientId = req.client?.id;
+
+        if (!clientId) {
+            return res.status(401).json({ error: "Unauthorized" });
+        }
+
+        const parsedParams = bookingIdParamsSchema.safeParse(req.params);
+
+        if (!parsedParams.success) {
+            return res.status(400).json(getZodErrorResponse(parsedParams.error));
+        }
+
+        const { id: bookingId } = parsedParams.data;
+
+        const booking = await prisma.booking.findFirst({
+            where: {
+                id: bookingId,
+                clientUserId: clientId,
+            },
+            include: {
+                slot: true,
+            }
+        });
+
+        if (!booking) {
+            return res.status(404).json({ error: "Booking not found" });
+        }
+
+        const rawItems = Array.isArray(booking.items) ? booking.items : [];
+        const ticketTypeIds = rawItems
+            .filter((item: any): item is { ticketTypeId: string; qty: number; unitPriceCents: number } =>
+                item && typeof item.ticketTypeId === 'string'
+            )
+            .map((item) => item.ticketTypeId);
+
+        const ticketTypes = ticketTypeIds.length > 0
+            ? await prisma.ticketType.findMany({
+                  where: { id: { in: ticketTypeIds } },
+                  select: { id: true, name: true },
+              })
+            : [];
+
+        const ticketNameMap = new Map(ticketTypes.map(t => [t.id, t.name]));
+
+        const items = rawItems.map((item: any) => ({
+            ticketName: ticketNameMap.get(item.ticketTypeId) ?? "Ticket",
+            qty: item.qty ?? 0,
+            unitPriceCents: item.unitPriceCents ?? 0,
+        }));
+
+        const pdfBuffer = await generateTicketPdf({
+            bookingId: booking.id,
+            email: booking.email,
+            slotStartAt: booking.slot.startAt,
+            slotEndAt: booking.slot.endAt,
+            qtyTotal: booking.qtyTotal,
+            amountTotalCents: booking.amountTotalCents,
+            items,
+        });
+
+        res.setHeader("Content-Type", "application/pdf");
+        res.setHeader("Content-Disposition", `attachment; filename="ticket-${bookingId}.pdf"`);
+        res.send(pdfBuffer);
+    } catch (error) {
+        console.error("PDF download error:", error);
+        return res.status(500).json({ error: "Failed to generate PDF" });
     }
 });
 
