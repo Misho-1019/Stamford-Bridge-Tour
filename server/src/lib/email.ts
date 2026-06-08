@@ -1,4 +1,3 @@
-import QRCode from "qrcode";
 import { Resend } from "resend";
 
 const resendApiKey = process.env.RESEND_API_KEY;
@@ -33,15 +32,8 @@ export async function sendBookingConfirmation(params: {
 
     const resend = new Resend(resendApiKey);
 
-    let qrDataUrl = "";
-
-    try {
-        qrDataUrl = await QRCode.toDataURL(
-            `STAMFORD-BRIDGE:${params.bookingId}:${params.email}`,
-            { width: 160, margin: 2 }
-        );
-    } catch {
-    }
+    const qrData = encodeURIComponent(`STAMFORD-BRIDGE:${params.bookingId}:${params.email}`);
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${qrData}`;
 
     const itemsHtml = params.items
         .map(
@@ -66,11 +58,9 @@ export async function sendBookingConfirmation(params: {
 </td></tr>
 <tr><td style="padding:24px">
 <p style="margin:0 0 16px;color:#475569;font-size:14px">Your tour booking has been confirmed.</p>
-${
-    qrDataUrl
-        ? `<div style="text-align:center;margin-bottom:16px"><img src="${qrDataUrl}" alt="Entry QR Code" width="120" height="120" style="display:inline-block;border-radius:8px;border:1px solid #e2e8f0" /></div>`
-        : ""
-}
+<div style="text-align:center;margin-bottom:16px">
+    <img src="${qrUrl}" alt="Entry QR Code" width="120" height="120" style="display:inline-block;border-radius:8px;border:1px solid #e2e8f0" />
+</div>
 <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e2e8f0;border-radius:8px">
 <tr><td style="padding:12px;background:#f8fafc">
 <table width="100%" cellpadding="0" cellspacing="0">
