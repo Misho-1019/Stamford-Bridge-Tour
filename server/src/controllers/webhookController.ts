@@ -3,6 +3,7 @@ import Stripe from "stripe";
 import { stripe } from "../lib/stripe";
 import { prisma } from "../db";
 import { Prisma } from "@prisma/client";
+import { sendBookingConfirmation } from "../lib/email";
 
 const webhookController = Router();
 
@@ -139,6 +140,43 @@ webhookController.post('/stripe', async (req, res) => {
 
                 await Promise.all(updates);
             })
+
+            const createdBooking = await prisma.booking.findUnique({
+                where: { stripeSessionId: session.id },
+                include: { slot: true },
+            })
+
+            if (createdBooking) {
+                const rawItems = Array.isArray(createdBooking.items) ? createdBooking.items : [];
+                const ticketTypeIds = rawItems
+                    .filter((item: any): item is { ticketTypeId: string; qty: number; unitPriceCents: number } =>
+                        item && typeof item.ticketTypeId === 'string' && typeof item.qty === 'number'
+                    )
+                    .map((item) => item.ticketTypeId);
+
+                const ticketTypes = ticketTypeIds.length > 0
+                    ? await prisma.ticketType.findMany({
+                          where: { id: { in: ticketTypeIds } },
+                          select: { id: true, name: true },
+                      })
+                    : [];
+
+                const ticketNameMap = new Map(ticketTypes.map(t => [t.id, t.name]));
+
+                sendBookingConfirmation({
+                    email: createdBooking.email,
+                    bookingId: createdBooking.id,
+                    slotStartAt: createdBooking.slot.startAt,
+                    slotEndAt: createdBooking.slot.endAt,
+                    qtyTotal: createdBooking.qtyTotal,
+                    amountTotalCents: createdBooking.amountTotalCents,
+                    items: rawItems.map((item: any) => ({
+                        ticketName: ticketNameMap.get(item.ticketTypeId) ?? "Ticket",
+                        qty: item.qty ?? 0,
+                        unitPriceCents: item.unitPriceCents ?? 0,
+                    })),
+                })
+            }
 
             return res.status(200).json({ received: true })
         }

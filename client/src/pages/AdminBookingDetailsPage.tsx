@@ -5,6 +5,7 @@ import type { AdminBooking } from "../types/adminBooking";
 import { formatDateTime, formatPrice } from "../lib/format";
 import { updateAdminBookingStatus } from "../api/adminBookingStatus";
 import { refundBooking } from "../api/adminRefunds";
+import QRCode from "../components/QRCode";
 
 function getStatusClasses(status: AdminBooking["status"]) {
     if (status === "CONFIRMED") {
@@ -349,6 +350,18 @@ function AdminBookingDetailsPage() {
                                     {booking.refundReason || "—"}
                                 </p>
                             </div>
+                        </div>
+                    </div>
+
+                    <div className="flex justify-center py-4">
+                        <div className="text-center">
+                            <p className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-500">
+                                Entry Code
+                            </p>
+                            <QRCode
+                                data={`STAMFORD-BRIDGE:${booking.id}:${booking.email}`}
+                                size={120}
+                            />
                         </div>
                     </div>
 

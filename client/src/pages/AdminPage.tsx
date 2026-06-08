@@ -69,6 +69,9 @@ function AdminPage() {
     const [ticketTypeStats, setTicketTypeStats] = useState<AdminTicketTypeStat[]>([]);
     const [slotStats, setSlotStats] = useState<AdminSlotStat[]>([]);
 
+    const [analyticsFromDate, setAnalyticsFromDate] = useState("");
+    const [analyticsToDate, setAnalyticsToDate] = useState("");
+
     const [statusFilter, setStatusFilter] = useState('ALL');
     const [emailQuery, setEmailQuery] = useState('');
     const [fromDate, setFromDate] = useState("");
@@ -229,12 +232,12 @@ function AdminPage() {
         }
     }
 
-    async function loadBookingStats() {
+    async function loadBookingStats(fromDate?: string, toDate?: string) {
         try {
             setIsLoadingStats(true)
             setStatsError('');
 
-            const data = await getAdminBookingStats();
+            const data = await getAdminBookingStats(fromDate, toDate);
             setBookingStats(data)
         } catch (error) {
             if (error instanceof Error) {
@@ -249,9 +252,9 @@ function AdminPage() {
         }
     }
 
-    async function loadRevenueSeries() {
+    async function loadRevenueSeries(fromDate?: string, toDate?: string) {
         try {
-            const data = await getAdminRevenueSeries();
+            const data = await getAdminRevenueSeries(fromDate, toDate);
             setRevenueSeries(data.data)
         } catch (error) {
             if (error instanceof Error) {
@@ -264,9 +267,9 @@ function AdminPage() {
         }
     }
 
-    async function loadTicketTypeStats() {
+    async function loadTicketTypeStats(fromDate?: string, toDate?: string) {
         try {
-            const data = await getAdminTicketTypeStats();
+            const data = await getAdminTicketTypeStats(fromDate, toDate);
 
             setTicketTypeStats(data.data)
         } catch (error) {
@@ -280,9 +283,9 @@ function AdminPage() {
         }
     }
 
-    async function loadSlotStats() {
+    async function loadSlotStats(fromDate?: string, toDate?: string) {
         try {
-            const data = await getAdminSlotStats();
+            const data = await getAdminSlotStats(fromDate, toDate);
 
             setSlotStats(data.data)
         } catch (error) {
@@ -304,16 +307,19 @@ function AdminPage() {
         async function loadAnalytics() {
             setStatsError('');
 
+            const from = analyticsFromDate || undefined;
+            const to = analyticsToDate || undefined;
+
             await Promise.all([
-                loadBookingStats(),
-                loadRevenueSeries(),
-                loadTicketTypeStats(),
-                loadSlotStats(),
+                loadBookingStats(from, to),
+                loadRevenueSeries(from, to),
+                loadTicketTypeStats(from, to),
+                loadSlotStats(from, to),
             ])
         }
 
         loadAnalytics();
-    }, [activeTab])
+    }, [activeTab, analyticsFromDate, analyticsToDate])
 
     const revenueChartData = revenueSeries.map((item) => ({
         date: item.date,
@@ -780,7 +786,7 @@ function AdminPage() {
                     </div>
                 )}
 
-                {activeTab === "analytics" && (
+                        {activeTab === "analytics" && (
                     <div className="space-y-6">
                         <div>
                             <h2 className="text-lg font-semibold text-blue-900">
@@ -789,6 +795,39 @@ function AdminPage() {
                             <p className="mt-2 text-sm text-slate-600">
                                 Overview of booking activity and revenue performance.
                             </p>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-3">
+                            <div className="flex items-center gap-2">
+                                <label className="text-sm font-medium text-slate-700">From</label>
+                                <input
+                                    type="date"
+                                    value={analyticsFromDate}
+                                    onChange={(e) => setAnalyticsFromDate(e.target.value)}
+                                    className="rounded border border-slate-300 px-3 py-2 text-sm"
+                                />
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <label className="text-sm font-medium text-slate-700">To</label>
+                                <input
+                                    type="date"
+                                    value={analyticsToDate}
+                                    onChange={(e) => setAnalyticsToDate(e.target.value)}
+                                    className="rounded border border-slate-300 px-3 py-2 text-sm"
+                                />
+                            </div>
+                            {(analyticsFromDate || analyticsToDate) && (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setAnalyticsFromDate("");
+                                        setAnalyticsToDate("");
+                                    }}
+                                    className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
+                                >
+                                    Reset
+                                </button>
+                            )}
                         </div>
                 
                         {isLoadingStats && (
@@ -1012,8 +1051,19 @@ function AdminPage() {
                                                         Bookings: {slot.bookingsCount} · Tickets sold: {slot.ticketsSold}
                                                     </p>
                                                     <p className="text-sm text-slate-600">
-                                                        Capacity: {slot.capacityTotal} · Usage: {slot.usagePercent}%
+                                                        Capacity: {slot.capacityTotal}
                                                     </p>
+                                                    <span
+                                                        className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                                                            slot.usagePercent > 80
+                                                                ? "bg-red-100 text-red-700"
+                                                                : slot.usagePercent > 50
+                                                                ? "bg-yellow-100 text-yellow-700"
+                                                                : "bg-green-100 text-green-700"
+                                                        }`}
+                                                    >
+                                                        {slot.usagePercent}% used
+                                                    </span>
                                                 </div>
                         
                                                 <p className="text-sm font-semibold text-blue-900">
@@ -1114,8 +1164,19 @@ function AdminPage() {
                                                         Bookings: {slot.bookingsCount} · Tickets sold: {slot.ticketsSold}
                                                     </p>
                                                     <p className="text-sm text-slate-600">
-                                                        Capacity: {slot.capacityTotal} · Usage: {slot.usagePercent}%
+                                                        Capacity: {slot.capacityTotal}
                                                     </p>
+                                                    <span
+                                                        className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                                                            slot.usagePercent > 80
+                                                                ? "bg-red-100 text-red-700"
+                                                                : slot.usagePercent > 50
+                                                                ? "bg-yellow-100 text-yellow-700"
+                                                                : "bg-green-100 text-green-700"
+                                                        }`}
+                                                    >
+                                                        {slot.usagePercent}% used
+                                                    </span>
                                                 </div>
                 
                                                 <p className="text-sm font-semibold text-blue-900">

@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router";
 import { cancelMyBooking, getMyBookingById, type ClientBooking } from "../api/clientBookings";
 import ConfirmModal from "../components/ConfirmModal";
 import Toast from "../components/Toast";
+import QRCode from "../components/QRCode";
 
 export default function MyBookingDetailsPage() {
     const { id } = useParams();
@@ -119,6 +120,13 @@ export default function MyBookingDetailsPage() {
                     >
                         {booking.status}
                     </div>
+                </div>
+
+                <div className="flex justify-center py-2">
+                    <QRCode
+                        data={`STAMFORD-BRIDGE:${booking.id}:${booking.email}`}
+                        size={120}
+                    />
                 </div>
 
                 <div className="text-sm text-slate-600 space-y-1">

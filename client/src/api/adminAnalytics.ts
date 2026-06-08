@@ -33,18 +33,28 @@ export type AdminSlotStat = {
     usagePercent: number;
 };
 
-export function getAdminBookingStats() {
-    return apiFetch<AdminBookingStats>('/admin/bookings/stats')
+function toQueryString(params: Record<string, string | undefined>): string {
+    const entries = Object.entries(params).filter(([, v]) => v !== undefined && v !== '');
+    if (entries.length === 0) return '';
+    return '?' + entries.map(([k, v]) => `${k}=${encodeURIComponent(v!)}`).join('&');
 }
 
-export function getAdminRevenueSeries() {
-    return apiFetch<{ data: AdminRevenueSeriesItem[] }>('/admin/bookings/revenue-series')
+export function getAdminBookingStats(fromDate?: string, toDate?: string) {
+    const qs = toQueryString({ fromDate, toDate });
+    return apiFetch<AdminBookingStats>(`/admin/bookings/stats${qs}`)
 }
 
-export function getAdminTicketTypeStats() {
-    return apiFetch<{ data: AdminTicketTypeStat[] }>('/admin/bookings/ticket-type-stats')
+export function getAdminRevenueSeries(fromDate?: string, toDate?: string) {
+    const qs = toQueryString({ fromDate, toDate });
+    return apiFetch<{ data: AdminRevenueSeriesItem[] }>(`/admin/bookings/revenue-series${qs}`)
 }
 
-export function getAdminSlotStats() {
-    return apiFetch<{ data: AdminSlotStat[] }>('/admin/bookings/slot-stats')
+export function getAdminTicketTypeStats(fromDate?: string, toDate?: string) {
+    const qs = toQueryString({ fromDate, toDate });
+    return apiFetch<{ data: AdminTicketTypeStat[] }>(`/admin/bookings/ticket-type-stats${qs}`)
+}
+
+export function getAdminSlotStats(fromDate?: string, toDate?: string) {
+    const qs = toQueryString({ fromDate, toDate });
+    return apiFetch<{ data: AdminSlotStat[] }>(`/admin/bookings/slot-stats${qs}`)
 }
