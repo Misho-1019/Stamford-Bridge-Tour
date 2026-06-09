@@ -35,20 +35,24 @@ The system was built to simulate **real-world booking and payment scenarios**, i
 * Real-time total price calculation
 * Secure checkout via Stripe
 * Authentication (register / login)
-* View personal bookings
+* View and manage personal bookings
 * Cancel bookings
+* Join waitlist for sold-out slots
+* QR code entry ticket on booking details
+* PDF ticket download
+* Email confirmation with PDF ticket attachment
 
 ### Admin
 
 * Secure admin authentication
-  n- View all bookings with pagination
+* View all bookings with pagination + filters
 * Booking management (cancel/refund)
-* Analytics dashboard:
+* Download booking PDFs
+* Analytics dashboard with date range filtering:
 
-  * Revenue overview
-  * Booking trends
+  * Revenue overview & trends
   * Ticket type performance
-  * Slot utilization
+  * Slot utilization with color-coded usage badges
 
 ### Payments & Automation
 
@@ -57,6 +61,7 @@ The system was built to simulate **real-world booking and payment scenarios**, i
 * Safe booking creation only after successful payment
 * Refund handling via webhook events
 * Server-side validation for booking integrity
+* Email notifications (confirmation + cancellation)
 
 ---
 
@@ -108,6 +113,8 @@ The system was built to simulate **real-world booking and payment scenarios**, i
 * TypeScript
 * Tailwind CSS
 * React Router
+* Recharts (analytics charts)
+* Playwright (E2E testing)
 * Custom API layer with cookie-based auth handling
 
 ### Backend
@@ -118,6 +125,8 @@ The system was built to simulate **real-world booking and payment scenarios**, i
 * Prisma ORM
 * Zod validation
 * JWT authentication with refresh token rotation
+* Resend (email notifications)
+* PDFKit (PDF ticket generation)
 
 ### Database
 
@@ -127,6 +136,13 @@ The system was built to simulate **real-world booking and payment scenarios**, i
 
 * Stripe Checkout
 * Stripe Webhooks
+
+### DevOps & CI/CD
+
+* Docker / Docker Compose
+* GitHub Actions (CI pipeline)
+* Vercel (frontend deployment)
+* Render (backend deployment)
 
 ---
 
@@ -231,11 +247,11 @@ stripe listen --forward-to localhost:8080/webhooks/stripe
 
 ## 🌱 Future Improvements
 
-* Email notifications for booking confirmations
-* Admin filtering and advanced analytics
-* Slot capacity visualization improvements
-* Better loading and error UX states
-* Mobile UX enhancements
+* Multi-language support (i18n) for international visitors
+* Group bookings for 10+ visitors
+* Promo codes and discount engine
+* Gift voucher / gift card system
+* Mobile native app integration
 
 ---
 
