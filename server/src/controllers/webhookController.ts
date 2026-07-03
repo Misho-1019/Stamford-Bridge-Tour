@@ -38,7 +38,9 @@ webhookController.post('/stripe', async (req, res) => {
         existingEvent = await prisma.webhookEvent.findUnique({
             where: { stripeId: event.id },
         })
-    } catch {
+    } catch (err) {
+        console.error("Webhook idempotency check failed:", err);
+        return res.status(500).json({ error: "Idempotency check failed" });
     }
 
     if (existingEvent) {
@@ -138,7 +140,9 @@ webhookController.post('/stripe', async (req, res) => {
                     })
                 );
 
-                await Promise.all(updates);
+                for (const update of updates) {
+                    await update;
+                }
             })
 
             const createdBooking = await prisma.booking.findUnique({
@@ -163,7 +167,8 @@ webhookController.post('/stripe', async (req, res) => {
 
                 const ticketNameMap = new Map(ticketTypes.map(t => [t.id, t.name]));
 
-                sendBookingConfirmation({
+                try {
+                    await sendBookingConfirmation({
                     email: createdBooking.email,
                     bookingId: createdBooking.id,
                     slotStartAt: createdBooking.slot.startAt,
@@ -176,6 +181,9 @@ webhookController.post('/stripe', async (req, res) => {
                         unitPriceCents: item.unitPriceCents ?? 0,
                     })),
                 })
+                } catch (emailErr) {
+                    console.error("Failed to send confirmation email:", emailErr);
+                }
             }
 
             return res.status(200).json({ received: true })

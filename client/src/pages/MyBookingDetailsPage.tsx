@@ -72,12 +72,12 @@ export default function MyBookingDetailsPage() {
     }, [toast])
 
     if (isLoading) {
-        return <div className="text-slate-600">Loading booking...</div>;
+        return <div className="text-white/80">Loading booking...</div>;
     }
 
     if (!booking) {
         return (
-            <div className="text-slate-600">
+            <div className="text-white/80">
                 Booking not found.
             </div>
         );
@@ -87,38 +87,47 @@ export default function MyBookingDetailsPage() {
         <div className="space-y-6">
             <Link
                 to="/my-bookings"
-                className="inline-flex text-sm font-medium text-blue-700 hover:underline"
+                className="inline-flex items-center gap-1 text-sm font-medium transition-colors hover:underline"
+                style={{ color: '#4DA3FF' }}
             >
-                ← Back to My Bookings
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 12H5m7-7l-7 7 7 7" />
+                </svg>
+                Back to My Bookings
             </Link>
 
-            <h1 className="text-2xl font-semibold text-blue-900">
+            <h1 className="text-2xl font-semibold tracking-[-0.02em]" style={{ color: 'rgba(255,255,255,0.90)' }}>
                 Booking Details
             </h1>
 
-            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+            <div className="glass-card p-6 space-y-4 relative overflow-hidden">
+                {/* Gold pulsing left accent */}
+                <div className="absolute left-0 top-0 h-full w-1 animate-gold-pulse" style={{ backgroundColor: '#D4AF37' }} />
+
                 <div className="flex justify-between items-center">
                     <div>
-                        <div className="text-sm text-slate-500">
-                            Booking ID
+                        <div className="text-xs font-mono-custom uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                            BOOKING REFERENCE
                         </div>
-                        <div className="font-medium text-slate-900">
-                            {booking.id}
+                        <div className="font-medium font-mono-custom text-sm" style={{ color: 'rgba(255,255,255,0.90)' }}>
+                            STB-{booking.id.slice(0, 6)}
                         </div>
                     </div>
 
-                    <div
-                        className={`text-xs font-semibold px-3 py-1 rounded-full ${
-                            booking.status === "CONFIRMED"
-                                ? "bg-green-100 text-green-700"
-                                : booking.status === "CANCELLED"
-                                ? "bg-red-100 text-red-600"
-                                : booking.status === "REFUNDED"
-                                ? "bg-yellow-100 text-yellow-700"
-                                : "bg-slate-100 text-slate-600"
-                        }`}
-                    >
-                        {booking.status}
+                    <div className="flex items-center gap-2 px-4 py-1.5 rounded-full" style={{
+                        background: booking.status === "CONFIRMED" ? 'rgba(34,197,94,0.1)' : booking.status === "CANCELLED" ? 'rgba(239,68,68,0.1)' : booking.status === "REFUNDED" ? 'rgba(234,179,8,0.1)' : 'rgba(255,255,255,0.05)',
+                        border: `1px solid ${
+                            booking.status === "CONFIRMED" ? 'rgba(34,197,94,0.25)' : booking.status === "CANCELLED" ? 'rgba(239,68,68,0.25)' : booking.status === "REFUNDED" ? 'rgba(234,179,8,0.25)' : 'rgba(255,255,255,0.1)'
+                        }`
+                    }}>
+                        {booking.status === "CONFIRMED" && (
+                            <span className="h-1.5 w-1.5 rounded-full animate-gold-pulse" style={{ backgroundColor: '#D4AF37' }} />
+                        )}
+                        <span className="text-xs font-semibold font-mono-custom tracking-wider" style={{
+                            color: booking.status === "CONFIRMED" ? '#22C55E' : booking.status === "CANCELLED" ? '#EF4444' : booking.status === "REFUNDED" ? '#EAB308' : 'rgba(255,255,255,0.50)'
+                        }}>
+                            {booking.status}
+                        </span>
                     </div>
                 </div>
 
@@ -129,64 +138,63 @@ export default function MyBookingDetailsPage() {
                     />
                 </div>
 
-                <div className="text-sm text-slate-600 space-y-1">
+                <div className="text-sm space-y-1" style={{ color: 'rgba(255,255,255,0.60)' }}>
                     <div>
-                        <span className="font-medium text-slate-800">
+                        <span className="font-medium" style={{ color: 'rgba(255,255,255,0.80)' }}>
                             Booking date:
                         </span>{" "}
                         {new Date(booking.createdAt).toLocaleString()}
                     </div>
 
                     <div>
-                        <span className="font-medium text-slate-800">
+                        <span className="font-medium" style={{ color: 'rgba(255,255,255,0.80)' }}>
                             Tour date:
                         </span>{" "}
                         {new Date(booking.slot.startAt).toLocaleString()}
                     </div>
 
                     <div>
-                        <span className="font-medium text-slate-800">
+                        <span className="font-medium" style={{ color: 'rgba(255,255,255,0.80)' }}>
                             Email:
                         </span>{" "}
                         {booking.email}
                     </div>
                 </div>
 
-                <div className="border-t pt-4">
-                    <div className="text-sm font-medium text-slate-800 mb-2">
+                <div className="pt-4" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                    <div className="text-sm font-medium mb-2" style={{ color: 'rgba(255,255,255,0.80)' }}>
                         Tickets
                     </div>
 
-                    <div className="space-y-1 text-sm text-slate-600">
+                    <div className="space-y-1 text-sm" style={{ color: 'rgba(255,255,255,0.55)' }}>
                         {booking.items.map((item, index) => (
-                            <div key={index}>
-                                {item.ticketName} × {item.qty} — €
-                                {(item.unitPriceCents / 100).toFixed(2)}
+                            <div key={index} className="flex justify-between">
+                                <span>{item.ticketName} × {item.qty}</span>
+                                <span className="font-mono-custom" style={{ color: 'rgba(255,255,255,0.80)' }}>£{(item.unitPriceCents / 100).toFixed(2)}</span>
                             </div>
                         ))}
                     </div>
                 </div>
 
-                <div className="border-t pt-4 text-sm text-slate-600 space-y-1">
-                    <div>
-                        <span className="font-medium text-slate-800">
-                            Total tickets:
-                        </span>{" "}
-                        {booking.qtyTotal}
-                    </div>
+                <div className="pt-4 flex justify-between items-center" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                    <span className="text-sm font-semibold" style={{ color: 'rgba(255,255,255,0.80)' }}>Total Amount Paid</span>
+                    <span className="text-xl font-bold font-mono-custom" style={{ color: '#D4AF37' }}>£{(booking.amountTotalCents / 100).toFixed(2)}</span>
+                </div>
 
-                    <div>
-                        <span className="font-medium text-slate-800">
-                            Total price:
-                        </span>{" "}
-                        €{(booking.amountTotalCents / 100).toFixed(2)}
-                    </div>
+                {/* Cancellation Policy */}
+                <div className="rounded-lg p-3" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                    <p className="text-xs" style={{ color: 'rgba(255,255,255,0.40)' }}>
+                        <svg className="mr-1 inline-block h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                        </svg>
+                        Cancellation Policy: Full refund available if cancelled at least 24 hours prior to tour start time. Transaction fees are non-refundable.
+                    </p>
                 </div>
 
                 {booking.status === "REFUNDED" && (
-                    <div className="border-t pt-4 text-sm text-slate-600 space-y-1">
+                    <div className="pt-4 text-sm space-y-1" style={{ borderTop: '1px solid rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.60)' }}>
                         <div>
-                            <span className="font-medium text-slate-800">
+                            <span className="font-medium" style={{ color: 'rgba(255,255,255,0.80)' }}>
                                 Refunded at:
                             </span>{" "}
                             {booking.refundedAt
@@ -196,7 +204,7 @@ export default function MyBookingDetailsPage() {
 
                         {booking.refundReason && (
                             <div>
-                                <span className="font-medium text-slate-800">
+                                <span className="font-medium" style={{ color: 'rgba(255,255,255,0.80)' }}>
                                     Refund reason:
                                 </span>{" "}
                                 {booking.refundReason}
@@ -206,20 +214,26 @@ export default function MyBookingDetailsPage() {
                 )}
 
                 {booking.status === "CONFIRMED" && (
-                    <div className="border-t pt-4 flex flex-wrap justify-end gap-2">
+                    <div className="pt-4 flex flex-wrap justify-end gap-2" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
                         <button
                             type="button"
                             onClick={() => window.open(
                                 `${import.meta.env.VITE_API_BASE_URL}/bookings/my-bookings/${booking.id}/pdf`
                             )}
-                            className="rounded-lg border border-blue-300 bg-white px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-50"
+                            className="rounded-lg border px-4 py-2 text-sm font-medium transition-all hover:bg-white/10 active:scale-95"
+                            style={{ borderColor: 'rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.70)' }}
                         >
                             Download PDF
                         </button>
                         <button
                             onClick={() => setIsModalOpen(true)}
                             disabled={isCancelling}
-                            className="rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
+                            className="rounded-lg border px-4 py-2 text-sm font-medium transition-all hover:bg-white/10 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+                            style={{
+                                borderColor: 'rgba(239,68,68,0.25)',
+                                background: 'rgba(239,68,68,0.08)',
+                                color: '#EF4444'
+                            }}
                         >
                             {isCancelling ? "Cancelling..." : "Cancel booking"}
                         </button>

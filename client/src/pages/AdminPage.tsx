@@ -105,25 +105,18 @@ function AdminPage() {
         }
 
         loadBookings(bookingsPage);
-
-        // Refetch after 1s to catch any delayed state updates
-        const timer = setTimeout(() => {
-            loadBookings(bookingsPage);
-        }, 1000);
-
-        return () => clearTimeout(timer);
     }, [activeTab, bookingsPage, statusFilter, emailQuery, fromDate, toDate])
 
     function getStatusClasses(status: AdminBooking['status']) {
         if (status === "CONFIRMED") {
-            return "bg-green-100 text-green-700";
+            return "bg-green-950/40 text-green-300";
         }
 
         if (status === "CANCELLED") {
-            return "bg-yellow-100 text-yellow-800";
+            return "bg-yellow-950/40 text-yellow-300";
         }
 
-        return "bg-slate-200 text-slate-700";
+        return "bg-slate-800/40 text-slate-300";
     }
 
     async function handleCancelBooking(bookingId: string) {
@@ -376,87 +369,41 @@ function AdminPage() {
 
     return (
         <section className="space-y-6">
-            <div>
-                <h1 className="text-2xl font-semibold text-blue-900">
+            <header className="mb-2">
+                <h1 className="text-2xl font-semibold tracking-[-0.02em]" style={{ color: 'rgba(255,255,255,0.90)' }}>
                     Admin Dashboard
                 </h1>
-                <p className="mt-1 text-sm text-slate-600">
+                <p className="mt-1 text-sm" style={{ color: 'rgba(255,255,255,0.55)' }}>
                     Manage bookings, slots, ticket types, and tour operations.
                 </p>
-            </div>
+            </header>
 
-            <div className="rounded-xl bg-white/90 p-3 shadow-sm">
-                <div className="flex flex-wrap gap-2">
-                    <button
-                        type="button"
-                        onClick={() => setActiveTab("bookings")}
-                        className={`rounded px-4 py-2 text-sm font-medium ${
-                            activeTab === "bookings"
-                                ? "bg-blue-700 text-white"
-                                : "bg-slate-100 hover:bg-slate-200"
-                        }`}
-                    >
-                        Bookings
-                    </button>
-
-                    <button
-                        type="button"
-                        onClick={() => setActiveTab("analytics")}
-                        className={`rounded px-4 py-2 text-sm font-medium ${
-                            activeTab === "analytics"
-                                ? "bg-blue-700 text-white"
-                                : "bg-slate-100 hover:bg-slate-200"
-                        }`}
-                    >
-                        Analytics
-                    </button>
-
-                    <button
-                        type="button"
-                        onClick={() => setActiveTab("slots")}
-                        className={`rounded px-4 py-2 text-sm font-medium ${
-                            activeTab === "slots"
-                                ? "bg-blue-700 text-white"
-                                : "bg-slate-100 hover:bg-slate-200"
-                        }`}
-                    >
-                        Slots
-                    </button>
-
-                    <button
-                        type="button"
-                        onClick={() => setActiveTab("tickets")}
-                        className={`rounded px-4 py-2 text-sm font-medium ${
-                            activeTab === "tickets"
-                                ? "bg-blue-700 text-white"
-                                : "bg-slate-100 hover:bg-slate-200"
-                        }`}
-                    >
-                        Ticket Types
-                    </button>
-
-                    <button
-                        type="button"
-                        onClick={() => setActiveTab("operations")}
-                        className={`rounded px-4 py-2 text-sm font-medium ${
-                            activeTab === "operations"
-                                ? "bg-blue-700 text-white"
-                                : "bg-slate-100 hover:bg-slate-200"
-                        }`}
-                    >
-                        Operations
-                    </button>
+            <div className="glass-card p-1.5">
+                <div className="flex flex-wrap gap-1">
+                    {["bookings", "analytics", "slots", "tickets", "operations"].map((tab) => (
+                        <button
+                            key={tab}
+                            type="button"
+                            onClick={() => setActiveTab(tab as AdminTab)}
+                            className={`rounded-full px-5 py-2 text-sm font-medium transition-all duration-300 ${
+                                activeTab === tab ? "" : "hover:text-white"
+                            }`}
+                            style={activeTab === tab ? { background: 'rgba(212,175,55,0.12)', border: '1px solid rgba(212,175,55,0.2)', color: '#D4AF37', boxShadow: '0 0 20px rgba(233,195,73,0.1)' } : { color: 'rgba(255,255,255,0.55)' }}
+                        >
+                            {tab === "bookings" ? "Bookings" : tab === "analytics" ? "Analytics" : tab === "slots" ? "Slots" : tab === "tickets" ? "Ticket Types" : "Operations"}
+                        </button>
+                    ))}
                 </div>
             </div>
 
-            <div className="rounded-xl bg-white/95 p-5 shadow-md">
+            <div className="rounded-xl glass-card p-5 shadow-lg">
                 {activeTab === "bookings" && (
                     <div className="space-y-4">
                         <div>
-                            <h2 className="text-lg font-semibold text-blue-900">
+                            <h2 className="text-lg font-semibold text-white">
                                 Bookings
                             </h2>
-                            <p className="mt-1 text-sm text-slate-600">
+                            <p className="mt-1 text-sm text-white/80">
                                 Total bookings: {bookingsTotal}
                             </p>
                         </div>
@@ -470,7 +417,7 @@ function AdminPage() {
                         )}
 
                         {bookingsError && (
-                            <p className="text-sm text-red-600">
+                            <p className="text-sm text-red-300">
                                 {bookingsError}
                             </p>
                         )}
@@ -489,7 +436,8 @@ function AdminPage() {
                             <div className="flex items-center gap-3">
                                 <label
                                     htmlFor="statusFilter"
-                                    className="text-sm font-medium text-slate-700"
+                                    className="text-sm font-medium"
+                                    style={{ color: 'rgba(255,255,255,0.65)' }}
                                 >
                                     Status
                                 </label>
@@ -498,7 +446,13 @@ function AdminPage() {
                                     id="statusFilter"
                                     value={statusFilter}
                                     onChange={(event) => setStatusFilter(event.target.value)}
-                                    className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-700"
+                                    className="rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2"
+                                    style={{
+                                        borderColor: 'rgba(255,255,255,0.10)',
+                                        background: 'rgba(255,255,255,0.06)',
+                                        backdropFilter: 'blur(8px)',
+                                        color: 'rgba(255,255,255,0.85)'
+                                    }}
                                 >
                                     <option value="ALL">All</option>
                                     <option value="CONFIRMED">Confirmed</option>
@@ -510,7 +464,8 @@ function AdminPage() {
                             <div className="flex items-center gap-3">
                                 <label
                                     htmlFor="emailQuery"
-                                    className="text-sm font-medium text-slate-700"
+                                    className="text-sm font-medium"
+                                    style={{ color: 'rgba(255,255,255,0.65)' }}
                                 >
                                     Email
                                 </label>
@@ -521,12 +476,18 @@ function AdminPage() {
                                     value={emailQuery}
                                     onChange={(event) => setEmailQuery(event.target.value)}
                                     placeholder="Search by email"
-                                    className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-700"
+                                    className="rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2"
+                                    style={{
+                                        borderColor: 'rgba(255,255,255,0.10)',
+                                        background: 'rgba(255,255,255,0.06)',
+                                        backdropFilter: 'blur(8px)',
+                                        color: 'rgba(255,255,255,0.85)'
+                                    }}
                                 />
                             </div>
 
                             <div className="flex items-center gap-3">
-                                <label className="text-sm font-medium text-slate-700">
+                                <label className="text-sm font-medium" style={{ color: 'rgba(255,255,255,0.65)' }}>
                                     From
                                 </label>
                             
@@ -534,12 +495,18 @@ function AdminPage() {
                                     type="date"
                                     value={fromDate}
                                     onChange={(e) => setFromDate(e.target.value)}
-                                    className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                                    className="rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2"
+                                    style={{
+                                        borderColor: 'rgba(255,255,255,0.10)',
+                                        background: 'rgba(255,255,255,0.06)',
+                                        backdropFilter: 'blur(8px)',
+                                        color: 'rgba(255,255,255,0.85)'
+                                    }}
                                 />
                             </div>
                             
                             <div className="flex items-center gap-3">
-                                <label className="text-sm font-medium text-slate-700">
+                                <label className="text-sm font-medium" style={{ color: 'rgba(255,255,255,0.65)' }}>
                                     To
                                 </label>
                             
@@ -547,7 +514,13 @@ function AdminPage() {
                                     type="date"
                                     value={toDate}
                                     onChange={(e) => setToDate(e.target.value)}
-                                    className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                                    className="rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2"
+                                    style={{
+                                        borderColor: 'rgba(255,255,255,0.10)',
+                                        background: 'rgba(255,255,255,0.06)',
+                                        backdropFilter: 'blur(8px)',
+                                        color: 'rgba(255,255,255,0.85)'
+                                    }}
                                 />
                             </div>
 
@@ -555,7 +528,8 @@ function AdminPage() {
                                 type="button"
                                 onClick={handleResetFilters}
                                 disabled={!hasActiveFilters}
-                                className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
+                                className="rounded-lg border px-4 py-2 text-sm font-medium transition-all hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
+                                style={{ borderColor: 'rgba(255,255,255,0.10)', background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.60)' }}
                             >
                                 Reset
                             </button>
@@ -567,9 +541,9 @@ function AdminPage() {
                                 <>
                                     <div className="space-y-3">
                                         {filteredBookings.length === 0 ? (
-                                            <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-6 text-sm text-slate-600">
+                                            <div className="rounded-lg border border-white/10 bg-white/10 px-4 py-6 text-sm text-white/80">
                                                 <p>No bookings match the current filters.</p>
-                                                <p className="mt-1 text-slate-500">
+                                                <p className="mt-1 text-white/60">
                                                     Try changing the status, email, or date range filters.
                                                 </p>
                                             </div>
@@ -578,19 +552,19 @@ function AdminPage() {
                                                 <div
                                                     key={booking.id}
                                                     onClick={() => navigate(`/admin/bookings/${booking.id}`)}
-                                                    className="group cursor-pointer rounded-xl border border-slate-200 bg-white/90 p-4 shadow-sm transition hover:border-blue-400 hover:bg-blue-50 hover:shadow-md"
+                                                    className="group cursor-pointer glass-card p-4 transition-all duration-300 hover:translate-x-0.5 hover:border-[rgba(212,175,55,0.15)]" style={{ borderLeft: `4px solid ${booking.status === 'CONFIRMED' ? 'rgba(34,197,94,0.4)' : booking.status === 'CANCELLED' ? 'rgba(234,179,8,0.4)' : 'rgba(255,255,255,0.1)'}` }}
                                                 >
                                                     <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                                                         <div className="space-y-2">
-                                                            <p className="font-semibold text-slate-900">
+                                                            <p className="font-semibold text-white">
                                                                 {booking.email}
                                                             </p>
     
-                                                            <p className="text-sm text-slate-600">
+                                                            <p className="text-sm text-white/80">
                                                                 Booking ID: {booking.id}
                                                             </p>
     
-                                                            <p className="text-sm text-slate-600">
+                                                            <p className="text-sm text-white/80">
                                                                 Slot:{" "}
                                                                 {formatDateTime(
                                                                     booking.slot.startAt
@@ -601,18 +575,18 @@ function AdminPage() {
                                                                 )}
                                                             </p>
     
-                                                            <p className="text-sm text-slate-600">
+                                                            <p className="text-sm text-white/80">
                                                                 Created:{" "}
                                                                 {formatDateTime(
                                                                     booking.createdAt
                                                                 )}
                                                             </p>
     
-                                                            <p className="text-sm text-slate-600">
+                                                            <p className="text-sm text-white/80">
                                                                 Tickets: {booking.qtyTotal}
                                                             </p>
     
-                                                            <p className="text-sm font-medium text-slate-800">
+                                                            <p className="text-sm font-medium text-white">
                                                                 Total:{" "}
                                                                 {formatPrice(
                                                                     booking.amountTotalCents
@@ -621,7 +595,7 @@ function AdminPage() {
                                                         </div>
     
                                                         <div className="flex flex-col items-start gap-2 md:items-end">
-                                                            <p className="text-xs text-slate-400 group-hover:text-blue-700">
+                                                            <p className="text-xs text-white/50 group-hover:text-[#4DA3FF]">
                                                                 View details →
                                                             </p>
 
@@ -645,7 +619,7 @@ function AdminPage() {
                                                                             cancellingBookingId === booking.id ||
                                                                             refundingBookingId === booking.id
                                                                         }
-                                                                        className="rounded-lg bg-slate-100 px-3 py-2 text-sm font-medium text-slate-800 hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-50"
+                                                                        className="rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-sm font-medium text-white/80 backdrop-blur-sm transition-all hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-50"
                                                                     >
                                                                         {cancellingBookingId === booking.id ? 'Cancelling...' : 'Cancel'}
                                                                     </button>
@@ -663,7 +637,7 @@ function AdminPage() {
                                                                             cancellingBookingId === booking.id ||
                                                                             refundingBookingId === booking.id
                                                                         }
-                                                                        className="rounded-lg bg-slate-100 px-3 py-2 text-sm font-medium text-slate-800 hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-50"
+                                                                        className="rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-sm font-medium text-white/80 backdrop-blur-sm transition-all hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-50"
                                                                         >
                                                                         {refundFormBookingId === booking.id ? "Refund Form Open" : refundingBookingId === booking.id ? "Refunding..." : "Refund"}
                                                                     </button>
@@ -671,7 +645,7 @@ function AdminPage() {
                                                             ) : null}
     
                                                             {booking.refundReason && (
-                                                                <p className="max-w-xs text-sm text-slate-600">
+                                                                <p className="max-w-xs text-sm text-white/60">
                                                                     Refund reason:{" "}
                                                                     {booking.refundReason}
                                                                 </p>
@@ -680,10 +654,10 @@ function AdminPage() {
                                                     </div>
     
                                                     {refundFormBookingId === booking.id ? (
-                                                        <div className="mt-4 rounded-xl border border-slate-200 bg-white/90 p-4">
+                                                        <div className="mt-4 rounded-xl border border-white/10 bg-white/10 p-4 backdrop-blur-sm">
                                                             <label
                                                                 htmlFor={`refund-reason-${booking.id}`}
-                                                                className="mb-2 block text-sm font-medium text-slate-700"
+                                                                className="mb-2 block text-sm font-medium text-white/80"
                                                             >
                                                                 Refund reason
                                                             </label>
@@ -697,13 +671,13 @@ function AdminPage() {
                                                                     setRefundFieldError('');
                                                                 }}
                                                                 placeholder="Enter refund reason"
-                                                                className={`w-full rounded border bg-white px-3 py-2 text-slate-900 outline-none focus:border-blue-700 ${
-                                                                    refundFieldError ? 'border-red-400' : 'border-slate-300'
+                                                                className={`w-full rounded border bg-white/90 px-3 py-2 text-slate-900 outline-none focus:border-[#0057d9] focus:ring-1 focus:ring-[#0057d9] ${
+                                                                    refundFieldError ? 'border-red-400' : 'border-white/20'
                                                                 }`}
                                                             />
     
                                                             {refundFieldError && (
-                                                                <p className="mt-2 text-sm text-red-600">
+                                                                <p className="mt-2 text-sm text-red-300">
                                                                     {refundFieldError}
                                                                 </p>
                                                             )}
@@ -716,7 +690,13 @@ function AdminPage() {
                                                                         handleRefund(booking.id);
                                                                     }}
                                                                     disabled={refundingBookingId === booking.id}
-                                                                    className="rounded-lg bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50"
+                                                                    className="rounded-lg px-4 py-2 text-sm font-semibold transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50"
+                                                                    style={{
+                                                                        border: '1px solid rgba(212,175,55,0.35)',
+                                                                        background: 'rgba(212,175,55,0.12)',
+                                                                        backdropFilter: 'blur(12px)',
+                                                                        color: '#D4AF37'
+                                                                    }}
                                                                 >
                                                                     {refundingBookingId === booking.id
                                                                         ? "Refunding..."
@@ -733,7 +713,7 @@ function AdminPage() {
                                                                         setBookingsError("");
                                                                     }}
                                                                     disabled={refundingBookingId === booking.id}
-                                                                    className="rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium text-slate-800 hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-50"
+                                                                    className="rounded-lg border border-white/20 bg-white/10 px-4 py-2 text-sm font-medium text-white/80 backdrop-blur-sm transition-all hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-50"
                                                                 >
                                                                     Cancel
                                                                 </button>
@@ -754,12 +734,12 @@ function AdminPage() {
                                                 )
                                             }
                                             disabled={bookingsPage === 1}
-                                            className="rounded bg-slate-100 px-4 py-2 text-sm font-medium hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-50"
+                                            className="rounded-lg border border-white/20 bg-white/10 px-4 py-2 text-sm font-medium text-white/80 backdrop-blur-sm transition-all hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-50"
                                         >
                                             Previous
                                         </button>
 
-                                        <p className="text-sm text-slate-600">
+                                        <p className="text-sm text-white/80">
                                             Page {bookingsPage} of {bookingsTotalPages}
                                         </p>
 
@@ -776,7 +756,7 @@ function AdminPage() {
                                             disabled={
                                                 bookingsPage === bookingsTotalPages
                                             }
-                                            className="rounded bg-slate-100 px-4 py-2 text-sm font-medium hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-50"
+                                            className="rounded-lg border border-white/20 bg-white/10 px-4 py-2 text-sm font-medium text-white/80 backdrop-blur-sm transition-all hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-50"
                                         >
                                             Next
                                         </button>
@@ -789,31 +769,33 @@ function AdminPage() {
                         {activeTab === "analytics" && (
                     <div className="space-y-6">
                         <div>
-                            <h2 className="text-lg font-semibold text-blue-900">
+                            <h2 className="text-lg font-semibold text-white">
                                 Analytics
                             </h2>
-                            <p className="mt-2 text-sm text-slate-600">
+                            <p className="mt-2 text-sm text-white/80">
                                 Overview of booking activity and revenue performance.
                             </p>
                         </div>
 
                         <div className="flex flex-wrap items-center gap-3">
                             <div className="flex items-center gap-2">
-                                <label className="text-sm font-medium text-slate-700">From</label>
+                                <label htmlFor="analytics-from" className="text-sm font-medium text-white/80">From</label>
                                 <input
+                                    id="analytics-from"
                                     type="date"
                                     value={analyticsFromDate}
                                     onChange={(e) => setAnalyticsFromDate(e.target.value)}
-                                    className="rounded border border-slate-300 px-3 py-2 text-sm"
+                                    className="rounded border border-white/20 bg-white/90 px-3 py-2 text-sm text-slate-900 outline-none focus:border-[#0057d9] focus:ring-1 focus:ring-[#0057d9]"
                                 />
                             </div>
                             <div className="flex items-center gap-2">
-                                <label className="text-sm font-medium text-slate-700">To</label>
+                                <label htmlFor="analytics-to" className="text-sm font-medium text-white/80">To</label>
                                 <input
+                                    id="analytics-to"
                                     type="date"
                                     value={analyticsToDate}
                                     onChange={(e) => setAnalyticsToDate(e.target.value)}
-                                    className="rounded border border-slate-300 px-3 py-2 text-sm"
+                                    className="rounded border border-white/20 bg-white/90 px-3 py-2 text-sm text-slate-900 outline-none focus:border-[#0057d9] focus:ring-1 focus:ring-[#0057d9]"
                                 />
                             </div>
                             {(analyticsFromDate || analyticsToDate) && (
@@ -823,7 +805,7 @@ function AdminPage() {
                                         setAnalyticsFromDate("");
                                         setAnalyticsToDate("");
                                     }}
-                                    className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
+                                    className="rounded-lg border border-white/20 bg-white/10 px-4 py-2 text-sm font-medium text-white/80 backdrop-blur-sm transition-all hover:bg-white/20"
                                 >
                                     Reset
                                 </button>
@@ -843,96 +825,99 @@ function AdminPage() {
                         )}
                 
                         {statsError && (
-                            <p className="text-sm text-red-600">
+                            <p className="text-sm text-red-300">
                                 {statsError}
                             </p>
                         )}
                 
                         {bookingStats && !isLoadingStats && !statsError && (
                             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                                <div className="rounded-xl bg-white/90 p-5 shadow-sm">
-                                    <p className="text-sm text-slate-600">Total Bookings</p>
-                                    <p className="mt-2 text-2xl font-semibold text-blue-900">
+                                <div className="glass-card p-5">
+                                    <p className="text-sm" style={{ color: 'rgba(255,255,255,0.55)' }}>Total Bookings</p>
+                                    <p className="mt-2 text-2xl font-semibold" style={{ color: 'rgba(255,255,255,0.90)' }}>
                                         {bookingStats.totalBookings}
                                     </p>
                                 </div>
                 
-                                <div className="rounded-xl bg-white/90 p-5 shadow-sm">
-                                    <p className="text-sm text-slate-600">Confirmed Bookings</p>
-                                    <p className="mt-2 text-2xl font-semibold text-green-700">
+                                <div className="glass-card p-5">
+                                    <p className="text-sm" style={{ color: 'rgba(255,255,255,0.55)' }}>Confirmed Bookings</p>
+                                    <p className="mt-2 text-2xl font-semibold" style={{ color: '#22C55E' }}>
                                         {bookingStats.confirmedBookings}
                                     </p>
                                 </div>
                 
-                                <div className="rounded-xl bg-white/90 p-5 shadow-sm">
-                                    <p className="text-sm text-slate-600">Cancelled Bookings</p>
-                                    <p className="mt-2 text-2xl font-semibold text-yellow-700">
+                                <div className="glass-card p-5">
+                                    <p className="text-sm" style={{ color: 'rgba(255,255,255,0.55)' }}>Cancelled Bookings</p>
+                                    <p className="mt-2 text-2xl font-semibold" style={{ color: '#EAB308' }}>
                                         {bookingStats.cancelledBookings}
                                     </p>
                                 </div>
                 
-                                <div className="rounded-xl bg-white/90 p-5 shadow-sm">
-                                    <p className="text-sm text-slate-600">Refunded Bookings</p>
-                                    <p className="mt-2 text-2xl font-semibold text-slate-700">
+                                <div className="glass-card p-5">
+                                    <p className="text-sm" style={{ color: 'rgba(255,255,255,0.55)' }}>Refunded Bookings</p>
+                                    <p className="mt-2 text-2xl font-semibold" style={{ color: 'rgba(255,255,255,0.55)' }}>
                                         {bookingStats.refundedBookings}
                                     </p>
                                 </div>
                 
-                                <div className="rounded-xl bg-white/95 p-5 shadow-md">
-                                    <p className="text-sm text-slate-600">Confirmed Revenue</p>
-                                    <p className="mt-2 text-2xl font-semibold text-blue-900">
+                                <div className="glass-card p-5">
+                                    <p className="text-sm" style={{ color: 'rgba(255,255,255,0.55)' }}>Confirmed Revenue</p>
+                                    <p className="mt-2 text-2xl font-semibold font-mono-custom" style={{ color: '#D4AF37' }}>
                                         {formatPrice(bookingStats.confirmedRevenueCents)}
                                     </p>
                                 </div>
                 
-                                <div className="rounded-xl bg-white/95 p-5 shadow-md">
-                                    <p className="text-sm text-slate-600">Refunded Revenue</p>
-                                    <p className="mt-2 text-2xl font-semibold text-slate-800">
+                                <div className="glass-card p-5">
+                                    <p className="text-sm" style={{ color: 'rgba(255,255,255,0.55)' }}>Refunded Revenue</p>
+                                    <p className="mt-2 text-2xl font-semibold font-mono-custom" style={{ color: 'rgba(255,255,255,0.55)' }}>
                                         {formatPrice(bookingStats.refundedRevenueCents)}
                                     </p>
                                 </div>
                             </div>
                         )}
 
-                        <div className="rounded-xl bg-white/90 p-5 shadow-sm">
+                        <div className="glass-card p-5">
                             <div>
-                                <h3 className="text-base font-semibold text-blue-900">
+                                <h3 className="text-base font-semibold" style={{ color: 'rgba(255,255,255,0.90)' }}>
                                     Revenue Trend
                                 </h3>
-                                <p className="mt-1 text-sm text-slate-600">
+                                <p className="mt-1 text-sm" style={{ color: 'rgba(255,255,255,0.55)' }}>
                                     Daily revenue over time.
                                 </p>
                             </div>
                         
                             <div className="mt-4 h-64">
                                 {revenueChartData.length === 0 ? (
-                                    <p className="text-sm text-slate-600">
+                                    <p className="text-sm" style={{ color: 'rgba(255,255,255,0.50)' }}>
                                         No chart data available.
                                     </p>
                                 ) : (
                                     <ResponsiveContainer width="100%" height="100%">
                                         <LineChart data={revenueChartData}>
-                                            <CartesianGrid strokeDasharray="3 3" />
-                        
-                                            <XAxis dataKey="label" />
-                        
+                                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                            
+                                            <XAxis dataKey="label" tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 12 }} stroke="rgba(255,255,255,0.06)" />
+                            
                                             <YAxis
                                                 tickFormatter={(value) => `£${value}`}
+                                                tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 12 }}
+                                                stroke="rgba(255,255,255,0.06)"
                                             />
-                        
+                            
                                             <Tooltip
+                                                contentStyle={{ background: 'rgba(10,14,26,0.95)', border: '1px solid rgba(212,175,55,0.2)', borderRadius: '12px', color: 'white' }}
                                                 formatter={(value) => {
                                                     if (value === undefined) return "N/A";
                                                     return [`£${value}`, "Revenue"];
                                                 }}
                                                 labelFormatter={(label) => `Date: ${label}`}
                                             />
-                        
+                            
                                             <Line
                                                 type="monotone"
                                                 dataKey="revenue"
-                                                stroke="#1d4ed8"
-                                                strokeWidth={3}
+                                                stroke="#D4AF37"
+                                                strokeWidth={2.5}
                                                 dot={false}
                                             />
                                         </LineChart>
@@ -941,37 +926,41 @@ function AdminPage() {
                             </div>
                         </div>
 
-                        <div className="rounded-xl bg-white/90 p-5 shadow-sm">
+                        <div className="glass-card p-5">
                             <div>
-                                <h3 className="text-base font-semibold text-blue-900">
+                                <h3 className="text-base font-semibold" style={{ color: 'rgba(255,255,255,0.90)' }}>
                                     Revenue by Day
                                 </h3>
-                                <p className="mt-1 text-sm text-slate-600">
+                                <p className="mt-1 text-sm" style={{ color: 'rgba(255,255,255,0.55)' }}>
                                     Daily confirmed revenue and booking count.
                                 </p>
                             </div>
                         
                             <div className="mt-4 space-y-3">
                                 {revenueSeries.length === 0 ? (
-                                    <p className="text-sm text-slate-600">
+                                    <p className="text-sm" style={{ color: 'rgba(255,255,255,0.50)' }}>
                                         No revenue data available.
                                     </p>
                                 ) : (
                                     revenueSeries.slice(-7).reverse().map((item) => (
                                         <div
                                             key={item.date}
-                                            className="flex flex-col gap-2 rounded-lg border border-slate-200 bg-white/90 p-3 sm:flex-row sm:items-center sm:justify-between"
+                                            className="flex flex-col gap-2 rounded-lg p-3 sm:flex-row sm:items-center sm:justify-between"
+                                            style={{
+                                                background: 'rgba(255,255,255,0.03)',
+                                                border: '1px solid rgba(255,255,255,0.06)'
+                                            }}
                                         >
                                             <div>
-                                                <p className="font-medium text-slate-900">
+                                                <p className="font-medium" style={{ color: 'rgba(255,255,255,0.80)' }}>
                                                     {formatDate(item.date)}
                                                 </p>
-                                                <p className="text-sm text-slate-600">
+                                                <p className="text-sm" style={{ color: 'rgba(255,255,255,0.50)' }}>
                                                     Bookings: {item.bookings}
                                                 </p>
                                             </div>
                         
-                                            <p className="text-sm font-semibold text-blue-900">
+                                            <p className="text-sm font-semibold font-mono-custom" style={{ color: '#D4AF37' }}>
                                                 {formatPrice(item.revenueCents)}
                                             </p>
                                         </div>
@@ -980,37 +969,38 @@ function AdminPage() {
                             </div>
                         </div>
 
-                        <div className="rounded-xl bg-white/90 p-5 shadow-sm">
+                        <div className="glass-card p-5">
                             <div>
-                                <h3 className="text-base font-semibold text-blue-900">
+                                <h3 className="text-base font-semibold" style={{ color: 'rgba(255,255,255,0.90)' }}>
                                     Ticket Type Performance
                                 </h3>
-                                <p className="mt-1 text-sm text-slate-600">
+                                <p className="mt-1 text-sm" style={{ color: 'rgba(255,255,255,0.55)' }}>
                                     Revenue and quantity sold by ticket type.
                                 </p>
                             </div>
                         
                             <div className="mt-4 space-y-3">
                                 {ticketTypeStats.length === 0 ? (
-                                    <p className="text-sm text-slate-600">
+                                    <p className="text-sm" style={{ color: 'rgba(255,255,255,0.50)' }}>
                                         No ticket type data available.
                                     </p>
                                 ) : (
                                     ticketTypeStats.map((item) => (
                                         <div
                                             key={item.ticketTypeId}
-                                            className="flex flex-col gap-2 rounded-lg border border-slate-200 bg-white/90 p-3 sm:flex-row sm:items-center sm:justify-between"
+                                            className="flex flex-col gap-2 rounded-lg p-3 sm:flex-row sm:items-center sm:justify-between"
+                                            style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
                                         >
                                             <div>
-                                                <p className="font-medium text-slate-900">
+                                                <p className="font-medium" style={{ color: 'rgba(255,255,255,0.80)' }}>
                                                     {item.ticketTypeName}
                                                 </p>
-                                                <p className="text-sm text-slate-600">
+                                                <p className="text-sm" style={{ color: 'rgba(255,255,255,0.50)' }}>
                                                     Tickets sold: {item.qty}
                                                 </p>
                                             </div>
                         
-                                            <p className="text-sm font-semibold text-blue-900">
+                                            <p className="text-sm font-semibold font-mono-custom" style={{ color: '#D4AF37' }}>
                                                 {formatPrice(item.revenueCents)}
                                             </p>
                                         </div>
@@ -1019,19 +1009,19 @@ function AdminPage() {
                             </div>
                         </div>
 
-                        <div className="rounded-xl bg-white/90 p-5 shadow-sm">
+                        <div className="glass-card p-5">
                             <div>
-                                <h3 className="text-base font-semibold text-blue-900">
+                                <h3 className="text-base font-semibold" style={{ color: 'rgba(255,255,255,0.90)' }}>
                                     Slot Performance
                                 </h3>
-                                <p className="mt-1 text-sm text-slate-600">
+                                <p className="mt-1 text-sm" style={{ color: 'rgba(255,255,255,0.55)' }}>
                                     Top-performing tour slots by usage and revenue.
                                 </p>
                             </div>
                         
                             <div className="mt-4 space-y-3">
                                 {slotStats.length === 0 ? (
-                                    <p className="text-sm text-slate-600">
+                                    <p className="text-sm" style={{ color: 'rgba(255,255,255,0.50)' }}>
                                         No slot performance data available.
                                     </p>
                                 ) : (
@@ -1040,33 +1030,33 @@ function AdminPage() {
                                         .slice(0, 10).map((slot) => (
                                         <div
                                             key={slot.slotId}
-                                            className="rounded-lg border border-slate-200 bg-white/90 p-3"
+                                            className="rounded-lg p-3"
+                                            style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
                                         >
                                             <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                                                 <div>
-                                                    <p className="font-medium text-slate-900">
+                                                    <p className="font-medium" style={{ color: 'rgba(255,255,255,0.80)' }}>
                                                         {formatDateTime(slot.startAt)} - {formatDateTime(slot.endAt)}
                                                     </p>
-                                                    <p className="text-sm text-slate-600">
+                                                    <p className="text-sm" style={{ color: 'rgba(255,255,255,0.50)' }}>
                                                         Bookings: {slot.bookingsCount} · Tickets sold: {slot.ticketsSold}
                                                     </p>
-                                                    <p className="text-sm text-slate-600">
+                                                    <p className="text-sm" style={{ color: 'rgba(255,255,255,0.50)' }}>
                                                         Capacity: {slot.capacityTotal}
                                                     </p>
                                                     <span
-                                                        className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                                                            slot.usagePercent > 80
-                                                                ? "bg-red-100 text-red-700"
-                                                                : slot.usagePercent > 50
-                                                                ? "bg-yellow-100 text-yellow-700"
-                                                                : "bg-green-100 text-green-700"
-                                                        }`}
+                                                        className="inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold"
+                                                        style={{
+                                                            background: slot.usagePercent > 80 ? 'rgba(239,68,68,0.1)' : slot.usagePercent > 50 ? 'rgba(234,179,8,0.1)' : 'rgba(34,197,94,0.1)',
+                                                            border: `1px solid ${slot.usagePercent > 80 ? 'rgba(239,68,68,0.25)' : slot.usagePercent > 50 ? 'rgba(234,179,8,0.25)' : 'rgba(34,197,94,0.25)'}`,
+                                                            color: slot.usagePercent > 80 ? '#EF4444' : slot.usagePercent > 50 ? '#EAB308' : '#22C55E'
+                                                        }}
                                                     >
                                                         {slot.usagePercent}% used
                                                     </span>
                                                 </div>
                         
-                                                <p className="text-sm font-semibold text-blue-900">
+                                                <p className="text-sm font-semibold font-mono-custom" style={{ color: '#D4AF37' }}>
                                                     {formatPrice(slot.revenueCents)}
                                                 </p>
                                             </div>
@@ -1081,105 +1071,110 @@ function AdminPage() {
                 {activeTab === "slots" && (
                     <div className="space-y-6">
                         <div>
-                            <h2 className="text-lg font-semibold text-blue-900">
+                            <h2 className="text-lg font-semibold tracking-[-0.02em]" style={{ color: 'rgba(255,255,255,0.90)' }}>
                                 Slots
                             </h2>
-                            <p className="mt-2 text-sm text-slate-600">
+                            <p className="mt-2 text-sm" style={{ color: 'rgba(255,255,255,0.55)' }}>
                                 Performance overview for the strongest tour slots.
                             </p>
                         </div>
                 
-                        <div className="rounded-xl bg-white/90 p-5 shadow-sm">
+                        <div className="glass-card p-5">
                             <div>
-                                <h3 className="text-base font-semibold text-blue-900">
+                                <h3 className="text-base font-semibold" style={{ color: 'rgba(255,255,255,0.90)' }}>
                                     Slot Usage Chart
                                 </h3>
-                                <p className="mt-1 text-sm text-slate-600">
+                                <p className="mt-1 text-sm" style={{ color: 'rgba(255,255,255,0.55)' }}>
                                     Top-performing slots ranked by usage percentage.
                                 </p>
                             </div>
                 
                             <div className="mt-4 h-80">
                                 {slotChartData.length === 0 ? (
-                                    <p className="text-sm text-slate-600">
+                                    <p className="text-sm" style={{ color: 'rgba(255,255,255,0.50)' }}>
                                         No slot chart data available.
                                     </p>
                                 ) : (
                                     <ResponsiveContainer width="100%" height="100%">
-                                        <BarChart data={slotChartData} layout="vertical">
-                                            <CartesianGrid strokeDasharray="3 3" />
-                                            <XAxis
-                                                type="number"
-                                                tickFormatter={(value) => `${value}%`}
-                                            />
-                                            <YAxis
-                                                type="category"
-                                                dataKey="label"
-                                                width={180}
-                                            />
-                                            <Tooltip
-                                                formatter={(value) => {
-                                                    if (value === undefined) return "N/A";
-                                                    return [`${value}%`, "Usage"];
-                                                }}
-                                            />
-                                            <Bar
-                                                dataKey="usagePercent"
-                                                fill="#1d4ed8"
-                                                radius={[0, 6, 6, 0]}
-                                            />
-                                        </BarChart>
-                                    </ResponsiveContainer>
+                                            <BarChart data={slotChartData} layout="vertical">
+                                                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                                                <XAxis
+                                                    type="number"
+                                                    tickFormatter={(value) => `${value}%`}
+                                                    tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 12 }}
+                                                    stroke="rgba(255,255,255,0.06)"
+                                                />
+                                                <YAxis
+                                                    type="category"
+                                                    dataKey="label"
+                                                    width={180}
+                                                    tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 12 }}
+                                                    stroke="rgba(255,255,255,0.06)"
+                                                />
+                                                <Tooltip
+                                                    contentStyle={{ background: 'rgba(10,14,26,0.95)', border: '1px solid rgba(212,175,55,0.2)', borderRadius: '12px', color: 'white' }}
+                                                    formatter={(value) => {
+                                                        if (value === undefined) return "N/A";
+                                                        return [`${value}%`, "Usage"];
+                                                    }}
+                                                />
+                                                <Bar
+                                                    dataKey="usagePercent"
+                                                    fill="#D4AF37"
+                                                    radius={[0, 6, 6, 0]}
+                                                />
+                                            </BarChart>
+                                        </ResponsiveContainer>
                                 )}
                             </div>
                         </div>
                 
-                        <div className="rounded-xl bg-white/90 p-5 shadow-sm">
+                        <div className="glass-card p-5">
                             <div>
-                                <h3 className="text-base font-semibold text-blue-900">
+                                <h3 className="text-base font-semibold" style={{ color: 'rgba(255,255,255,0.90)' }}>
                                     Top Slot Performance
                                 </h3>
-                                <p className="mt-1 text-sm text-slate-600">
+                                <p className="mt-1 text-sm" style={{ color: 'rgba(255,255,255,0.55)' }}>
                                     Detailed performance metrics for the highest-usage slots.
                                 </p>
                             </div>
                 
                             <div className="mt-4 space-y-3">
                                 {topSlotStats.length === 0 ? (
-                                    <p className="text-sm text-slate-600">
+                                    <p className="text-sm" style={{ color: 'rgba(255,255,255,0.50)' }}>
                                         No slot performance data available.
                                     </p>
                                 ) : (
                                     topSlotStats.map((slot) => (
                                         <div
                                             key={slot.slotId}
-                                            className="rounded-lg border border-slate-200 bg-white/90 p-3"
+                                            className="rounded-lg p-3"
+                                            style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
                                         >
                                             <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                                                 <div>
-                                                    <p className="font-medium text-slate-900">
+                                                    <p className="font-medium" style={{ color: 'rgba(255,255,255,0.80)' }}>
                                                         {formatDateTime(slot.startAt)} - {formatDateTime(slot.endAt)}
                                                     </p>
-                                                    <p className="text-sm text-slate-600">
+                                                    <p className="text-sm" style={{ color: 'rgba(255,255,255,0.50)' }}>
                                                         Bookings: {slot.bookingsCount} · Tickets sold: {slot.ticketsSold}
                                                     </p>
-                                                    <p className="text-sm text-slate-600">
+                                                    <p className="text-sm" style={{ color: 'rgba(255,255,255,0.50)' }}>
                                                         Capacity: {slot.capacityTotal}
                                                     </p>
                                                     <span
-                                                        className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                                                            slot.usagePercent > 80
-                                                                ? "bg-red-100 text-red-700"
-                                                                : slot.usagePercent > 50
-                                                                ? "bg-yellow-100 text-yellow-700"
-                                                                : "bg-green-100 text-green-700"
-                                                        }`}
+                                                        className="inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold"
+                                                        style={{
+                                                            background: slot.usagePercent > 80 ? 'rgba(239,68,68,0.1)' : slot.usagePercent > 50 ? 'rgba(234,179,8,0.1)' : 'rgba(34,197,94,0.1)',
+                                                            border: `1px solid ${slot.usagePercent > 80 ? 'rgba(239,68,68,0.25)' : slot.usagePercent > 50 ? 'rgba(234,179,8,0.25)' : 'rgba(34,197,94,0.25)'}`,
+                                                            color: slot.usagePercent > 80 ? '#EF4444' : slot.usagePercent > 50 ? '#EAB308' : '#22C55E'
+                                                        }}
                                                     >
                                                         {slot.usagePercent}% used
                                                     </span>
                                                 </div>
                 
-                                                <p className="text-sm font-semibold text-blue-900">
+                                                <p className="text-sm font-semibold font-mono-custom" style={{ color: '#D4AF37' }}>
                                                     {formatPrice(slot.revenueCents)}
                                                 </p>
                                             </div>
@@ -1194,62 +1189,63 @@ function AdminPage() {
                 {activeTab === "tickets" && (
                     <div className="space-y-6">
                         <div>
-                            <h2 className="text-lg font-semibold text-blue-900">
+                            <h2 className="text-lg font-semibold tracking-[-0.02em]" style={{ color: 'rgba(255,255,255,0.90)' }}>
                                 Ticket Types
                             </h2>
-                            <p className="mt-2 text-sm text-slate-600">
+                            <p className="mt-2 text-sm" style={{ color: 'rgba(255,255,255,0.55)' }}>
                                 Performance overview by ticket type.
                             </p>
                         </div>
 
-                        <div className="rounded-xl bg-white/90 p-5 shadow-sm">
+                        <div className="glass-card p-5">
                             <div>
-                                <h3 className="text-base font-semibold text-blue-900">
+                                <h3 className="text-base font-semibold" style={{ color: 'rgba(255,255,255,0.90)' }}>
                                     Ticket Type Revenue Chart
                                 </h3>
-                                <p className="mt-1 text-sm text-slate-600">
+                                <p className="mt-1 text-sm" style={{ color: 'rgba(255,255,255,0.55)' }}>
                                     Revenue comparison across ticket types.
                                 </p>
                             </div>
                         
                             <div className="mt-4 h-72">
                                 {ticketTypeChartData.length === 0 ? (
-                                    <p className="text-sm text-slate-600">
+                                    <p className="text-sm" style={{ color: 'rgba(255,255,255,0.50)' }}>
                                         No chart data available.
                                     </p>
                                 ) : (
                                     <ResponsiveContainer width="100%" height="100%">
-                                        <BarChart data={ticketTypeChartData}>
-                                            <CartesianGrid strokeDasharray="3 3" />
-                                            <XAxis dataKey="name" />
-                                            <YAxis tickFormatter={(value) => `£${value}`} />
-                                            <Tooltip
-                                                formatter={(value) => {
-                                                    if (value === undefined) return "N/A";
-                                                    return [`£${value}`, "Revenue"];
-                                                }}
-                                            />
-                                            <Bar dataKey="revenue" fill="#1d4ed8" radius={[6, 6, 0, 0]} />
-                                        </BarChart>
-                                    </ResponsiveContainer>
+                                            <BarChart data={ticketTypeChartData}>
+                                                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                                                <XAxis dataKey="name" tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 12 }} stroke="rgba(255,255,255,0.06)" />
+                                                <YAxis tickFormatter={(value) => `£${value}`} tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 12 }} stroke="rgba(255,255,255,0.06)" />
+                                                <Tooltip
+                                                    contentStyle={{ background: 'rgba(10,14,26,0.95)', border: '1px solid rgba(212,175,55,0.2)', borderRadius: '12px', color: 'white' }}
+                                                    formatter={(value) => {
+                                                        if (value === undefined) return "N/A";
+                                                        return [`£${value}`, "Revenue"];
+                                                    }}
+                                                />
+                                                <Bar dataKey="revenue" fill="#D4AF37" radius={[6, 6, 0, 0]} />
+                                            </BarChart>
+                                        </ResponsiveContainer>
                                 )}
                             </div>
                         </div>
                 
                         {ticketTypeStats.length === 0 ? (
-                            <div className="rounded-xl bg-white/90 p-5 shadow-sm">
-                                <p className="text-sm text-slate-600">
+                            <div className="glass-card p-5">
+                                <p className="text-sm" style={{ color: 'rgba(255,255,255,0.50)' }}>
                                     No ticket type data available.
                                 </p>
                             </div>
                         ) : (
                             <>
-                                <div className="rounded-xl bg-white/90 p-5 shadow-sm">
+                                <div className="glass-card p-5">
                                     <div>
-                                        <h3 className="text-base font-semibold text-blue-900">
+                                        <h3 className="text-base font-semibold" style={{ color: 'rgba(255,255,255,0.90)' }}>
                                             Ticket Type Revenue
                                         </h3>
-                                        <p className="mt-1 text-sm text-slate-600">
+                                        <p className="mt-1 text-sm" style={{ color: 'rgba(255,255,255,0.55)' }}>
                                             Revenue generated by each ticket type.
                                         </p>
                                     </div>
@@ -1258,25 +1254,26 @@ function AdminPage() {
                                         {ticketTypeStats.map((item) => (
                                             <div
                                                 key={item.ticketTypeId}
-                                                className="flex flex-col gap-2 rounded-lg border border-slate-200 bg-white/90 p-3 sm:flex-row sm:items-center sm:justify-between"
+                                                className="flex flex-col gap-2 rounded-lg p-3 sm:flex-row sm:items-center sm:justify-between"
+                                                style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
                                             >
                                                 <div>
-                                                    <p className="font-medium text-slate-900">
+                                                    <p className="font-medium" style={{ color: 'rgba(255,255,255,0.80)' }}>
                                                         {item.ticketTypeName}
                                                     </p>
 
                                                     {ticketTypeDescriptions[item.ticketTypeName] && (
-                                                        <p className="text-sm text-slate-500">
+                                                        <p className="text-sm" style={{ color: 'rgba(255,255,255,0.45)' }}>
                                                             {ticketTypeDescriptions[item.ticketTypeName]}
                                                         </p>
                                                     )}
 
-                                                    <p className="text-sm text-slate-600">
+                                                    <p className="text-sm" style={{ color: 'rgba(255,255,255,0.50)' }}>
                                                         Tickets sold: {item.qty}
                                                     </p>
                                                 </div>
                 
-                                                <p className="text-sm font-semibold text-blue-900">
+                                                <p className="text-sm font-semibold font-mono-custom" style={{ color: '#D4AF37' }}>
                                                     {formatPrice(item.revenueCents)}
                                                 </p>
                                             </div>
@@ -1291,32 +1288,32 @@ function AdminPage() {
                 {activeTab === "operations" && (
                     <div className="space-y-6">
                         <div>
-                            <h2 className="text-lg font-semibold text-blue-900">
+                            <h2 className="text-lg font-semibold tracking-[-0.02em]" style={{ color: 'rgba(255,255,255,0.90)' }}>
                                 Operations
                             </h2>
-                            <p className="mt-2 text-sm text-slate-600">
+                            <p className="mt-2 text-sm" style={{ color: 'rgba(255,255,255,0.55)' }}>
                                 Run admin maintenance tasks for slots and blackouts.
                             </p>
                         </div>
                 
                         {operationsError && (
-                            <p className="text-sm text-red-600">
+                            <p className="text-sm" style={{ color: '#EF4444' }}>
                                 {operationsError}
                             </p>
                         )}
                 
                         {operationsSuccess && (
-                            <p className="text-sm text-green-700">
+                            <p className="text-sm" style={{ color: '#22C55E' }}>
                                 {operationsSuccess}
                             </p>
                         )}
                 
-                        <div className="rounded-xl bg-white/90 p-5 shadow-sm space-y-4">
+                        <div className="glass-card p-5 space-y-4">
                             <div>
-                                <h3 className="text-base font-semibold text-blue-900">
+                                <h3 className="text-base font-semibold" style={{ color: 'rgba(255,255,255,0.90)' }}>
                                     Generate Slots
                                 </h3>
-                                <p className="mt-1 text-sm text-slate-600">
+                                <p className="mt-1 text-sm" style={{ color: 'rgba(255,255,255,0.55)' }}>
                                     Generate tour slots for the upcoming number of days.
                                 </p>
                             </div>
@@ -1329,26 +1326,38 @@ function AdminPage() {
                                     onChange={(event) =>
                                         setGenerateDays(Number(event.target.value))
                                     }
-                                    className="w-full rounded border border-slate-300 bg-white px-3 py-2 text-slate-900 outline-none focus:border-blue-700 sm:max-w-xs"
+                                    className="w-full rounded border px-3 py-2 text-sm outline-none focus:ring-2 sm:max-w-xs"
+                                    style={{
+                                        borderColor: 'rgba(255,255,255,0.10)',
+                                        background: 'rgba(255,255,255,0.06)',
+                                        backdropFilter: 'blur(8px)',
+                                        color: 'rgba(255,255,255,0.85)'
+                                    }}
                                 />
                 
                                 <button
                                     type="button"
                                     onClick={handleGenerateSlots}
                                     disabled={isGeneratingSlots}
-                                    className="rounded-lg bg-blue-700 px-4 py-2 font-medium text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50"
+                                    className="rounded-lg px-4 py-2 text-sm font-semibold transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50"
+                                    style={{
+                                        border: '1px solid rgba(212,175,55,0.35)',
+                                        background: 'rgba(212,175,55,0.12)',
+                                        backdropFilter: 'blur(12px)',
+                                        color: '#D4AF37'
+                                    }}
                                 >
                                     {isGeneratingSlots ? "Generating..." : "Generate Slots"}
                                 </button>
                             </div>
                         </div>
                 
-                        <div className="rounded-xl bg-white/90 p-5 shadow-sm space-y-4">
+                        <div className="glass-card p-5 space-y-4">
                             <div>
-                                <h3 className="text-base font-semibold text-blue-900">
+                                <h3 className="text-base font-semibold" style={{ color: 'rgba(255,255,255,0.90)' }}>
                                     Sync Blackouts
                                 </h3>
-                                <p className="mt-1 text-sm text-slate-600">
+                                <p className="mt-1 text-sm" style={{ color: 'rgba(255,255,255,0.55)' }}>
                                     Sync blackout dates based on upcoming fixtures.
                                 </p>
                             </div>
@@ -1361,14 +1370,26 @@ function AdminPage() {
                                     onChange={(event) =>
                                         setSyncDaysAhead(Number(event.target.value))
                                     }
-                                    className="w-full rounded border border-slate-300 bg-white px-3 py-2 text-slate-900 outline-none focus:border-blue-700 sm:max-w-xs"
+                                    className="w-full rounded border px-3 py-2 text-sm outline-none focus:ring-2 sm:max-w-xs"
+                                    style={{
+                                        borderColor: 'rgba(255,255,255,0.10)',
+                                        background: 'rgba(255,255,255,0.06)',
+                                        backdropFilter: 'blur(8px)',
+                                        color: 'rgba(255,255,255,0.85)'
+                                    }}
                                 />
                 
                                 <button
                                     type="button"
                                     onClick={handleSyncBlackouts}
                                     disabled={isSyncingBlackouts}
-                                    className="rounded-lg bg-blue-700 px-4 py-2 font-medium text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50"
+                                    className="rounded-lg px-4 py-2 text-sm font-semibold transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50"
+                                    style={{
+                                        border: '1px solid rgba(212,175,55,0.35)',
+                                        background: 'rgba(212,175,55,0.12)',
+                                        backdropFilter: 'blur(12px)',
+                                        color: '#D4AF37'
+                                    }}
                                 >
                                     {isSyncingBlackouts ? "Syncing..." : "Sync Blackouts"}
                                 </button>

@@ -9,14 +9,14 @@ import QRCode from "../components/QRCode";
 
 function getStatusClasses(status: AdminBooking["status"]) {
     if (status === "CONFIRMED") {
-        return "bg-green-100 text-green-700";
+        return "bg-green-950/40 text-green-300";
     }
 
     if (status === "CANCELLED") {
-        return "bg-yellow-100 text-yellow-800";
+        return "bg-yellow-950/40 text-yellow-300";
     }
 
-    return "bg-slate-200 text-slate-700";
+    return "bg-slate-800/40 text-slate-300";
 }
 
 function AdminBookingDetailsPage() {
@@ -127,13 +127,13 @@ function AdminBookingDetailsPage() {
             <section className="space-y-4">
                 <Link
                     to="/admin"
-                    className="inline-flex rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200"
+                    className="inline-flex rounded-lg border border-white/20 bg-white/10 px-4 py-2 text-sm font-medium text-white/80 backdrop-blur-sm transition-all hover:bg-white/20"
                 >
                     Back to Admin
                 </Link>
 
-                <div className="rounded-xl bg-white/95 p-5 shadow-md">
-                    <p className="text-sm text-slate-600">Loading booking details...</p>
+                <div className="rounded-xl border border-white/10 bg-white/10 p-5 backdrop-blur-sm">
+                    <p className="text-sm text-white/80">Loading booking details...</p>
                 </div>
             </section>
         );
@@ -144,13 +144,13 @@ function AdminBookingDetailsPage() {
             <section className="space-y-4">
                 <Link
                     to="/admin"
-                    className="inline-flex rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200"
+                    className="inline-flex rounded-lg border border-white/20 bg-white/10 px-4 py-2 text-sm font-medium text-white/80 backdrop-blur-sm transition-all hover:bg-white/20"
                 >
                     Back to Admin
                 </Link>
 
-                <div className="rounded-xl bg-white/95 p-5 shadow-md">
-                    <p className="text-sm text-red-600">{error}</p>
+                <div className="rounded-xl border border-white/10 bg-white/10 p-5 backdrop-blur-sm">
+                    <p className="text-sm text-red-300">{error}</p>
                 </div>
             </section>
         );
@@ -161,13 +161,13 @@ function AdminBookingDetailsPage() {
             <section className="space-y-4">
                 <Link
                     to="/admin"
-                    className="inline-flex rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200"
+                    className="inline-flex rounded-lg border border-white/20 bg-white/10 px-4 py-2 text-sm font-medium text-white/80 backdrop-blur-sm transition-all hover:bg-white/20"
                 >
                     Back to Admin
                 </Link>
 
-                <div className="rounded-xl bg-white/95 p-5 shadow-md">
-                    <p className="text-sm text-slate-600">Booking not found.</p>
+                <div className="rounded-xl border border-white/10 bg-white/10 p-5 backdrop-blur-sm">
+                    <p className="text-sm text-white/80">Booking not found.</p>
                 </div>
             </section>
         );
@@ -175,30 +175,38 @@ function AdminBookingDetailsPage() {
 
     return (
         <section className="space-y-6">
-            <div className="rounded-xl bg-white/95 p-5 shadow-md">
+            <div className="glass-card p-5">
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                     <div>
                         <Link
                             to="/admin"
-                            className="inline-flex rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-200"
+                            className="inline-flex items-center gap-1 rounded-lg border px-4 py-2 text-sm font-medium transition-all hover:bg-white/10"
+                            style={{ borderColor: 'rgba(255,255,255,0.10)', background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.65)' }}
                         >
+                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M19 12H5m7-7l-7 7 7 7" />
+                            </svg>
                             Back to Admin
                         </Link>
             
-                        <h1 className="mt-4 text-2xl font-semibold text-blue-900">
+                        <h1 className="mt-4 text-2xl font-semibold tracking-[-0.02em]" style={{ color: 'rgba(255,255,255,0.90)' }}>
                             Booking Details
                         </h1>
             
-                        <p className="mt-1 break-all text-sm text-slate-600">
-                            Booking ID: {booking.id}
+                        <p className="mt-1 break-all text-sm font-mono-custom" style={{ color: 'rgba(255,255,255,0.45)' }}>
+                            {booking.id}
                         </p>
                     </div>
             
                     <div className="flex flex-col items-start gap-3 lg:items-end">
                         <span
-                            className={`rounded-full px-3 py-1 text-xs font-semibold ${getStatusClasses(
-                                booking.status
-                            )}`}
+                            className={`rounded-full px-3 py-1 text-xs font-semibold ${getStatusClasses(booking.status)}`}
+                            style={{
+                                background: booking.status === "CONFIRMED" ? 'rgba(34,197,94,0.1)' : booking.status === "CANCELLED" ? 'rgba(234,179,8,0.1)' : 'rgba(255,255,255,0.05)',
+                                border: `1px solid ${
+                                    booking.status === "CONFIRMED" ? 'rgba(34,197,94,0.25)' : booking.status === "CANCELLED" ? 'rgba(234,179,8,0.25)' : 'rgba(255,255,255,0.1)'
+                                }`
+                            }}
                         >
                             {booking.status}
                         </span>
@@ -210,7 +218,8 @@ function AdminBookingDetailsPage() {
                                     onClick={() => window.open(
                                         `${import.meta.env.VITE_API_BASE_URL}/bookings/my-bookings/${booking.id}/pdf`
                                     )}
-                                    className="rounded-lg border border-blue-300 bg-white px-4 py-2 text-sm font-medium text-blue-700 transition hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50"
+                                    className="rounded-lg border px-4 py-2 text-sm font-medium transition-all hover:bg-white/10"
+                                    style={{ borderColor: 'rgba(255,255,255,0.10)', background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.65)' }}
                                 >
                                     Download PDF
                                 </button>
@@ -218,7 +227,8 @@ function AdminBookingDetailsPage() {
                                     type="button"
                                     onClick={handleCancelBooking}
                                     disabled={isCancelling || isRefunding}
-                                    className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                                    className="rounded-lg border px-4 py-2 text-sm font-medium transition-all hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
+                                    style={{ borderColor: 'rgba(239,68,68,0.25)', background: 'rgba(239,68,68,0.08)', color: '#EF4444' }}
                                 >
                                     {isCancelling ? "Cancelling..." : "Cancel Booking"}
                                 </button>
@@ -231,7 +241,13 @@ function AdminBookingDetailsPage() {
                                         setError("");
                                     }}
                                     disabled={isCancelling || isRefunding}
-                                    className="rounded-lg bg-blue-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50"
+                                    className="rounded-lg px-4 py-2 text-sm font-medium transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
+                                    style={{
+                                        border: '1px solid rgba(212,175,55,0.35)',
+                                        background: 'rgba(212,175,55,0.12)',
+                                        backdropFilter: 'blur(12px)',
+                                        color: '#D4AF37'
+                                    }}
                                 >
                                     {isRefundFormOpen ? "Refund Form Open" : "Refund Booking"}
                                 </button>
@@ -242,19 +258,20 @@ function AdminBookingDetailsPage() {
             </div>
 
             {isRefundFormOpen && booking.status === "CONFIRMED" && (
-                <div className="rounded-xl bg-white/95 p-5 shadow-md">
-                    <h2 className="text-base font-semibold text-blue-900">
+                <div className="glass-card p-5">
+                    <h2 className="text-base font-semibold" style={{ color: 'rgba(255,255,255,0.90)' }}>
                         Refund Booking
                     </h2>
             
-                    <p className="mt-1 text-sm text-slate-600">
+                    <p className="mt-1 text-sm" style={{ color: 'rgba(255,255,255,0.55)' }}>
                         Enter a reason for the refund.
                     </p>
             
                     <div className="mt-4">
                         <label
                             htmlFor="refundReason"
-                            className="mb-2 block text-sm font-medium text-slate-700"
+                            className="mb-2 block text-sm font-medium"
+                            style={{ color: 'rgba(255,255,255,0.65)' }}
                         >
                             Refund reason
                         </label>
@@ -268,13 +285,17 @@ function AdminBookingDetailsPage() {
                                 setRefundFieldError("");
                             }}
                             placeholder="Enter refund reason"
-                            className={`w-full rounded-lg border bg-white px-3 py-2 text-slate-900 outline-none focus:border-blue-700 ${
-                                refundFieldError ? "border-red-400" : "border-slate-300"
-                            }`}
+                            className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2"
+                            style={{
+                                borderColor: refundFieldError ? 'rgba(239,68,68,0.4)' : 'rgba(255,255,255,0.10)',
+                                background: 'rgba(255,255,255,0.06)',
+                                backdropFilter: 'blur(8px)',
+                                color: 'rgba(255,255,255,0.85)'
+                            }}
                         />
             
                         {refundFieldError && (
-                            <p className="mt-2 text-sm text-red-600">
+                            <p className="mt-2 text-sm" style={{ color: '#EF4444' }}>
                                 {refundFieldError}
                             </p>
                         )}
@@ -285,7 +306,13 @@ function AdminBookingDetailsPage() {
                             type="button"
                             onClick={handleRefund}
                             disabled={isRefunding}
-                            className="rounded-lg bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50"
+                            className="rounded-lg px-4 py-2 text-sm font-semibold transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
+                            style={{
+                                border: '1px solid rgba(212,175,55,0.35)',
+                                background: 'rgba(212,175,55,0.12)',
+                                backdropFilter: 'blur(12px)',
+                                color: '#D4AF37'
+                            }}
                         >
                             {isRefunding ? "Refunding..." : "Confirm Refund"}
                         </button>
@@ -299,7 +326,8 @@ function AdminBookingDetailsPage() {
                                 setError("");
                             }}
                             disabled={isRefunding}
-                            className="rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium text-slate-800 hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-50"
+                            className="rounded-lg border px-4 py-2 text-sm font-medium transition-all hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
+                            style={{ borderColor: 'rgba(255,255,255,0.10)', background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.60)' }}
                         >
                             Close
                         </button>
@@ -307,55 +335,55 @@ function AdminBookingDetailsPage() {
                 </div>
             )}
 
-            <div className="rounded-xl bg-white/95 p-5 shadow-md">
+            <div className="glass-card p-5">
                 <div className="space-y-6">
                     <div>
-                        <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+                        <h2 className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.40)' }}>
                             Basic Info
                         </h2>
 
                         <div className="mt-3 grid gap-4 md:grid-cols-2">
-                            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                                <p className="text-xs font-medium uppercase text-slate-500">
+                            <div className="rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                                <p className="text-xs font-medium uppercase" style={{ color: 'rgba(255,255,255,0.40)' }}>
                                     Email
                                 </p>
-                                <p className="mt-1 break-all text-sm text-slate-900">
+                                <p className="mt-1 break-all text-sm" style={{ color: 'rgba(255,255,255,0.80)' }}>
                                     {booking.email}
                                 </p>
                             </div>
 
-                            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                                <p className="text-xs font-medium uppercase text-slate-500">
+                            <div className="rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                                <p className="text-xs font-medium uppercase" style={{ color: 'rgba(255,255,255,0.40)' }}>
                                     Client User ID
                                 </p>
-                                <p className="mt-1 break-all text-sm text-slate-900">
+                                <p className="mt-1 break-all text-sm font-mono-custom" style={{ color: 'rgba(255,255,255,0.80)' }}>
                                     {booking.clientUserId || "—"}
                                 </p>
                             </div>
 
-                            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                                <p className="text-xs font-medium uppercase text-slate-500">
+                            <div className="rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                                <p className="text-xs font-medium uppercase" style={{ color: 'rgba(255,255,255,0.40)' }}>
                                     Created At
                                 </p>
-                                <p className="mt-1 text-sm text-slate-900">
+                                <p className="mt-1 text-sm" style={{ color: 'rgba(255,255,255,0.80)' }}>
                                     {formatDateTime(booking.createdAt)}
                                 </p>
                             </div>
 
-                            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                                <p className="text-xs font-medium uppercase text-slate-500">
+                            <div className="rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                                <p className="text-xs font-medium uppercase" style={{ color: 'rgba(255,255,255,0.40)' }}>
                                     Refunded At
                                 </p>
-                                <p className="mt-1 text-sm text-slate-900">
+                                <p className="mt-1 text-sm" style={{ color: 'rgba(255,255,255,0.80)' }}>
                                     {booking.refundedAt ? formatDateTime(booking.refundedAt) : "—"}
                                 </p>
                             </div>
 
-                            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 md:col-span-2">
-                                <p className="text-xs font-medium uppercase text-slate-500">
+                            <div className="rounded-xl p-4 md:col-span-2" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                                <p className="text-xs font-medium uppercase" style={{ color: 'rgba(255,255,255,0.40)' }}>
                                     Refund Reason
                                 </p>
-                                <p className="mt-1 text-sm text-slate-900">
+                                <p className="mt-1 text-sm" style={{ color: 'rgba(255,255,255,0.80)' }}>
                                     {booking.refundReason || "—"}
                                 </p>
                             </div>
@@ -364,7 +392,7 @@ function AdminBookingDetailsPage() {
 
                     <div className="flex justify-center py-4">
                         <div className="text-center">
-                            <p className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-500">
+                            <p className="mb-2 text-xs font-medium uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.40)' }}>
                                 Entry Code
                             </p>
                             <QRCode
@@ -375,34 +403,34 @@ function AdminBookingDetailsPage() {
                     </div>
 
                     <div>
-                        <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+                        <h2 className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.40)' }}>
                             Slot Info
                         </h2>
 
                         <div className="mt-3 grid gap-4 md:grid-cols-2">
-                            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                                <p className="text-xs font-medium uppercase text-slate-500">
+                            <div className="rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                                <p className="text-xs font-medium uppercase" style={{ color: 'rgba(255,255,255,0.40)' }}>
                                     Slot ID
                                 </p>
-                                <p className="mt-1 break-all text-sm text-slate-900">
+                                <p className="mt-1 break-all text-sm font-mono-custom" style={{ color: 'rgba(255,255,255,0.80)' }}>
                                     {booking.slotId}
                                 </p>
                             </div>
 
-                            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                                <p className="text-xs font-medium uppercase text-slate-500">
+                            <div className="rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                                <p className="text-xs font-medium uppercase" style={{ color: 'rgba(255,255,255,0.40)' }}>
                                     Start
                                 </p>
-                                <p className="mt-1 text-sm text-slate-900">
+                                <p className="mt-1 text-sm" style={{ color: 'rgba(255,255,255,0.80)' }}>
                                     {formatDateTime(booking.slot.startAt)}
                                 </p>
                             </div>
 
-                            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                                <p className="text-xs font-medium uppercase text-slate-500">
+                            <div className="rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                                <p className="text-xs font-medium uppercase" style={{ color: 'rgba(255,255,255,0.40)' }}>
                                     End
                                 </p>
-                                <p className="mt-1 text-sm text-slate-900">
+                                <p className="mt-1 text-sm" style={{ color: 'rgba(255,255,255,0.80)' }}>
                                     {formatDateTime(booking.slot.endAt)}
                                 </p>
                             </div>
@@ -410,34 +438,34 @@ function AdminBookingDetailsPage() {
                     </div>
 
                     <div>
-                        <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+                        <h2 className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.40)' }}>
                             Totals
                         </h2>
 
                         <div className="mt-3 grid gap-4 md:grid-cols-2">
-                            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                                <p className="text-xs font-medium uppercase text-slate-500">
+                            <div className="rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                                <p className="text-xs font-medium uppercase" style={{ color: 'rgba(255,255,255,0.40)' }}>
                                     Total Tickets
                                 </p>
-                                <p className="mt-1 text-sm text-slate-900">
+                                <p className="mt-1 text-sm" style={{ color: 'rgba(255,255,255,0.80)' }}>
                                     {booking.qtyTotal}
                                 </p>
                             </div>
 
-                            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                                <p className="text-xs font-medium uppercase text-slate-500">
+                            <div className="rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                                <p className="text-xs font-medium uppercase" style={{ color: 'rgba(255,255,255,0.40)' }}>
                                     Total Amount
                                 </p>
-                                <p className="mt-1 text-sm text-slate-900">
+                                <p className="mt-1 text-sm font-mono-custom" style={{ color: '#D4AF37' }}>
                                     {formatPrice(booking.amountTotalCents)}
                                 </p>
                             </div>
 
-                            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 md:col-span-2">
-                                <p className="text-xs font-medium uppercase text-slate-500">
+                            <div className="rounded-xl p-4 md:col-span-2" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                                <p className="text-xs font-medium uppercase" style={{ color: 'rgba(255,255,255,0.40)' }}>
                                     Stripe Session ID
                                 </p>
-                                <p className="mt-1 break-all text-sm text-slate-900">
+                                <p className="mt-1 break-all text-sm font-mono-custom" style={{ color: 'rgba(255,255,255,0.80)' }}>
                                     {booking.stripeSessionId || "—"}
                                 </p>
                             </div>
@@ -445,42 +473,42 @@ function AdminBookingDetailsPage() {
                     </div>
 
                     <div>
-                        <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+                        <h2 className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.40)' }}>
                             Items
                         </h2>
 
-                        <div className="mt-3 overflow-hidden rounded-xl border border-slate-200">
-                            <table className="min-w-full divide-y divide-slate-200 text-sm">
-                                <thead className="bg-slate-50">
+                        <div className="mt-3 overflow-hidden rounded-xl" style={{ border: '1px solid rgba(255,255,255,0.06)' }}>
+                            <table className="min-w-full divide-y text-sm" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+                                <thead style={{ background: 'rgba(255,255,255,0.03)' }}>
                                     <tr>
-                                        <th className="px-4 py-3 text-left font-medium text-slate-600">
+                                        <th className="px-4 py-3 text-left font-medium" style={{ color: 'rgba(255,255,255,0.55)' }}>
                                             Ticket Type
                                         </th>
-                                        <th className="px-4 py-3 text-left font-medium text-slate-600">
+                                        <th className="px-4 py-3 text-left font-medium" style={{ color: 'rgba(255,255,255,0.55)' }}>
                                             Qty
                                         </th>
-                                        <th className="px-4 py-3 text-left font-medium text-slate-600">
+                                        <th className="px-4 py-3 text-left font-medium" style={{ color: 'rgba(255,255,255,0.55)' }}>
                                             Unit Price
                                         </th>
-                                        <th className="px-4 py-3 text-left font-medium text-slate-600">
+                                        <th className="px-4 py-3 text-left font-medium" style={{ color: 'rgba(255,255,255,0.55)' }}>
                                             Subtotal
                                         </th>
                                     </tr>
                                 </thead>
 
-                                <tbody className="divide-y divide-slate-200 bg-white">
+                                <tbody className="divide-y" style={{ borderColor: 'rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)' }}>
                                     {booking.items.map((item, index) => (
                                         <tr key={`${item.ticketTypeId}-${index}`}>
-                                            <td className="px-4 py-3 font-medium text-slate-900">
+                                            <td className="px-4 py-3 font-medium" style={{ color: 'rgba(255,255,255,0.80)' }}>
                                                 {item.ticketName || item.ticketTypeId}
                                             </td>
-                                            <td className="px-4 py-3 text-slate-600">
+                                            <td className="px-4 py-3" style={{ color: 'rgba(255,255,255,0.65)' }}>
                                                 {item.qty}
                                             </td>
-                                            <td className="px-4 py-3 text-slate-600">
+                                            <td className="px-4 py-3 font-mono-custom" style={{ color: 'rgba(255,255,255,0.65)' }}>
                                                 {formatPrice(item.unitPriceCents)}
                                             </td>
-                                            <td className="px-4 py-3 font-semibold text-slate-900">
+                                            <td className="px-4 py-3 font-semibold font-mono-custom" style={{ color: '#D4AF37' }}>
                                                 {formatPrice(item.qty * item.unitPriceCents)}
                                             </td>
                                         </tr>

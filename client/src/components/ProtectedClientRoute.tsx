@@ -13,7 +13,7 @@ export default function ProtectedClientRoute(
     const location = useLocation();
 
     if (isLoading) {
-        return <div className="p-4">Loading...</div>
+        return <div className="p-4 text-white/80">Loading...</div>
     }
 
     if (!isAuthenticated) {

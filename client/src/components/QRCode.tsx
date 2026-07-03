@@ -26,7 +26,7 @@ function QRCode({ data, size = 120 }: QRCodeProps) {
             ref={canvasRef}
             width={size}
             height={size}
-            className="rounded-lg border border-slate-200"
+            className="rounded-lg border border-white/20"
         />
     );
 }

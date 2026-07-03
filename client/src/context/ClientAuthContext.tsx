@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type Dispatch, type ReactNode, type SetStateAction } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type Dispatch, type ReactNode, type SetStateAction } from "react";
 import { clientLogin, clientLogout, clientRefresh, clientRegister, type Client, type ClientLoginInput, type ClientRegisterInput } from "../api/clientAuth"
 
 type ClientAuthContextValue = {
@@ -29,7 +29,11 @@ export function ClientAuthProvider({children}: { children: ReactNode }) {
         }
     }, [])
 
+    const refreshCalled = useRef(false);
+
     useEffect(() => {
+        if (refreshCalled.current) return;
+        refreshCalled.current = true;
         restoreSession();
     }, [restoreSession])
 

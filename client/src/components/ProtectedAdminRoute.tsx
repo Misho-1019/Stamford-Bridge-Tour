@@ -14,7 +14,7 @@ export default function ProtectedAdminRoute({
 
     if (isInitializing) {
         return (
-            <div className="p-6 text-sm text-slate-600">
+            <div className="p-6 text-sm text-white/80">
                 Loading...
             </div>
         );

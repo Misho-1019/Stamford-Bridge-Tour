@@ -8,7 +8,6 @@ import { verifyAccessToken } from "../lib/auth";
 
 const createHold = Router();
 
-const INITIAL_HOLD_MINUTES = 2;
 const HOLD_DURATION_MINUTES = 10;
 
 createHold.post('/', async (req, res) => {
@@ -20,7 +19,6 @@ createHold.post('/', async (req, res) => {
         }
 
         const { slotId, email, items } = parsedBody.data;
-        const normalizedEmail = email.trim().toLowerCase();
 
         let clientId: string | null = null;
 
@@ -38,6 +36,7 @@ createHold.post('/', async (req, res) => {
         }
 
         let clientEmail: string | null = null;
+        let normalizedEmail = email.trim().toLowerCase();
 
         if (clientId) {
             const user = await prisma.clientUser.findUnique({
@@ -46,6 +45,10 @@ createHold.post('/', async (req, res) => {
             })
 
             clientEmail = user?.email ?? null;
+
+            if (clientEmail && normalizedEmail !== clientEmail) {
+                return res.status(403).json({ error: "Email must match your account email" });
+            }
         }
 
         const ticketTypes = await prisma.ticketType.findMany({
@@ -97,7 +100,7 @@ createHold.post('/', async (req, res) => {
             }
         })
 
-        const expiresAt = new Date(Date.now() + INITIAL_HOLD_MINUTES * 60 * 1000);
+        const expiresAt = new Date(Date.now() + HOLD_DURATION_MINUTES * 60 * 1000);
 
         const hold = await prisma.$transaction(async (tx) => {
             const now = new Date();
@@ -214,7 +217,6 @@ createHold.post('/', async (req, res) => {
             where: { id: hold.id },
             data: {
                 stripeSessionId: session.id,
-                expiresAt: new Date(Date.now() + HOLD_DURATION_MINUTES * 60 * 1000),
             }
         })
 

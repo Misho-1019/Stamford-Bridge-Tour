@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { loginAdmin, logoutAdmin, refreshAdminSession, type AdminLoginInput, type AdminUser } from "../api/adminAuth"
 import { useClientAuth } from "./ClientAuthContext";
 
@@ -29,7 +29,11 @@ export function AdminAuthProvider({ children }: AdminAuthProviderProps) {
         setAdmin(data.admin);
     }
 
+    const initCalled = useRef(false);
+
     useEffect(() => {
+        if (initCalled.current) return;
+        initCalled.current = true;
         async function init() {
             try {
                 const data = await refreshAdminSession();
